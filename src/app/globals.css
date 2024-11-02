@@ -1,0 +1,41 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  color: #000000; /* Set default text color to black */
+  background: #ffffff; /* Changed to white background */
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.Toastify__toast-container {
+  z-index: 9999; /* Ensure toast notifications are on top */
+}
+
+.Toastify__toast {
+  margin-bottom: 1rem;
+  position: relative !important;
+  transform: translate3d(0, 0, 0);
+  margin-top: -3px !important;
+}
+
+.Toastify__toast-container--bottom-right {
+  bottom: 1em;
+  right: 1em;
+}
+
+.Toastify__toast-body {
+  padding: 12px;
+}
