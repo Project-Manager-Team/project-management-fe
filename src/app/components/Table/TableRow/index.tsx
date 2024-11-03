@@ -1,5 +1,5 @@
 import React, { memo, useState, useEffect, useRef } from "react";
-import { Item, HistoryItem } from "../interfaces";
+import { HistoryItem, TableRowProps } from "../interfaces"; // Updated import
 import {
   FiEdit,
   FiSave,
@@ -7,36 +7,23 @@ import {
   FiCheckSquare,
   FiFolder,
   FiUserPlus,
+  FiUser,
 } from "react-icons/fi";
 import apiClient from "@/utils";
 import { toast } from "react-toastify";
+import Image from "next/image"; // Ensure Image is imported
 
-interface TableRowProps {
-  item: Item;
-  managerNames: string[]; // Added managerNames
-  handleChange: (
-    index: number,
-    name: string,
-    value: string | number | boolean | null
-  ) => void;
-  handleEditItem: (index: number) => void;
-  handleDeleteItem: (id: number | null) => void;
-  setHistory: React.Dispatch<React.SetStateAction<HistoryItem[]>>;
-  setReloadTableData: React.Dispatch<React.SetStateAction<boolean>>;
-  handleUpdateProgress: (id: number, progress: number) => void;
-  // Removed handleAddManager
-}
+// Add the backend URL
+const backendUrl = "http://localhost:8000"; // Replace with your actual backend URL
 
 const TableRow: React.FC<TableRowProps> = ({
   item,
-  managerNames, // Destructure managerNames
   handleChange,
   handleEditItem,
   handleDeleteItem,
   setHistory,
   setReloadTableData,
   handleUpdateProgress,
-  // Removed handleAddManager
 }) => {
   const [showInviteForm, setShowInviteForm] = useState<boolean>(false);
   const [inviteUsername, setInviteUsername] = useState<string>("");
@@ -225,8 +212,35 @@ const TableRow: React.FC<TableRowProps> = ({
           )}
         </td>{/* */}
         <td className="py-3 px-6 text-left bg-white rounded-lg">
-          {managerNames.join(", ")}
-          {/* Removed the Add Manager button */}
+          <div className="flex space-x-2">
+            {item.managers?.map((manager, index) => (
+              <div key={index} className="relative group">
+                {manager.avatar ? (
+                  <Image
+                    src={
+                      manager.avatar.startsWith("http")
+                        ? manager.avatar
+                        : `${backendUrl}${manager.avatar}`
+                    }
+                    alt={manager.username}
+                    width={32}
+                    height={32}
+                    className="rounded-full cursor-pointer"
+                    onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+                      (e.target as HTMLImageElement).onerror = null;
+                      (e.target as HTMLImageElement).src = "/default-avatar.png";
+                    }}
+                  />
+                ) : (
+                  <FiUser className="w-8 h-8 text-gray-500 cursor-pointer" />
+                )}
+                <span className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                  {manager.username}
+                </span>
+              </div>
+            ))}
+          </div>
+          {/* ...existing code... */}
         </td>
         <td className="py-3 px-6 text-left hidden lg:table-cell">
           <button
@@ -304,21 +318,4 @@ const TableRow: React.FC<TableRowProps> = ({
   );
 };
 
-export default memo(TableRow, (prevProps, nextProps) => {
-  return (
-    prevProps.item.id === nextProps.item.id &&
-    prevProps.item.index === nextProps.item.index &&
-    prevProps.item.title === nextProps.item.title &&
-    prevProps.item.description === nextProps.item.description &&
-    prevProps.item.beginTime === nextProps.item.beginTime &&
-    prevProps.item.endTime === nextProps.item.endTime &&
-    prevProps.item.progress === nextProps.item.progress &&
-    prevProps.item.manager === nextProps.item.manager &&
-    prevProps.item.isEditing === nextProps.item.isEditing &&
-    prevProps.handleChange === nextProps.handleChange &&
-    prevProps.handleDeleteItem === nextProps.handleDeleteItem &&
-    prevProps.setHistory === nextProps.setHistory &&
-    prevProps.setReloadTableData === nextProps.setReloadTableData &&
-    prevProps.handleUpdateProgress === nextProps.handleUpdateProgress
-  );
-});
+export default memo(TableRow);

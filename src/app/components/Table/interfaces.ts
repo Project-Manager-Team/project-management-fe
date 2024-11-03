@@ -10,8 +10,8 @@ export interface Item {
   manager: string | null;
   parentId: number | null;
   isEditing: boolean;
-  // Ensure all sortable fields are included
-  [key: string]: string | number | boolean | null | undefined;
+  managers?: { username: string; avatar: string | null }[];
+  [key: string]: unknown;
 }
 
 export interface HistoryItem {

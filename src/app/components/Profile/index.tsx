@@ -1,9 +1,9 @@
 "use client";
-import React, { useState, useEffect, useRef } from "react"; // Added React import
-import Image from 'next/image';
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import Image from "next/image";
 import { FaArrowAltCircleLeft, FaUserCircle } from "react-icons/fa";
 import { RxAvatar } from "react-icons/rx";
-import { toast } from "react-toastify"; // Import ToastContainer
+import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import apiClient from "@/utils";
 import { useRouter } from "next/navigation";
@@ -11,39 +11,37 @@ import { useRouter } from "next/navigation";
 interface User {
   username: string;
   email: string;
-  avatar: string; // Added avatar property
+  avatar?: string;
 }
 
-const backendUrl = "http://localhost:8000"; // Ensure this matches your Django backend URL
-
 function Profile() {
-  const [showInfo, setShowInfo] = useState<boolean>(false);
-  const [changePass, setChangePass] = useState<boolean>(false);
   const [user, setUser] = useState<User | null>(null);
-  const [oldPassword, setOldPassword] = useState<string>("");
-  const [newPassword, setNewPassword] = useState<string>("");
-  const [newPassword2, setNewPassword2] = useState<string>("");
-  const [selectedAvatar, setSelectedAvatar] = useState<File | null>(null); // New state for selected avatar
-  const AvatarRef = useRef<HTMLDivElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null); // Added ref for file input
+  const [passwords, setPasswords] = useState({
+    oldPassword: "",
+    newPassword: "",
+    newPassword2: "",
+  });
+  const [isVisible, setIsVisible] = useState({
+    showInfo: false,
+    changePass: false,
+  });
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+  const backendUrl = "http://localhost:8000";
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const getUser = async () => {
       try {
-        const response = await apiClient.get("/user/detail/");
-        const avatarResponse = await apiClient.get("/user/avatar/");
+        const [userResponse, avatarResponse] = await Promise.all([
+          apiClient.get("/user/detail/"),
+          apiClient.get("/user/avatar/"),
+        ]);
         let avatarUrl = avatarResponse.data.avatar;
-
-        // If avatarUrl is not an absolute URL, prepend backendUrl
-        if (!avatarUrl.startsWith('http')) {
+        if (avatarUrl && !avatarUrl.startsWith("http")) {
           avatarUrl = `${backendUrl}${avatarUrl}`;
         }
-
-        setUser({ 
-          ...response.data, 
-          avatar: avatarUrl 
-        });
+        setUser({ ...userResponse.data, avatar: avatarUrl || "" });
       } catch {
         toast.error("Failed to fetch user details");
       }
@@ -51,123 +49,149 @@ function Profile() {
     getUser();
   }, []);
 
-  const handleButtonChangePassword = async () => {
+  const handlePasswordChange = async () => {
+    const { oldPassword, newPassword, newPassword2 } = passwords;
     if (newPassword !== newPassword2) {
       toast.error("Mật khẩu không khớp");
-    } else if (newPassword.length < 8) {
-      toast.error("Mật khẩu phải có ít nhất 8 ký tự");
-    } else if (newPassword === oldPassword) {
-      toast.error("Mật khẩu mới không được trùng với mật khẩu cũ");
-    } else if (newPassword === newPassword2 && newPassword.length >= 8) {
-      await changePassword();
+      return;
     }
-  };
-
-  const changePassword = async () => {
+    if (newPassword.length < 8) {
+      toast.error("Mật khẩu phải có ít nhất 8 ký tự");
+      return;
+    }
+    if (newPassword === oldPassword) {
+      toast.error("Mật khẩu mới không được trùng với mật khẩu cũ");
+      return;
+    }
     try {
-      const response = await apiClient.post("/user/change-password/", {
+      await apiClient.post("/user/change-password/", {
         old_password: oldPassword,
         new_password: newPassword,
       });
-      if (response.status !== 200) {
-        throw new Error("Đổi mật khẩu thất bại");
-      }
       toast.success("Đổi mật khẩu thành công");
     } catch {
       toast.error("Đổi mật khẩu thất bại");
     }
   };
 
-  const handleAvatarChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files[0]) {
-      const file = event.target.files[0];
-      setSelectedAvatar(file);
-
-      const formData = new FormData();
-      formData.append('avatar', file);
-
-      try {
-        const response = await apiClient.post(
-          "/user/profile/update-avatar/",
-          formData,
-          {
-            headers: { "Content-Type": "multipart/form-data" },
-          }
-        );
-
-        let avatarUrl = response.data.avatar;
-
-        // If avatarUrl is not an absolute URL, prepend backendUrl
-        if (!avatarUrl.startsWith('http')) {
-          avatarUrl = `${backendUrl}${avatarUrl}`;
-        }
-
-        setUser(prevUser => prevUser ? { ...prevUser, avatar: avatarUrl } : null);
-        toast.success("Avatar updated successfully");
-      } catch {
-        toast.error("Failed to update avatar");
+  const handleAvatarSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
       }
+      debounceRef.current = setTimeout(() => {
+        processAndUploadImage(file);
+      }, 500); // Debounce by 500ms
     }
   };
 
-  const handleSignOut = async () => {
-    localStorage.removeItem("access");
+  const processAndUploadImage = useCallback(async (file: File) => {
+    const image = new window.Image(); // Use the browser's native Image object
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+      if (e.target?.result) {
+        image.src = e.target.result as string;
+      }
+    };
+
+    image.onload = async () => {
+      const canvas = document.createElement("canvas");
+      const size = Math.min(image.width, image.height); // Use the smaller dimension for the square size
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext("2d");
+
+      if (ctx) {
+        ctx.fillStyle = '#ffffff'; // Màu nền trắng
+        ctx.fillRect(0, 0, size, size);
+        const x = (image.width > image.height) ? (image.width - image.height) / 2 : 0;
+        const y = (image.height > image.width) ? (image.height - image.width) / 2 : 0;
+        ctx.drawImage(image, x, y, size, size, 0, 0, size, size);
+      }
+
+      canvas.toBlob(async (blob) => {
+        if (blob) {
+          const formData = new FormData();
+          formData.append("avatar", blob, "avatar.jpeg");
+          try {
+            const response = await apiClient.post(
+              "/user/profile/update-avatar/",
+              formData,
+              {
+                headers: { "Content-Type": "multipart/form-data" },
+              }
+            );
+            let avatarUrl = response.data.avatar;
+            if (avatarUrl && !avatarUrl.startsWith("http")) {
+              avatarUrl = `${backendUrl}${avatarUrl}`;
+            }
+            setUser((prevUser) =>
+              prevUser ? { ...prevUser, avatar: avatarUrl } : null
+            );
+            toast.success("Avatar updated successfully");
+          } catch {
+            toast.error("Failed to update avatar");
+          }
+        }
+      }, "image/jpeg");
+    };
+
+    reader.readAsDataURL(file);
+  }, [backendUrl]);
+
+  const handleSignOut = () => {
+    sessionStorage.removeItem("access");
     localStorage.removeItem("refresh");
     router.push("/login");
   };
 
-  const handleShowInfo = () => {
-    setShowInfo(!showInfo);
-    setChangePass(false);
-  };
-
-  const handleChangePass = () => {
-    setChangePass(true);
-  };
-
-  const handleBackInfo = () => {
-    setChangePass(false);
-  };
-
-  const handleClickOutside = (event: MouseEvent) => {
-    if (
-      AvatarRef.current &&
-      !AvatarRef.current.contains(event.target as Node)
-    ) {
-      setShowInfo(false);
-      setChangePass(false); // Hide the form when clicking outside
-    }
-  };
-
   useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        !(
+          event.target as HTMLElement
+        ).closest(".profile-dropdown, .profile-avatar")
+      ) {
+        setIsVisible({ showInfo: false, changePass: false });
+      }
+    };
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
+  }, []);
+
   const handleFormSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    await handleButtonChangePassword();
+    await handlePasswordChange();
   };
 
   const handlePanelAvatarClick = () => {
-    fileInputRef.current?.click(); // Trigger file input click from panel
+    fileInputRef.current?.click();
   };
 
   return (
     <>
-      {/* <ToastContainer /> */} {/* Loại bỏ dòng này */}
-      <div className="relative" ref={AvatarRef}>
-        <div className="cursor-pointer" onClick={handleShowInfo}>
+      <div className="relative profile-avatar">
+        <div className="cursor-pointer" onClick={() => setIsVisible((prev) => ({ ...prev, showInfo: !prev.showInfo }))}>
           {user?.avatar ? (
             <Image
-              src={user.avatar}
+              src={user.avatar.startsWith("http") ? user.avatar : `${backendUrl}${user.avatar}`}
               alt="Avatar"
-              width={48} // Increased width from 32 to 48
-              height={48} // Increased height from 32 to 48
-              className="rounded-full" // Removed "w-8 h-8"
-              priority // Add this line
+              width={48}
+              height={48}
+              className="rounded-full"
+              priority
             />
           ) : (
             <RxAvatar className="text-3xl text-gray-700 hover:text-blue-600" />
@@ -176,32 +200,28 @@ function Profile() {
         <input
           type="file"
           accept="image/*"
-          onChange={handleAvatarChange}
-          ref={fileInputRef} // Added ref to input
-          style={{ display: "none" }} // Hide the input
+          onChange={handleAvatarSelect}
+          ref={fileInputRef}
+          style={{ display: "none" }}
         />
-        {!changePass ? (
+        {!isVisible.changePass ? (
           <div>
-            {showInfo && (
-              <div className="absolute right-0 mt-2 w-64 md:w-72 bg-white rounded-lg shadow-lg border border-gray-200 p-6 z-50 transform transition-all duration-300 ease-in-out"> {/* Changed width to 80% of w-80 and w-96 */}
-                {" "}
-                {/* Changed background to white */}
+            {isVisible.showInfo && (
+              <div className="absolute right-0 mt-2 w-64 md:w-72 bg-white rounded-lg shadow-lg border border-gray-200 p-6 z-50 transform transition-all duration-300 ease-in-out profile-dropdown">
                 <div className="flex flex-col items-center mb-4">
                   {user?.avatar ? (
                     <div
                       className="cursor-pointer"
                       onClick={handlePanelAvatarClick}
                     >
-                      {" "}
-                      {/* Make panel avatar clickable */}
                       <Image
-                        src={user.avatar}
+                        src={user.avatar.startsWith("http") ? user.avatar : `${backendUrl}${user.avatar}`}
                         alt="Avatar"
                         width={80}
                         height={80}
                         className="rounded-full mb-2"
-                        loading="eager" // Added loading attribute
-                        priority // Add this line
+                        loading="eager"
+                        priority
                       />
                     </div>
                   ) : (
@@ -209,12 +229,9 @@ function Profile() {
                       className="cursor-pointer"
                       onClick={handlePanelAvatarClick}
                     >
-                      {" "}
-                      {/* Make panel avatar clickable */}
                       <FaUserCircle className="text-5xl text-gray-700 mb-2" />
                     </div>
                   )}
-                  {/* Added Username and Email Display */}
                   <div className="text-center mt-2">
                     <p className="font-semibold text-gray-600">
                       {user?.username}
@@ -222,9 +239,8 @@ function Profile() {
                     <p className="text-gray-600">{user?.email}</p>
                   </div>
                 </div>
-                {/* Removed visible file input */}
                 <button
-                  onClick={handleChangePass}
+                  onClick={() => setIsVisible((prev) => ({ ...prev, changePass: true }))}
                   className="mt-2 w-full bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-lg transition-colors duration-200 active:bg-blue-700 shadow-md"
                 >
                   Đổi mật khẩu
@@ -239,17 +255,13 @@ function Profile() {
             )}
           </div>
         ) : (
-          <div className="absolute right-0 mt-2 w-64 md:w-72 bg-white rounded-lg shadow-lg border border-gray-200 p-6 z-50 transform transition-all duration-300 ease-in-out">
-            {" "}
-            {/* Changed background to white */}
+          <div className="absolute right-0 mt-2 w-64 md:w-72 bg-white rounded-lg shadow-lg border border-gray-200 p-6 z-50 transform transition-all duration-300 ease-in-out profile-dropdown">
             <div className="flex items-center mb-4">
               <FaArrowAltCircleLeft
-                onClick={handleBackInfo}
+                onClick={() => setIsVisible((prev) => ({ ...prev, changePass: false }))}
                 className="cursor-pointer text-gray-600 hover:text-blue-600 transition-colors text-xl mr-3"
               />
               <h3 className="text-lg font-semibold text-gray-800">
-                {" "}
-                {/* Changed text color */}
                 Đổi Mật Khẩu
               </h3>
             </div>
@@ -265,24 +277,24 @@ function Profile() {
               <input
                 type="password"
                 placeholder="Mật khẩu cũ"
-                onChange={(e) => setOldPassword(e.target.value)}
-                className="mt-2 p-3 rounded-lg w-full focus:ring-2 focus:ring-blue-400 outline-none transition-all duration-200 text-black" /* Changed text color */
+                onChange={(e) => setPasswords((prev) => ({ ...prev, oldPassword: e.target.value }))}
+                className="mt-2 p-3 rounded-lg w-full focus:ring-2 focus:ring-blue-400 outline-none transition-all duration-200 text-black"
                 autoComplete="off"
                 required
               />
               <input
                 type="password"
                 placeholder="Mật khẩu mới"
-                onChange={(e) => setNewPassword(e.target.value)}
-                className="mt-3 p-3 rounded-lg w-full focus:ring-2 focus:ring-blue-400 outline-none transition-all duration-200 text-black" /* Changed text color */
+                onChange={(e) => setPasswords((prev) => ({ ...prev, newPassword: e.target.value }))}
+                className="mt-3 p-3 rounded-lg w-full focus:ring-2 focus:ring-blue-400 outline-none transition-all duration-200 text-black"
                 autoComplete="new-password"
                 required
               />
               <input
                 type="password"
                 placeholder="Nhập lại mật khẩu"
-                onChange={(e) => setNewPassword2(e.target.value)}
-                className="mt-3 p-3 rounded-lg w-full focus:ring-2 focus:ring-blue-400 outline-none transition-all duration-200 text-black" /* Changed text color */
+                onChange={(e) => setPasswords((prev) => ({ ...prev, newPassword2: e.target.value }))}
+                className="mt-3 p-3 rounded-lg w-full focus:ring-2 focus:ring-blue-400 outline-none transition-all duration-200 text-black"
                 autoComplete="new-password"
                 required
               />

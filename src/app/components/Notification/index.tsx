@@ -3,8 +3,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBell } from "@fortawesome/free-solid-svg-icons";
 import { FaTrashAlt } from "react-icons/fa";
 import apiClient from "@/utils";
-import { toast } from "react-toastify"; // Đảm bảo không import ToastContainer
-import "react-toastify/dist/ReactToastify.css";
+import { toast } from "react-toastify"; // Ensure ToastContainer is not imported here
 
 interface NotificationProps {
   setReloadTableData: React.Dispatch<React.SetStateAction<boolean>>;

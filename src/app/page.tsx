@@ -1,7 +1,6 @@
 'use client';
-import React, { useState } from "react"; // Added React and useState import
+import React, { useState } from "react";
 import Notification from "./components/Notification";
-import "react-toastify/dist/ReactToastify.css";
 import Profile from "./components/Profile";
 import HistoryBar from "./components/HistoryBar";
 import Table from "./components/Table";
@@ -10,7 +9,7 @@ export default function Home() {
   const [reloadTableData, setReloadTableData] = useState<boolean>(false);
   const [history, setHistory] = useState<HistoryItem[]>([
     {
-      id: 0, // Ensure each history item has a unique ID
+      id: 0,
       url: `/project/personal/`,
       title: "Home",
     },
@@ -19,7 +18,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100 w-full">
       <div className="fixed top-0 left-0 w-full bg-gray-900 z-50">
-        <div className="w-full p-2 flex justify-start items-center"> {/* Changed container mx-auto to w-full */}
+        <div className="w-full p-2 flex justify-start items-center">
           <HistoryBar history={history} setHistory={setHistory} />
           <div className="flex space-x-4 ml-4">
             <Notification setReloadTableData={setReloadTableData} />
@@ -27,14 +26,14 @@ export default function Home() {
           </div>
         </div>
       </div>
-      <div className="w-full p-4 pt-20 sm:p-6 mt-16"> {/* Adjusted padding and added top margin */}
+      <div className="w-full p-4 pt-20 sm:p-6 mt-16">
         <Table
           setHistory={setHistory}
           reloadTableData={reloadTableData}
           current={history[history.length - 1]}
           setReloadTableData={setReloadTableData}
         />
-        {/* Removed ToastContainer */}
+        {/* Removed ToastContainer as it's now in layout.tsx via ToastProvider */}
       </div>
     </div>
   );

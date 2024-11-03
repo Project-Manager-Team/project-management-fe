@@ -3,7 +3,7 @@ import React, { useState } from "react"; // Added React and useState import
 import { useRouter } from "next/navigation"; // Ensure useRouter is imported
 import { FaUser, FaEnvelope, FaLock } from "react-icons/fa"; // Import missing icons
 import apiClient from "@/utils";
-import { toast, ToastContainer } from "react-toastify"; // Import ToastContainer
+import { toast } from "react-toastify"; // Removed ToastContainer import
 import axios from "axios"; // Import axios
 import "react-toastify/dist/ReactToastify.css";
 
@@ -179,7 +179,6 @@ function LoginRegister() {
           </form>
         </div>
       </div>
-      <ToastContainer />
     </section>
   );
 }
