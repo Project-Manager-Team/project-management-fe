@@ -12,9 +12,8 @@ import {
 import apiClient from "@/utils";
 import { toast } from "react-toastify";
 import Image from "next/image"; // Ensure Image is imported
-
+import { DOMAIN } from '@/app/config'
 // Add the backend URL
-const backendUrl = "http://localhost:8000"; // Replace with your actual backend URL
 
 const TableRow: React.FC<TableRowProps> = ({
   item,
@@ -220,7 +219,7 @@ const TableRow: React.FC<TableRowProps> = ({
                     src={
                       manager.avatar.startsWith("http")
                         ? manager.avatar
-                        : `${backendUrl}${manager.avatar}`
+                        : `${DOMAIN}${manager.avatar}`
                     }
                     alt={manager.username}
                     width={32}

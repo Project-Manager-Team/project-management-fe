@@ -7,7 +7,7 @@ import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import apiClient from "@/utils";
 import { useRouter } from "next/navigation";
-
+import {DOMAIN} from '@/app/config'
 interface User {
   username: string;
   email: string;
@@ -27,7 +27,6 @@ function Profile() {
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
-  const backendUrl = "http://localhost:8000";
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -39,7 +38,7 @@ function Profile() {
         ]);
         let avatarUrl = avatarResponse.data.avatar;
         if (avatarUrl && !avatarUrl.startsWith("http")) {
-          avatarUrl = `${backendUrl}${avatarUrl}`;
+          avatarUrl = `${DOMAIN}${avatarUrl}`;
         }
         setUser({ ...userResponse.data, avatar: avatarUrl || "" });
       } catch {
@@ -125,7 +124,7 @@ function Profile() {
             );
             let avatarUrl = response.data.avatar;
             if (avatarUrl && !avatarUrl.startsWith("http")) {
-              avatarUrl = `${backendUrl}${avatarUrl}`;
+              avatarUrl = `${DOMAIN}${avatarUrl}`;
             }
             setUser((prevUser) =>
               prevUser ? { ...prevUser, avatar: avatarUrl } : null
@@ -139,7 +138,7 @@ function Profile() {
     };
 
     reader.readAsDataURL(file);
-  }, [backendUrl]);
+  }, [DOMAIN]);
 
   const handleSignOut = () => {
     sessionStorage.removeItem("access");
@@ -186,7 +185,7 @@ function Profile() {
         <div className="cursor-pointer" onClick={() => setIsVisible((prev) => ({ ...prev, showInfo: !prev.showInfo }))}>
           {user?.avatar ? (
             <Image
-              src={user.avatar.startsWith("http") ? user.avatar : `${backendUrl}${user.avatar}`}
+              src={user.avatar.startsWith("http") ? user.avatar : `${DOMAIN}${user.avatar}`}
               alt="Avatar"
               width={48}
               height={48}
@@ -215,7 +214,7 @@ function Profile() {
                       onClick={handlePanelAvatarClick}
                     >
                       <Image
-                        src={user.avatar.startsWith("http") ? user.avatar : `${backendUrl}${user.avatar}`}
+                        src={user.avatar.startsWith("http") ? user.avatar : `${DOMAIN}${user.avatar}`}
                         alt="Avatar"
                         width={80}
                         height={80}
