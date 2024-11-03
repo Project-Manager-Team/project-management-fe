@@ -1,8 +1,9 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react"; // Added React import
+import Image from 'next/image';
 import { FaArrowAltCircleLeft, FaUserCircle } from "react-icons/fa";
 import { RxAvatar } from "react-icons/rx";
-import { toast, ToastContainer } from "react-toastify"; // Import ToastContainer
+import { toast } from "react-toastify"; // Import ToastContainer
 import "react-toastify/dist/ReactToastify.css";
 import apiClient from "@/utils";
 import { useRouter } from "next/navigation";
@@ -10,7 +11,10 @@ import { useRouter } from "next/navigation";
 interface User {
   username: string;
   email: string;
+  avatar: string; // Added avatar property
 }
+
+const backendUrl = "http://localhost:8000"; // Ensure this matches your Django backend URL
 
 function Profile() {
   const [showInfo, setShowInfo] = useState<boolean>(false);
@@ -19,14 +23,27 @@ function Profile() {
   const [oldPassword, setOldPassword] = useState<string>("");
   const [newPassword, setNewPassword] = useState<string>("");
   const [newPassword2, setNewPassword2] = useState<string>("");
+  const [selectedAvatar, setSelectedAvatar] = useState<File | null>(null); // New state for selected avatar
   const AvatarRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null); // Added ref for file input
   const router = useRouter();
 
   useEffect(() => {
     const getUser = async () => {
       try {
         const response = await apiClient.get("/user/detail/");
-        setUser(response.data);
+        const avatarResponse = await apiClient.get("/user/avatar/");
+        let avatarUrl = avatarResponse.data.avatar;
+
+        // If avatarUrl is not an absolute URL, prepend backendUrl
+        if (!avatarUrl.startsWith('http')) {
+          avatarUrl = `${backendUrl}${avatarUrl}`;
+        }
+
+        setUser({ 
+          ...response.data, 
+          avatar: avatarUrl 
+        });
       } catch {
         toast.error("Failed to fetch user details");
       }
@@ -58,6 +75,38 @@ function Profile() {
       toast.success("Đổi mật khẩu thành công");
     } catch {
       toast.error("Đổi mật khẩu thất bại");
+    }
+  };
+
+  const handleAvatarChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files[0]) {
+      const file = event.target.files[0];
+      setSelectedAvatar(file);
+
+      const formData = new FormData();
+      formData.append('avatar', file);
+
+      try {
+        const response = await apiClient.post(
+          "/user/profile/update-avatar/",
+          formData,
+          {
+            headers: { "Content-Type": "multipart/form-data" },
+          }
+        );
+
+        let avatarUrl = response.data.avatar;
+
+        // If avatarUrl is not an absolute URL, prepend backendUrl
+        if (!avatarUrl.startsWith('http')) {
+          avatarUrl = `${backendUrl}${avatarUrl}`;
+        }
+
+        setUser(prevUser => prevUser ? { ...prevUser, avatar: avatarUrl } : null);
+        toast.success("Avatar updated successfully");
+      } catch {
+        toast.error("Failed to update avatar");
+      }
     }
   };
 
@@ -102,27 +151,78 @@ function Profile() {
     await handleButtonChangePassword();
   };
 
+  const handlePanelAvatarClick = () => {
+    fileInputRef.current?.click(); // Trigger file input click from panel
+  };
+
   return (
     <>
       {/* <ToastContainer /> */} {/* Loại bỏ dòng này */}
       <div className="relative" ref={AvatarRef}>
-        <div className="cursor-pointer">
-          <RxAvatar
-            onClick={handleShowInfo}
-            className="text-3xl text-gray-700 hover:text-blue-600"
-          />
+        <div className="cursor-pointer" onClick={handleShowInfo}>
+          {user?.avatar ? (
+            <Image
+              src={user.avatar}
+              alt="Avatar"
+              width={48} // Increased width from 32 to 48
+              height={48} // Increased height from 32 to 48
+              className="rounded-full" // Removed "w-8 h-8"
+              priority // Add this line
+            />
+          ) : (
+            <RxAvatar className="text-3xl text-gray-700 hover:text-blue-600" />
+          )}
         </div>
+        <input
+          type="file"
+          accept="image/*"
+          onChange={handleAvatarChange}
+          ref={fileInputRef} // Added ref to input
+          style={{ display: "none" }} // Hide the input
+        />
         {!changePass ? (
           <div>
             {showInfo && (
-              <div className="absolute right-0 mt-2 w-80 md:w-96 bg-white rounded-lg shadow-lg border border-gray-200 p-6 z-50 transform transition-all duration-300 ease-in-out"> {/* Changed background to white */}
+              <div className="absolute right-0 mt-2 w-64 md:w-72 bg-white rounded-lg shadow-lg border border-gray-200 p-6 z-50 transform transition-all duration-300 ease-in-out"> {/* Changed width to 80% of w-80 and w-96 */}
+                {" "}
+                {/* Changed background to white */}
                 <div className="flex flex-col items-center mb-4">
-                  <FaUserCircle className="text-5xl text-gray-700 mb-2" />
-                  <h3 className="text-lg font-semibold text-gray-800"> {/* Changed text color */}
-                    {user?.username}
-                  </h3>
-                  <div className="text-sm text-gray-600">{user?.email}</div>
+                  {user?.avatar ? (
+                    <div
+                      className="cursor-pointer"
+                      onClick={handlePanelAvatarClick}
+                    >
+                      {" "}
+                      {/* Make panel avatar clickable */}
+                      <Image
+                        src={user.avatar}
+                        alt="Avatar"
+                        width={80}
+                        height={80}
+                        className="rounded-full mb-2"
+                        loading="eager" // Added loading attribute
+                        priority // Add this line
+                      />
+                    </div>
+                  ) : (
+                    <div
+                      className="cursor-pointer"
+                      onClick={handlePanelAvatarClick}
+                    >
+                      {" "}
+                      {/* Make panel avatar clickable */}
+                      <FaUserCircle className="text-5xl text-gray-700 mb-2" />
+                    </div>
+                  )}
+                  {/* Added Username and Email Display */}
+                  <div className="text-center mt-2">
+                    <p className="font-semibold text-gray-600">
+                      {user?.username}
+                    </p>
+                    <p className="text-gray-600">{user?.email}</p>
+                  </div>
                 </div>
+                {/* Removed visible file input */}
                 <button
                   onClick={handleChangePass}
                   className="mt-2 w-full bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-lg transition-colors duration-200 active:bg-blue-700 shadow-md"
@@ -139,13 +239,17 @@ function Profile() {
             )}
           </div>
         ) : (
-          <div className="absolute right-0 mt-2 w-80 md:w-96 bg-white rounded-lg shadow-lg border border-gray-200 p-6 z-50 transform transition-all duration-300 ease-in-out"> {/* Changed background to white */}
+          <div className="absolute right-0 mt-2 w-64 md:w-72 bg-white rounded-lg shadow-lg border border-gray-200 p-6 z-50 transform transition-all duration-300 ease-in-out">
+            {" "}
+            {/* Changed background to white */}
             <div className="flex items-center mb-4">
               <FaArrowAltCircleLeft
                 onClick={handleBackInfo}
                 className="cursor-pointer text-gray-600 hover:text-blue-600 transition-colors text-xl mr-3"
               />
-              <h3 className="text-lg font-semibold text-gray-800"> {/* Changed text color */}
+              <h3 className="text-lg font-semibold text-gray-800">
+                {" "}
+                {/* Changed text color */}
                 Đổi Mật Khẩu
               </h3>
             </div>
@@ -195,4 +299,5 @@ function Profile() {
     </>
   );
 }
+
 export default Profile;
