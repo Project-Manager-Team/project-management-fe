@@ -7,7 +7,7 @@ import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import apiClient from "@/utils";
 import { useRouter } from "next/navigation";
-import {DOMAIN} from '@/app/config'
+import { DOMAIN } from "@/app/config";
 interface User {
   username: string;
   email: string;
@@ -85,60 +85,65 @@ function Profile() {
     }
   };
 
-  const processAndUploadImage = useCallback(async (file: File) => {
-    const image = new window.Image(); // Use the browser's native Image object
-    const reader = new FileReader();
+  const processAndUploadImage = useCallback(
+    async (file: File) => {
+      const image = new window.Image(); // Use the browser's native Image object
+      const reader = new FileReader();
 
-    reader.onload = (e) => {
-      if (e.target?.result) {
-        image.src = e.target.result as string;
-      }
-    };
-
-    image.onload = async () => {
-      const canvas = document.createElement("canvas");
-      const size = Math.min(image.width, image.height); // Use the smaller dimension for the square size
-      canvas.width = size;
-      canvas.height = size;
-      const ctx = canvas.getContext("2d");
-
-      if (ctx) {
-        ctx.fillStyle = '#ffffff'; // Màu nền trắng
-        ctx.fillRect(0, 0, size, size);
-        const x = (image.width > image.height) ? (image.width - image.height) / 2 : 0;
-        const y = (image.height > image.width) ? (image.height - image.width) / 2 : 0;
-        ctx.drawImage(image, x, y, size, size, 0, 0, size, size);
-      }
-
-      canvas.toBlob(async (blob) => {
-        if (blob) {
-          const formData = new FormData();
-          formData.append("avatar", blob, "avatar.jpeg");
-          try {
-            const response = await apiClient.post(
-              "/user/profile/update-avatar/",
-              formData,
-              {
-                headers: { "Content-Type": "multipart/form-data" },
-              }
-            );
-            let avatarUrl = response.data.avatar;
-            if (avatarUrl && !avatarUrl.startsWith("http")) {
-              avatarUrl = `${DOMAIN}${avatarUrl}`;
-            }
-            setUser((prevUser) =>
-              prevUser ? { ...prevUser, avatar: avatarUrl } : null
-            );
-            toast.success("Avatar updated successfully");
-          } catch {
-            toast.error("Failed to update avatar");
-          }
+      reader.onload = (e) => {
+        if (e.target?.result) {
+          image.src = e.target.result as string;
         }
-      }, "image/jpeg");
-    };
+      };
 
-    reader.readAsDataURL(file);
-  }, [DOMAIN]);
+      image.onload = async () => {
+        const canvas = document.createElement("canvas");
+        const size = Math.min(image.width, image.height); // Use the smaller dimension for the square size
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext("2d");
+
+        if (ctx) {
+          ctx.fillStyle = "#ffffff"; // Màu nền trắng
+          ctx.fillRect(0, 0, size, size);
+          const x =
+            image.width > image.height ? (image.width - image.height) / 2 : 0;
+          const y =
+            image.height > image.width ? (image.height - image.width) / 2 : 0;
+          ctx.drawImage(image, x, y, size, size, 0, 0, size, size);
+        }
+
+        canvas.toBlob(async (blob) => {
+          if (blob) {
+            const formData = new FormData();
+            formData.append("avatar", blob, "avatar.jpeg");
+            try {
+              const response = await apiClient.post(
+                "/user/profile/update-avatar/",
+                formData,
+                {
+                  headers: { "Content-Type": "multipart/form-data" },
+                }
+              );
+              let avatarUrl = response.data.avatar;
+              if (avatarUrl && !avatarUrl.startsWith("http")) {
+                avatarUrl = `${DOMAIN}${avatarUrl}`;
+              }
+              setUser((prevUser) =>
+                prevUser ? { ...prevUser, avatar: avatarUrl } : null
+              );
+              toast.success("Avatar updated successfully");
+            } catch {
+              toast.error("Failed to update avatar");
+            }
+          }
+        }, "image/jpeg");
+      };
+
+      reader.readAsDataURL(file);
+    },
+    [DOMAIN]
+  );
 
   const handleSignOut = () => {
     sessionStorage.removeItem("access");
@@ -149,9 +154,9 @@ function Profile() {
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
-        !(
-          event.target as HTMLElement
-        ).closest(".profile-dropdown, .profile-avatar")
+        !(event.target as HTMLElement).closest(
+          ".profile-dropdown, .profile-avatar"
+        )
       ) {
         setIsVisible({ showInfo: false, changePass: false });
       }
@@ -182,10 +187,19 @@ function Profile() {
   return (
     <>
       <div className="relative profile-avatar">
-        <div className="cursor-pointer" onClick={() => setIsVisible((prev) => ({ ...prev, showInfo: !prev.showInfo }))}>
+        <div
+          className="cursor-pointer"
+          onClick={() =>
+            setIsVisible((prev) => ({ ...prev, showInfo: !prev.showInfo }))
+          }
+        >
           {user?.avatar ? (
             <Image
-              src={user.avatar.startsWith("http") ? user.avatar : `${DOMAIN}${user.avatar}`}
+              src={
+                user.avatar.startsWith("http")
+                  ? user.avatar
+                  : `${DOMAIN}${user.avatar}`
+              }
               alt="Avatar"
               width={48}
               height={48}
@@ -214,7 +228,11 @@ function Profile() {
                       onClick={handlePanelAvatarClick}
                     >
                       <Image
-                        src={user.avatar.startsWith("http") ? user.avatar : `${DOMAIN}${user.avatar}`}
+                        src={
+                          user.avatar.startsWith("http")
+                            ? user.avatar
+                            : `${DOMAIN}${user.avatar}`
+                        }
                         alt="Avatar"
                         width={80}
                         height={80}
@@ -239,7 +257,9 @@ function Profile() {
                   </div>
                 </div>
                 <button
-                  onClick={() => setIsVisible((prev) => ({ ...prev, changePass: true }))}
+                  onClick={() =>
+                    setIsVisible((prev) => ({ ...prev, changePass: true }))
+                  }
                   className="mt-2 w-full bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-lg transition-colors duration-200 active:bg-blue-700 shadow-md"
                 >
                   Đổi mật khẩu
@@ -257,7 +277,9 @@ function Profile() {
           <div className="absolute right-0 mt-2 w-64 md:w-72 bg-white rounded-lg shadow-lg border border-gray-200 p-6 z-50 transform transition-all duration-300 ease-in-out profile-dropdown">
             <div className="flex items-center mb-4">
               <FaArrowAltCircleLeft
-                onClick={() => setIsVisible((prev) => ({ ...prev, changePass: false }))}
+                onClick={() =>
+                  setIsVisible((prev) => ({ ...prev, changePass: false }))
+                }
                 className="cursor-pointer text-gray-600 hover:text-blue-600 transition-colors text-xl mr-3"
               />
               <h3 className="text-lg font-semibold text-gray-800">
@@ -276,7 +298,12 @@ function Profile() {
               <input
                 type="password"
                 placeholder="Mật khẩu cũ"
-                onChange={(e) => setPasswords((prev) => ({ ...prev, oldPassword: e.target.value }))}
+                onChange={(e) =>
+                  setPasswords((prev) => ({
+                    ...prev,
+                    oldPassword: e.target.value,
+                  }))
+                }
                 className="mt-2 p-3 rounded-lg w-full focus:ring-2 focus:ring-blue-400 outline-none transition-all duration-200 text-black"
                 autoComplete="off"
                 required
@@ -284,7 +311,12 @@ function Profile() {
               <input
                 type="password"
                 placeholder="Mật khẩu mới"
-                onChange={(e) => setPasswords((prev) => ({ ...prev, newPassword: e.target.value }))}
+                onChange={(e) =>
+                  setPasswords((prev) => ({
+                    ...prev,
+                    newPassword: e.target.value,
+                  }))
+                }
                 className="mt-3 p-3 rounded-lg w-full focus:ring-2 focus:ring-blue-400 outline-none transition-all duration-200 text-black"
                 autoComplete="new-password"
                 required
@@ -292,7 +324,12 @@ function Profile() {
               <input
                 type="password"
                 placeholder="Nhập lại mật khẩu"
-                onChange={(e) => setPasswords((prev) => ({ ...prev, newPassword2: e.target.value }))}
+                onChange={(e) =>
+                  setPasswords((prev) => ({
+                    ...prev,
+                    newPassword2: e.target.value,
+                  }))
+                }
                 className="mt-3 p-3 rounded-lg w-full focus:ring-2 focus:ring-blue-400 outline-none transition-all duration-200 text-black"
                 autoComplete="new-password"
                 required
