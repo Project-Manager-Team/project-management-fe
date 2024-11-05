@@ -12,7 +12,7 @@ interface ManagersModalProps {
   currentManagerItem: Item;
   managerPermissions: Manager[];
   setManagerPermissions: React.Dispatch<React.SetStateAction<Manager[]>>; // Add this
-  // Remove: handleOpenInviteForm: (item: Item) => void;
+  handleOpenInviteForm: (item: Item) => void;
   savePermissions: () => void;
   setShowManagers: React.Dispatch<React.SetStateAction<boolean>>;
   isOpen: boolean; // Add this prop
@@ -214,6 +214,7 @@ const ManagersModal: React.FC<ManagersModalProps> = ({
                 value={inviteUsername}
                 onChange={(e) => setInviteUsername(e.target.value)}
                 className="w-full p-1.5 text-xs border rounded text-yellow-800 focus:border-green-500"
+                required
               />
               <input
                 type="text"
@@ -221,6 +222,7 @@ const ManagersModal: React.FC<ManagersModalProps> = ({
                 value={inviteTitle}
                 onChange={(e) => setInviteTitle(e.target.value)}
                 className="w-full p-1.5 text-xs border rounded text-yellow-800 focus:border-green-500"
+                required
               />
               <textarea
                 placeholder="Content"
@@ -231,8 +233,13 @@ const ManagersModal: React.FC<ManagersModalProps> = ({
               />
               <button
                 onClick={() => {
+                  if (!inviteUsername || !inviteTitle) {
+                    toast.error("Vui lòng điền Username và Title!");
+                    return;
+                  }
                   handleInvite();
                   setIsInviteOpen(false);
+                  console.log("fuck")
                 }}
                 className="w-full bg-green-500 text-white p-1.5 rounded text-xs hover:bg-green-600"
               >

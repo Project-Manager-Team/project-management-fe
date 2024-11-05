@@ -32,7 +32,7 @@ export interface Current {
   title: string;
 }
 
-export type PermissionKey = "canEdit" | "canFinish" | "canAdd" | "canDelete";
+export type PermissionKey = 'canEdit' | 'canFinish' | 'canAdd' | 'canDelete';
 
 export interface User {
   id: number;

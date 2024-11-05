@@ -10,9 +10,7 @@ import ManagersModal from "./ManagersModal";
 import ReactModal from 'react-modal';
 
 // Add this after imports
-if (typeof window !== 'undefined') {
-  ReactModal.setAppElement('#root' as string);
-}
+ReactModal.setAppElement('body'); // Set the root element for accessibility
 
 const modalStyles = {
   content: {
@@ -76,7 +74,6 @@ export default function Table({
   const [currentManagerItem, setCurrentManagerItem] = useState<Item | null>(null);
   const [managerPermissions, setManagerPermissions] = useState<Manager[]>([]);
 
-  const [currentInviteItem, setCurrentInviteItem] = useState<Item | null>(null);
   const [inviteUsername, setInviteUsername] = useState<string>("");
   const [inviteTitle, setInviteTitle] = useState<string>("");
   const [inviteContent, setInviteContent] = useState<string>("");
@@ -85,11 +82,6 @@ export default function Table({
   const handleOpenManagers = (item: Item) => {
     setCurrentManagerItem(item);
     setShowManagers(true);
-  };
-
-  // Handler to open Invite modal
-  const handleOpenInviteForm = (item: Item) => {
-    setCurrentInviteItem(item);
   };
 
   // Fetch managers' permissions when modal opens
@@ -143,21 +135,33 @@ export default function Table({
 
   // Handle Invite
   const handleInvite = async () => {
-    if (!currentInviteItem) return;
-
     try {
+      if (!currentManagerItem || !inviteUsername || !inviteTitle) {
+        toast.error("Vui lòng điền đầy đủ thông tin!");
+        return;
+      }
+
       await apiClient.post("/api/invitation/", {
         username: inviteUsername,
         title: inviteTitle,
         content: inviteContent,
-        project: currentInviteItem.id,
+        project: currentManagerItem.id,
       });
+
+      toast.success("Lời mời đã được gửi thành công!");
+      
+      // Clear form fields
       setInviteUsername("");
       setInviteTitle("");
       setInviteContent("");
-      toast.success("Lời mời đã được gửi thành công!");
+      
+      // Optionally refresh managers list
+      const response = await apiClient.get<Manager[]>(
+        `/api/project/${currentManagerItem.id}/managers_permissions/`
+      );
+      setManagerPermissions(response.data);
     } catch {
-      toast.error("Không thể gửi lời mời");
+      toast.error("Không thể gửi lời mời. Vui lòng thử lại!");
     }
   };
 
@@ -396,7 +400,7 @@ export default function Table({
                 handleUpdateProgress={handleUpdateProgress}
                 selectedColumns={selectedColumns}
                 openManagers={handleOpenManagers} // Pass handler
-                openInviteForm={handleOpenInviteForm} // Pass handler
+                openInviteForm={() => {}} // Add empty function since it's required by interface
               />
             ))}
           </tbody>
@@ -445,6 +449,7 @@ export default function Table({
           currentManagerItem={currentManagerItem}
           managerPermissions={managerPermissions}
           setManagerPermissions={setManagerPermissions}
+          handleOpenInviteForm={() => {}} // Add empty function since it's required by interface
           savePermissions={savePermissions}
           setShowManagers={setShowManagers}
           isOpen={showManagers}

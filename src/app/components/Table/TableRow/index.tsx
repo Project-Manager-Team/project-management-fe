@@ -20,7 +20,7 @@ interface TableRowProps {
   handleUpdateProgress: (id: number, progress: number) => void;
   selectedColumns: string[];
   openManagers: (item: Item) => void; // New prop
-  openInviteForm: (item: Item) => void; // New prop
+  openInviteForm?: (item: Item) => void; // Make this prop optional
   // ...existing props...
 }
 
