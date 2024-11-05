@@ -1,10 +1,10 @@
 import React from "react";
-import { FiEdit, FiSave, FiTrash2, FiCheckSquare, FiFolder, FiUserPlus, FiUser } from "react-icons/fi";
+import { FiEdit, FiSave, FiTrash2, FiCheckSquare, FiFolder, FiUser } from "react-icons/fi";
 import { toast } from "react-toastify";
 import Image from "next/image";
 import { DOMAIN } from "@/app/config";
 import ManagerButton from "./ManagerButton";
-import { HistoryItem, Manager, PermissionKey, Item, ItemProperty } from "../interfaces";
+import { HistoryItem, Item, ItemProperty } from "../interfaces";
 
 interface TableRowProps {
   item: Item;
@@ -34,7 +34,6 @@ const TableRow: React.FC<TableRowProps> = ({
   handleUpdateProgress,
   selectedColumns,
   openManagers,
-  openInviteForm,
 }) => {
   // Remove local state and modal references
 

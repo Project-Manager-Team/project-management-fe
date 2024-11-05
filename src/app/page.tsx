@@ -33,7 +33,6 @@ export default function Home() {
           current={history[history.length - 1]}
           setReloadTableData={setReloadTableData}
         />
-        {/* Removed ToastContainer as it's now in layout.tsx via ToastProvider */}
       </div>
     </div>
   );

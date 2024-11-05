@@ -4,12 +4,36 @@ import { useState, useEffect } from "react";
 import apiClient from "@/utils";
 import { toast } from "react-toastify";
 import TableRow from "./TableRow";
-import { Item, Current, HistoryItem, ItemProperty, Manager } from "./interfaces";
-import { FiPlus, FiSave, FiUser } from "react-icons/fi";
-import Image from "next/image";
-import { DOMAIN } from "@/app/config";
+import { Item, Current, HistoryItem, ItemProperty, Manager, PermissionUpdatePayload } from "./interfaces";
+import { FiPlus, FiSave } from "react-icons/fi";
 import ManagersModal from "./ManagersModal";
-import InviteModal from "./InviteModal";
+import ReactModal from 'react-modal';
+
+// Add this after imports
+if (typeof window !== 'undefined') {
+  ReactModal.setAppElement('#root' as string);
+}
+
+const modalStyles = {
+  content: {
+    top: '50%',
+    left: '50%',
+    right: 'auto',
+    bottom: 'auto',
+    marginRight: '-50%',
+    transform: 'translate(-50%, -50%)',
+    backgroundColor: 'white',
+    borderRadius: '0.5rem',
+    padding: '2rem',
+    maxWidth: '90%',
+    maxHeight: '90vh',
+    overflow: 'auto'
+  },
+  overlay: {
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    zIndex: 1000
+  }
+};
 
 interface TableProps {
   current: Current;
@@ -52,7 +76,6 @@ export default function Table({
   const [currentManagerItem, setCurrentManagerItem] = useState<Item | null>(null);
   const [managerPermissions, setManagerPermissions] = useState<Manager[]>([]);
 
-  const [showInviteForm, setShowInviteForm] = useState<boolean>(false);
   const [currentInviteItem, setCurrentInviteItem] = useState<Item | null>(null);
   const [inviteUsername, setInviteUsername] = useState<string>("");
   const [inviteTitle, setInviteTitle] = useState<string>("");
@@ -67,7 +90,6 @@ export default function Table({
   // Handler to open Invite modal
   const handleOpenInviteForm = (item: Item) => {
     setCurrentInviteItem(item);
-    setShowInviteForm(true);
   };
 
   // Fetch managers' permissions when modal opens
@@ -89,22 +111,6 @@ export default function Table({
       fetchManagersPermissions();
     }
   }, [showManagers, currentManagerItem]);
-
-  // Handle permission changes
-  const handlePermissionChange = (
-    managerIndex: number,
-    permissionType: PermissionKey,
-    value: boolean
-  ) => {
-    setManagerPermissions((prevPermissions) => {
-      const updatedPermissions = [...prevPermissions];
-      const manager = updatedPermissions[managerIndex];
-      if (manager.permissions) {
-        manager.permissions[permissionType] = value;
-      }
-      return updatedPermissions;
-    });
-  };
 
   // Save permissions
   const savePermissions = async () => {
@@ -146,7 +152,6 @@ export default function Table({
         content: inviteContent,
         project: currentInviteItem.id,
       });
-      setShowInviteForm(false);
       setInviteUsername("");
       setInviteTitle("");
       setInviteContent("");
@@ -290,6 +295,7 @@ export default function Table({
         isEditing: true,
         managers: [],
         owner: null, // Initialize owner as null
+        managersCount: 0, // Add managersCount property
       };
       const newListProject = [...listProject, newItem];
       setListProject(newListProject);
@@ -335,9 +341,6 @@ export default function Table({
 
   return (
     <div className="bg-white shadow-md rounded-lg overflow-hidden w-full">
-      {/* Remove or comment out the existing Column Selection */}
-      {/* ...existing code... */}
-
       <div className="overflow-x-auto">
         <table
           className="min-w-full bg-white border-separate border-spacing-y-2"
@@ -400,56 +403,52 @@ export default function Table({
         </table>
       </div>
 
-      {/* Column Selection Modal */}
-      {isColumnSelectorOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-80">
-            <h3 className="text-lg font-semibold mb-4">Chọn cột hiển thị</h3>
-            <div className="flex flex-col space-y-2">
-              {allColumns.map((col) => (
-                <label key={col.id} className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={selectedColumns.includes(col.id)}
-                    onChange={() => toggleColumn(col.id)}
-                    className="mr-2"
-                  />
-                  {col.label}
-                </label>
-              ))}
-            </div>
-            <div className="mt-4 flex justify-end space-x-2">
-              <button
-                onClick={() => setIsColumnSelectorOpen(false)}
-                className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-              >
-                Đóng
-              </button>
-              <button
-                onClick={() => setIsColumnSelectorOpen(false)}
-                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-              >
-                Lưu
-              </button>
-            </div>
-          </div>
+      <ReactModal
+        isOpen={isColumnSelectorOpen}
+        onRequestClose={() => setIsColumnSelectorOpen(false)}
+        style={modalStyles}
+        contentLabel="Column Selection Modal"
+      >
+        <h3 className="text-lg font-semibold mb-4">Chọn cột hiển thị</h3>
+        <div className="flex flex-col space-y-2">
+          {allColumns.map((col) => (
+            <label key={col.id} className="flex items-center">
+              <input
+                type="checkbox"
+                checked={selectedColumns.includes(col.id)}
+                onChange={() => toggleColumn(col.id)}
+                className="mr-2"
+              />
+              {col.label}
+            </label>
+          ))}
         </div>
-      )}
+        <div className="mt-4 flex justify-end space-x-2">
+          <button
+            onClick={() => setIsColumnSelectorOpen(false)}
+            className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+          >
+            Đóng
+          </button>
+          <button
+            onClick={() => setIsColumnSelectorOpen(false)}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            Lưu
+          </button>
+        </div>
+      </ReactModal>
+
       {/* Managers Modal */}
-      {showManagers && currentManagerItem && (
+      {currentManagerItem && (
         <ManagersModal
           currentManagerItem={currentManagerItem}
           managerPermissions={managerPermissions}
-          handlePermissionChange={handlePermissionChange}
-          handleOpenInviteForm={handleOpenInviteForm}
+          setManagerPermissions={setManagerPermissions}
           savePermissions={savePermissions}
           setShowManagers={setShowManagers}
-        />
-      )}
-
-      {/* Invite Modal */}
-      {showInviteForm && currentInviteItem && (
-        <InviteModal
+          isOpen={showManagers}
+          onClose={() => setShowManagers(false)}
           inviteUsername={inviteUsername}
           setInviteUsername={setInviteUsername}
           inviteTitle={inviteTitle}
@@ -457,10 +456,9 @@ export default function Table({
           inviteContent={inviteContent}
           setInviteContent={setInviteContent}
           handleInvite={handleInvite}
-          setShowInviteForm={setShowInviteForm}
-          currentInviteItem={currentInviteItem}
         />
       )}
+
       <div className="p-6 bg-gray-100 flex justify-center">
         <button
           className="p-2 bg-blue-500 text-white border-none rounded-full cursor-pointer shadow-md transition-transform transform hover:translate-y-[-3px] active:translate-y-3 flex items-center justify-center"
@@ -477,3 +475,4 @@ export default function Table({
     </div>
   );
 }
+

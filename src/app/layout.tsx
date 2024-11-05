@@ -29,8 +29,10 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-white text-black`}
       >
-        {children}
-        <ToastProvider /> {/* Ensure ToastProvider is included here */}
+        <div id="root">
+          {children}
+          <ToastProvider />
+        </div>
       </body>
     </html>
   );

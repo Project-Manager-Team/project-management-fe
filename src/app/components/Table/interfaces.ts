@@ -11,8 +11,8 @@ export interface Item {
   parentId: number | null;
   isEditing: boolean;
   managers?: Manager[];
-  owner: Owner | null; // Added owner property
-  managersCount: number; // Added managersCount property
+  owner: Owner | null;
+  managersCount: number;
 }
 
 export interface Owner {
@@ -32,22 +32,34 @@ export interface Current {
   title: string;
 }
 
-export interface Manager {
-  user: {
-    id: number;               // Ensure Manager has an ID
-    username: string;
-    avatar: string | null;
-  };
-  permission_id: number | null;
-  permissions: {
-    canEdit: boolean;
-    canDelete: boolean;
-    canAdd: boolean;
-    canFinish: boolean;
-  } | null;
+export type PermissionKey = "canEdit" | "canFinish" | "canAdd" | "canDelete";
+
+export interface User {
+  id: number;
+  username: string;
+  avatar: string | null;
 }
 
-export type PermissionKey = keyof NonNullable<Manager['permissions']>;
+export interface Permissions {
+  canEdit: boolean;
+  canFinish: boolean;
+  canAdd: boolean;
+  canDelete: boolean;
+}
 
-// Define a union type for all possible property names of Item
+export interface Manager {
+  user: User;
+  permission_id?: number;
+  permissions?: Permissions;
+}
+
 export type ItemProperty = keyof Item;
+
+export interface PermissionUpdatePayload {
+  project: number;
+  user: number;
+  canEdit: boolean;
+  canDelete: boolean;
+  canAdd: boolean;
+  canFinish: boolean;
+}
