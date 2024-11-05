@@ -33,8 +33,8 @@ function Profile() {
     const getUser = async () => {
       try {
         const [userResponse, avatarResponse] = await Promise.all([
-          apiClient.get("/user/detail/"),
-          apiClient.get("/user/avatar/"),
+          apiClient.get("/api/user/detail/"),
+          apiClient.get("/api/user/avatar/"),
         ]);
         let avatarUrl = avatarResponse.data.avatar;
         if (avatarUrl && !avatarUrl.startsWith("http")) {
@@ -63,7 +63,7 @@ function Profile() {
       return;
     }
     try {
-      await apiClient.post("/user/change-password/", {
+      await apiClient.post("/api/user/change-password/", {
         old_password: oldPassword,
         new_password: newPassword,
       });

@@ -24,7 +24,7 @@ function Notification({ setReloadTableData }: NotificationProps) {
   const notificationRef = useRef<HTMLDivElement>(null);
 
   const getInvitations = async () => {
-    const response = await apiClient.get(`/invitation/`);
+    const response = await apiClient.get(`/api/invitation/`);
     return response.data;
   };
 
@@ -52,7 +52,7 @@ function Notification({ setReloadTableData }: NotificationProps) {
   };
 
   const editInvitation = async (item: Invitation, invitationID: number): Promise<void> => {
-    await apiClient.patch(`/invitation/${invitationID}/`, item);
+    await apiClient.patch(`/api/invitation/${invitationID}/`, item);
     setReloadAPI(!reloadAPI);
   };
 
@@ -72,7 +72,7 @@ function Notification({ setReloadTableData }: NotificationProps) {
 
   const deleteInvitation = async (invitationID: number) => {
     try {
-      const response = await apiClient.delete(`/invitation/${invitationID}/`);
+      const response = await apiClient.delete(`/api/invitation/${invitationID}/`);
       setReloadAPI(!reloadAPI);
       if (response.status !== 204) {
         throw new Error(`HTTP error! status: ${response.status}`);

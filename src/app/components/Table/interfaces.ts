@@ -12,7 +12,6 @@ export interface Item {
   isEditing: boolean;
   managers?: Manager[];
   owner: Owner | null; // Added owner property
-  [key: string]: unknown;
 }
 
 export interface Owner {
@@ -32,20 +31,6 @@ export interface Current {
   title: string;
 }
 
-export interface TableRowProps {
-  item: Item;
-  handleChange: (
-    index: number,
-    name: string,
-    value: string | number | boolean | null
-  ) => void;
-  handleEditItem: (index: number) => void;
-  handleDeleteItem: (id: number | null) => void;
-  setHistory: React.Dispatch<React.SetStateAction<HistoryItem[]>>;
-  setReloadTableData: React.Dispatch<React.SetStateAction<boolean>>;
-  handleUpdateProgress: (id: number, progress: number) => void;
-}
-
 export interface Manager {
   user: {
     id: number;               // Ensure Manager has an ID
@@ -62,3 +47,6 @@ export interface Manager {
 }
 
 export type PermissionKey = keyof NonNullable<Manager['permissions']>;
+
+// Define a union type for all possible property names of Item
+export type ItemProperty = keyof Item;

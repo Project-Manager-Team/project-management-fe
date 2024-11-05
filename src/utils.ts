@@ -23,7 +23,7 @@ apiClient.interceptors.response.use(
     if (error.response.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
       const refresh = localStorage.getItem("refresh")
-      const { data } = await axios.post(`${API_BASE_URL}/user/token/refresh/`,  { refresh: refresh });
+      const { data } = await axios.post(`${API_BASE_URL}/api/user/token/refresh/`,  { refresh: refresh });
       sessionStorage.setItem("access", data.access);
       originalRequest.headers.Authorization = `Bearer ${data.access}`;
       return apiClient(originalRequest);

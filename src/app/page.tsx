@@ -10,7 +10,7 @@ export default function Home() {
   const [history, setHistory] = useState<HistoryItem[]>([
     {
       id: 0,
-      url: `/project/personal/`,
+      url: `/api/project/personal/`,
       title: "Home",
     },
   ]);

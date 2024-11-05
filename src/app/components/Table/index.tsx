@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import apiClient from "@/utils";
 import { toast } from "react-toastify";
 import TableRow from "./TableRow";
-import { Item, Current, HistoryItem } from "./interfaces";
+import { Item, Current, HistoryItem, ItemProperty } from "./interfaces";
 import { FiPlus, FiSave } from "react-icons/fi";
 
 interface TableProps {
@@ -11,6 +11,7 @@ interface TableProps {
   setHistory: React.Dispatch<React.SetStateAction<HistoryItem[]>>;
   reloadTableData: boolean;
   setReloadTableData: React.Dispatch<React.SetStateAction<boolean>>;
+  
 }
 
 interface Column {
@@ -19,7 +20,7 @@ interface Column {
 }
 
 const allColumns: Column[] = [
-  { id: "type", label: "Lo���i" },
+  { id: "type", label: "Loại" },
   { id: "title", label: "Tiêu đề" },
   { id: "description", label: "Nội dung" },
   { id: "beginTime", label: "Ngày bắt đầu" },
@@ -36,7 +37,9 @@ export default function Table({
 }: TableProps) {
   const [isCreating, setIsCreating] = useState<boolean>(false);
   const [listProject, setListProject] = useState<Item[]>([]);
-  const [selectedColumns, setSelectedColumns] = useState<string[]>(allColumns.map(col => col.id));
+  const [selectedColumns, setSelectedColumns] = useState<string[]>(
+    allColumns.map((col) => col.id)
+  );
   const [isColumnSelectorOpen, setIsColumnSelectorOpen] = useState<boolean>(false); // New state
 
   const toggleColumn = (columnId: string) => {
@@ -49,7 +52,7 @@ export default function Table({
 
   const handleChange = (
     index: number,
-    name: string,
+    name: ItemProperty, // Use ItemProperty union type
     value: string | number | boolean | null
   ) => {
     setListProject((prevList) => {
@@ -78,7 +81,7 @@ export default function Table({
 
     if (currentItem.isEditing) {
       try {
-        await apiClient.put(`project/${currentItem.id}/`, currentItem);
+        await apiClient.put(`/api/project/${currentItem.id}/`, currentItem); // Ensure correct API path
         toast.success("Cập nhật thành công!");
       } catch {
         toast.error("Cập nhật không thành công");
@@ -93,16 +96,21 @@ export default function Table({
     }
 
     const itemToDelete = listProject.find((item) => item.id === id);
-    const isNewItem = isCreating && itemToDelete && itemToDelete.id === listProject[listProject.length - 1].id;
+    const isNewItem =
+      isCreating &&
+      itemToDelete &&
+      itemToDelete.id === listProject[listProject.length - 1].id;
 
     const confirmDelete = () => {
       if (isNewItem) {
-        setListProject((prevList) => prevList.filter((item) => item.id !== id));
+        setListProject((prevList) =>
+          prevList.filter((item) => item.id !== id)
+        );
         setIsCreating(false);
         toast.success("Đã xoá nhiệm vụ mới tạo!");
       } else {
         apiClient
-          .delete(`project/${id}/`)
+          .delete(`/api/project/${id}/`) // Ensure correct API path
           .then(() => {
             toast.success("Xóa nhiệm vụ thành công!");
             setListProject((prevList) =>
@@ -179,7 +187,7 @@ export default function Table({
         return;
       }
       try {
-        const response = await apiClient.post("project/", listProject[listProject.length - 1]);
+        const response = await apiClient.post<Item>("/api/project/", newItem); // Ensure correct API path
         // Assuming the backend returns the created item with a unique ID
         const createdItem: Item = response.data;
         setListProject((prevList) =>
@@ -199,7 +207,7 @@ export default function Table({
   // Function to handle progress updates
   const handleUpdateProgress = async (id: number, progress: number) => {
     try {
-      await apiClient.patch(`project/${id}/`, { progress });
+      await apiClient.patch(`/api/project/${id}/`, { progress }); // Ensure correct API path
       setListProject((prevList) =>
         prevList.map((item) =>
           item.id === id ? { ...item, progress } : item
@@ -243,10 +251,18 @@ export default function Table({
               {selectedColumns.includes("description") && (
                 <th className="py-3 px-6 text-left hidden md:table-cell">Nội dung</th>
               )}
-              {selectedColumns.includes("beginTime") && <th className="py-3 px-6 text-left">Ngày bắt đầu</th>}
-              {selectedColumns.includes("endTime") && <th className="py-3 px-6 text-left">Ngày Kết thúc</th>}
-              {selectedColumns.includes("owner") && <th className="py-3 px-6 text-left">Người sở hữu</th>}
-              {selectedColumns.includes("progress") && <th className="py-3 px-6 text-left">Tình trạng</th>}
+              {selectedColumns.includes("beginTime") && (
+                <th className="py-3 px-6 text-left">Ngày bắt đầu</th>
+              )}
+              {selectedColumns.includes("endTime") && (
+                <th className="py-3 px-6 text-left">Ngày Kết thúc</th>
+              )}
+              {selectedColumns.includes("owner") && (
+                <th className="py-3 px-6 text-left">Người sở hữu</th>
+              )}
+              {selectedColumns.includes("progress") && (
+                <th className="py-3 px-6 text-left">Tình trạng</th>
+              )}
               <th className="py-3 px-6 text-right"></th>
             </tr>
           </thead>
@@ -261,7 +277,7 @@ export default function Table({
                 setHistory={setHistory}
                 setReloadTableData={setReloadTableData}
                 handleUpdateProgress={handleUpdateProgress}
-                selectedColumns={selectedColumns}
+                selectedColumns={selectedColumns} // Ensure this prop is passed
               />
             ))}
           </tbody>

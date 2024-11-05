@@ -32,7 +32,7 @@ function LoginRegister() {
         return;
       }
       try {
-        await apiClient.post("/user/register/", { username, email, password });
+        await apiClient.post("/api/user/register/", { username, email, password });
         toast.success("Đăng ký thành công!");
         setIsRegister(false);
       } catch (error: unknown) { // Added error typing
@@ -46,7 +46,7 @@ function LoginRegister() {
       }
     } else {
       try {
-        const response = await apiClient.post("/user/token/", { username, password });
+        const response = await apiClient.post("/api/user/token/", { username, password });
         sessionStorage.setItem("access", response.data.access);
         if (rememberMe && response.data.refresh) {
           localStorage.setItem("refresh", response.data.refresh);

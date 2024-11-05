@@ -1,5 +1,5 @@
 import React, { memo, useState, useEffect, useRef } from "react";
-import { HistoryItem, Manager, PermissionKey } from "../interfaces";
+import { HistoryItem, Manager, PermissionKey, Item, ItemProperty } from "../interfaces";
 import {
   FiEdit,
   FiSave,
@@ -12,28 +12,14 @@ import {
 import apiClient from "@/utils";
 import { toast } from "react-toastify";
 import Image from "next/image";
-import { DOMAIN } from '@/app/config';
+import { DOMAIN } from "@/app/config";
 import ManagerButton from "./ManagerButton";
 
 interface LocalTableRowProps {
-  item: {
-    id: number;
-    index: number;
-    type: string;
-    title: string;
-    description?: string;
-    beginTime?: string;
-    endTime?: string;
-    owner?: {
-      avatar?: string;
-      username: string;
-    };
-    progress: number;
-    isEditing: boolean;
-  };
+  item: Item;
   handleChange: (
     index: number,
-    name: string,
+    name: ItemProperty, // Changed from string to ItemProperty
     value: string | number | boolean | null
   ) => void;
   handleEditItem: (index: number) => void;
@@ -42,6 +28,16 @@ interface LocalTableRowProps {
   setReloadTableData: React.Dispatch<React.SetStateAction<boolean>>;
   handleUpdateProgress: (id: number, progress: number) => void;
   selectedColumns: string[];
+}
+
+// Define interface for permission update payload
+interface PermissionUpdatePayload {
+  project: number;
+  user: number;
+  canEdit: boolean;
+  canDelete: boolean;
+  canAdd: boolean;
+  canFinish: boolean;
 }
 
 const TableRow: React.FC<LocalTableRowProps> = ({
@@ -92,9 +88,9 @@ const TableRow: React.FC<LocalTableRowProps> = ({
     // Fetch managers' permissions when showManagers is true
     const fetchManagersPermissions = async () => {
       try {
-        const response = await apiClient.get(
-          `/project/${item.id}/managers_permissions/`
-        ); // Corrected URL
+        const response = await apiClient.get<Manager[]>(
+          `/api/project/${item.id}/managers_permissions/` // Ensure correct API path
+        );
         setManagerPermissions(response.data);
       } catch {
         toast.error("Không thể lấy dữ liệu quản lý");
@@ -111,7 +107,7 @@ const TableRow: React.FC<LocalTableRowProps> = ({
       ...prevHistory,
       {
         id: item.id,
-        url: `/project/${item.id}/child`,
+        url: `/api/project/${item.id}/child`,
         title: item.title || "",
       },
     ]);
@@ -136,7 +132,7 @@ const TableRow: React.FC<LocalTableRowProps> = ({
 
   const handleInvite = async () => {
     try {
-      await apiClient.post("/invitation/", {
+      await apiClient.post("/api/invitation/", { // Ensure correct API path
         username: inviteUsername,
         title: inviteTitle,
         content: inviteContent,
@@ -154,13 +150,14 @@ const TableRow: React.FC<LocalTableRowProps> = ({
 
   const handlePermissionChange = (
     managerIndex: number,
-    permissionType: PermissionKey, // Updated type
+    permissionType: PermissionKey,
     value: boolean
   ) => {
     setManagerPermissions((prevPermissions) => {
       const updatedPermissions = [...prevPermissions];
-      if (updatedPermissions[managerIndex].permissions) {
-        updatedPermissions[managerIndex].permissions[permissionType] = value; // Removed type assertion
+      const manager = updatedPermissions[managerIndex];
+      if (manager.permissions) {
+        manager.permissions[permissionType] = value;
       }
       return updatedPermissions;
     });
@@ -168,20 +165,21 @@ const TableRow: React.FC<LocalTableRowProps> = ({
 
   const savePermissions = async () => {
     try {
-      const updatePromises = managerPermissions.map(manager => {
+      const updatePromises = managerPermissions.map((manager) => {
         if (manager.permissions && manager.permission_id && manager.user.id) {
-          return apiClient.put(`/permissions/${manager.permission_id}/`, {
-            project: item.id,            // Include Project ID
-            user: manager.user.id,    // Include Manager ID
+          const payload: PermissionUpdatePayload = {
+            project: item.id,         // Use 'projectId' as per backend expectation
+            user: manager.user.id, // Use 'managerId' as per backend expectation
             canEdit: manager.permissions.canEdit,
             canDelete: manager.permissions.canDelete,
             canAdd: manager.permissions.canAdd,
             canFinish: manager.permissions.canFinish,
-          });
+          };
+          return apiClient.put(`/api/permissions/${manager.permission_id}/`, payload); // Ensure correct API path
         }
         return Promise.resolve();
       });
-  
+
       await Promise.all(updatePromises);
       toast.success("Cập nhật quyền thành công!");
       setShowManagers(false);
@@ -197,14 +195,16 @@ const TableRow: React.FC<LocalTableRowProps> = ({
   // Utility function to format datetime
   const formatDateTime = (datetime: string): { time: string; date: string } => {
     const dateObj = new Date(datetime);
-    const time = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const time = dateObj.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
     const date = dateObj.toLocaleDateString();
     return { time, date };
   };
 
-
   return (
-    <>
+    <React.Fragment>
       <tr
         className="
           group transition-colors duration-300 rounded-lg 
@@ -213,7 +213,7 @@ const TableRow: React.FC<LocalTableRowProps> = ({
         "
       >
         {/* Removed Empty Cell for Column Selection */}
-        
+
         {selectedColumns.includes("type") && (
           <td className="py-3 px-6 text-left bg-transparent">
             <button
@@ -231,11 +231,13 @@ const TableRow: React.FC<LocalTableRowProps> = ({
               type="text"
               name="title"
               className={`w-full ${
-                item.isEditing ? 'bg-yellow-50 border border-blue-500' : 'bg-transparent'
+                item.isEditing
+                  ? "bg-yellow-50 border border-blue-500"
+                  : "bg-transparent"
               } focus:outline-none focus:ring-0 text-black rounded-lg`}
               value={item.title || ""}
               onChange={(e) =>
-                handleChange(item.index, e.target.name, e.target.value)
+                handleChange(item.index, e.target.name as keyof Item, e.target.value)
               }
               disabled={!item.isEditing}
             />
@@ -247,11 +249,13 @@ const TableRow: React.FC<LocalTableRowProps> = ({
               type="text"
               name="description"
               className={`w-full ${
-                item.isEditing ? 'bg-yellow-50 border border-blue-500' : 'bg-transparent'
+                item.isEditing
+                  ? "bg-yellow-50 border border-blue-500"
+                  : "bg-transparent"
               } focus:outline-none focus:ring-0 text-black rounded-lg`}
               value={item.description || ""}
               onChange={(e) =>
-                handleChange(item.index, e.target.name, e.target.value)
+                handleChange(item.index, e.target.name as keyof Item, e.target.value)
               }
               disabled={!item.isEditing}
             />
@@ -264,11 +268,13 @@ const TableRow: React.FC<LocalTableRowProps> = ({
                 type="datetime-local"
                 name="beginTime"
                 className={`w-full ${
-                  item.isEditing ? 'bg-yellow-50 border border-blue-500' : 'bg-transparent'
+                  item.isEditing
+                    ? "bg-yellow-50 border border-blue-500"
+                    : "bg-transparent"
                 } focus:outline-none focus:ring-0 text-black rounded-lg`}
                 value={item.beginTime ? item.beginTime.substring(0, 16) : ""}
                 onChange={(e) =>
-                  handleChange(item.index, e.target.name, e.target.value)
+                  handleChange(item.index, e.target.name as keyof Item, e.target.value)
                 }
                 disabled={!item.isEditing}
               />
@@ -290,11 +296,13 @@ const TableRow: React.FC<LocalTableRowProps> = ({
                 type="datetime-local"
                 name="endTime"
                 className={`w-full ${
-                  item.isEditing ? 'bg-yellow-50 border border-blue-500' : 'bg-transparent'
+                  item.isEditing
+                    ? "bg-yellow-50 border border-blue-500"
+                    : "bg-transparent"
                 } focus:outline-none focus:ring-0 text-black rounded-lg`}
                 value={item.endTime ? item.endTime.substring(0, 16) : ""}
                 onChange={(e) =>
-                  handleChange(item.index, e.target.name, e.target.value)
+                  handleChange(item.index, e.target.name as keyof Item, e.target.value)
                 }
                 disabled={!item.isEditing}
               />
@@ -324,9 +332,12 @@ const TableRow: React.FC<LocalTableRowProps> = ({
                     width={32}
                     height={32}
                     className="rounded-full cursor-pointer"
-                    onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+                    onError={(
+                      e: React.SyntheticEvent<HTMLImageElement, Event>
+                    ) => {
                       (e.target as HTMLImageElement).onerror = null;
-                      (e.target as HTMLImageElement).src = "/default-avatar.png";
+                      (e.target as HTMLImageElement).src =
+                        "/default-avatar.png";
                     }}
                   />
                 ) : (
@@ -367,7 +378,7 @@ const TableRow: React.FC<LocalTableRowProps> = ({
             <button
               className="p-2 bg-gray-200 text-gray-800 border-none rounded-full cursor-pointer shadow-md transition-transform transform hover:translate-y-[-3px] active:translate-y-3 flex items-center justify-center"
               onClick={() => {
-                if (item.title.trim() === "") {
+                if (item.title && item.title.trim() === "") {
                   toast.error("Title is required");
                 } else {
                   handleEditItem(item.index);
@@ -388,9 +399,7 @@ const TableRow: React.FC<LocalTableRowProps> = ({
             >
               <FiTrash2 className="w-5 h-5" />
             </button>
-            <ManagerButton
-              onClick={() => setShowManagers(true)}
-            />
+            <ManagerButton onClick={() => setShowManagers(true)} />
             <button
               className="p-2 bg-green-500 text-white border-none rounded-full cursor-pointer shadow-md transition-transform transform hover:translate-y-[-3px] active:translate-y-3 flex items-center justify-center"
               onClick={() => setShowInviteForm(true)} // Add this line
@@ -414,16 +423,26 @@ const TableRow: React.FC<LocalTableRowProps> = ({
                 <table className="min-w-full bg-white border border-gray-200">
                   <thead>
                     <tr>
-                      <th className="py-2 px-4 border-b border-gray-200">Quản lý</th>
-                      <th className="py-2 px-4 border-b border-gray-200">Quyền sửa</th>
-                      <th className="py-2 px-4 border-b border-gray-200">Quyền hoàn thành</th>
-                      <th className="py-2 px-4 border-b border-gray-200">Quyền th��m</th>
-                      <th className="py-2 px-4 border-b border-gray-200">Quyền xoá</th>
+                      <th className="py-2 px-4 border-b border-gray-200">
+                        Quản lý
+                      </th>
+                      <th className="py-2 px-4 border-b border-gray-200">
+                        Quyền sửa
+                      </th>
+                      <th className="py-2 px-4 border-b border-gray-200">
+                        Quyền hoàn thành
+                      </th>
+                      <th className="py-2 px-4 border-b border-gray-200">
+                        Quyền thêm
+                      </th>
+                      <th className="py-2 px-4 border-b border-gray-200">
+                        Quyền xoá
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
                     {managerPermissions.map((manager, index) => (
-                      <tr key={index}>
+                      <tr key={manager.user.id}> {/* Use unique key */}
                         <td className="py-2 px-4 border-b border-gray-200">
                           <div className="flex items-center space-x-2">
                             {manager.user.avatar ? (
@@ -446,9 +465,19 @@ const TableRow: React.FC<LocalTableRowProps> = ({
                         </td>
                         <td className="py-2 px-4 border-b border-gray-200">
                           <select
-                            value={manager.permissions ? (manager.permissions.canEdit ? 'yes' : 'no') : 'no'}
+                            value={
+                              manager.permissions
+                                ? manager.permissions.canEdit
+                                  ? "yes"
+                                  : "no"
+                                : "no"
+                            }
                             onChange={(e) =>
-                              handlePermissionChange(index, 'canEdit', e.target.value === 'yes')
+                              handlePermissionChange(
+                                index,
+                                "canEdit",
+                                e.target.value === "yes"
+                              )
                             }
                             className="border rounded p-1 w-full"
                           >
@@ -458,9 +487,19 @@ const TableRow: React.FC<LocalTableRowProps> = ({
                         </td>
                         <td className="py-2 px-4 border-b border-gray-200">
                           <select
-                            value={manager.permissions ? (manager.permissions.canFinish ? 'yes' : 'no') : 'no'}
+                            value={
+                              manager.permissions
+                                ? manager.permissions.canFinish
+                                  ? "yes"
+                                  : "no"
+                                : "no"
+                            }
                             onChange={(e) =>
-                              handlePermissionChange(index, 'canFinish', e.target.value === 'yes')
+                              handlePermissionChange(
+                                index,
+                                "canFinish",
+                                e.target.value === "yes"
+                              )
                             }
                             className="border rounded p-1 w-full"
                           >
@@ -470,9 +509,19 @@ const TableRow: React.FC<LocalTableRowProps> = ({
                         </td>
                         <td className="py-2 px-4 border-b border-gray-200">
                           <select
-                            value={manager.permissions ? (manager.permissions.canAdd ? 'yes' : 'no') : 'no'}
+                            value={
+                              manager.permissions
+                                ? manager.permissions.canAdd
+                                  ? "yes"
+                                  : "no"
+                                : "no"
+                            }
                             onChange={(e) =>
-                              handlePermissionChange(index, 'canAdd', e.target.value === 'yes')
+                              handlePermissionChange(
+                                index,
+                                "canAdd",
+                                e.target.value === "yes"
+                              )
                             }
                             className="border rounded p-1 w-full"
                           >
@@ -482,9 +531,19 @@ const TableRow: React.FC<LocalTableRowProps> = ({
                         </td>
                         <td className="py-2 px-4 border-b border-gray-200">
                           <select
-                            value={manager.permissions ? (manager.permissions.canDelete ? 'yes' : 'no') : 'no'}
+                            value={
+                              manager.permissions
+                                ? manager.permissions.canDelete
+                                  ? "yes"
+                                  : "no"
+                                : "no"
+                            }
                             onChange={(e) =>
-                              handlePermissionChange(index, 'canDelete', e.target.value === 'yes')
+                              handlePermissionChange(
+                                index,
+                                "canDelete",
+                                e.target.value === "yes"
+                              )
                             }
                             className="border rounded p-1 w-full"
                           >
@@ -528,7 +587,9 @@ const TableRow: React.FC<LocalTableRowProps> = ({
                   value={inviteUsername}
                   onChange={(e) => setInviteUsername(e.target.value)}
                   className={`w-full ${
-                    item.isEditing ? 'bg-yellow-50 border border-blue-500' : 'bg-transparent'
+                    item.isEditing
+                      ? "bg-yellow-50 border border-blue-500"
+                      : "bg-transparent"
                   } mb-2 p-2 border rounded`}
                 />
                 <input
@@ -537,7 +598,9 @@ const TableRow: React.FC<LocalTableRowProps> = ({
                   value={inviteTitle}
                   onChange={(e) => setInviteTitle(e.target.value)}
                   className={`w-full ${
-                    item.isEditing ? 'bg-yellow-50 border border-blue-500' : 'bg-transparent'
+                    item.isEditing
+                      ? "bg-yellow-50 border border-blue-500"
+                      : "bg-transparent"
                   } mb-2 p-2 border rounded`}
                 />
                 <textarea
@@ -545,7 +608,9 @@ const TableRow: React.FC<LocalTableRowProps> = ({
                   value={inviteContent}
                   onChange={(e) => setInviteContent(e.target.value)}
                   className={`w-full ${
-                    item.isEditing ? 'bg-yellow-50 border border-blue-500' : 'bg-transparent'
+                    item.isEditing
+                      ? "bg-yellow-50 border border-blue-500"
+                      : "bg-transparent"
                   } mb-2 p-2 border rounded`}
                 />
                 <button
@@ -559,7 +624,7 @@ const TableRow: React.FC<LocalTableRowProps> = ({
           </td>
         </tr>
       )}
-    </>
+    </React.Fragment>
   );
 };
 
