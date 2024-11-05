@@ -12,6 +12,7 @@ export interface Item {
   isEditing: boolean;
   managers?: Manager[];
   owner: Owner | null; // Added owner property
+  managersCount: number; // Added managersCount property
 }
 
 export interface Owner {

@@ -1,17 +1,21 @@
 "use client";
+import React from "react"; // Added React import
 import { useState, useEffect } from "react";
 import apiClient from "@/utils";
 import { toast } from "react-toastify";
 import TableRow from "./TableRow";
-import { Item, Current, HistoryItem, ItemProperty } from "./interfaces";
-import { FiPlus, FiSave } from "react-icons/fi";
+import { Item, Current, HistoryItem, ItemProperty, Manager } from "./interfaces";
+import { FiPlus, FiSave, FiUser } from "react-icons/fi";
+import Image from "next/image";
+import { DOMAIN } from "@/app/config";
+import ManagersModal from "./ManagersModal";
+import InviteModal from "./InviteModal";
 
 interface TableProps {
   current: Current;
   setHistory: React.Dispatch<React.SetStateAction<HistoryItem[]>>;
   reloadTableData: boolean;
   setReloadTableData: React.Dispatch<React.SetStateAction<boolean>>;
-  
 }
 
 interface Column {
@@ -35,12 +39,122 @@ export default function Table({
   reloadTableData,
   setReloadTableData,
 }: TableProps) {
+  // Existing state variables
   const [isCreating, setIsCreating] = useState<boolean>(false);
   const [listProject, setListProject] = useState<Item[]>([]);
   const [selectedColumns, setSelectedColumns] = useState<string[]>(
     allColumns.map((col) => col.id)
   );
-  const [isColumnSelectorOpen, setIsColumnSelectorOpen] = useState<boolean>(false); // New state
+  const [isColumnSelectorOpen, setIsColumnSelectorOpen] = useState<boolean>(false);
+
+  // New state variables for modals
+  const [showManagers, setShowManagers] = useState<boolean>(false);
+  const [currentManagerItem, setCurrentManagerItem] = useState<Item | null>(null);
+  const [managerPermissions, setManagerPermissions] = useState<Manager[]>([]);
+
+  const [showInviteForm, setShowInviteForm] = useState<boolean>(false);
+  const [currentInviteItem, setCurrentInviteItem] = useState<Item | null>(null);
+  const [inviteUsername, setInviteUsername] = useState<string>("");
+  const [inviteTitle, setInviteTitle] = useState<string>("");
+  const [inviteContent, setInviteContent] = useState<string>("");
+
+  // Handler to open Managers modal
+  const handleOpenManagers = (item: Item) => {
+    setCurrentManagerItem(item);
+    setShowManagers(true);
+  };
+
+  // Handler to open Invite modal
+  const handleOpenInviteForm = (item: Item) => {
+    setCurrentInviteItem(item);
+    setShowInviteForm(true);
+  };
+
+  // Fetch managers' permissions when modal opens
+  useEffect(() => {
+    const fetchManagersPermissions = async () => {
+      if (currentManagerItem) {
+        try {
+          const response = await apiClient.get<Manager[]>(
+            `/api/project/${currentManagerItem.id}/managers_permissions/` // Ensure correct API path
+          );
+          setManagerPermissions(response.data);
+        } catch {
+          toast.error("Không thể lấy dữ liệu quản lý");
+        }
+      }
+    };
+
+    if (showManagers) {
+      fetchManagersPermissions();
+    }
+  }, [showManagers, currentManagerItem]);
+
+  // Handle permission changes
+  const handlePermissionChange = (
+    managerIndex: number,
+    permissionType: PermissionKey,
+    value: boolean
+  ) => {
+    setManagerPermissions((prevPermissions) => {
+      const updatedPermissions = [...prevPermissions];
+      const manager = updatedPermissions[managerIndex];
+      if (manager.permissions) {
+        manager.permissions[permissionType] = value;
+      }
+      return updatedPermissions;
+    });
+  };
+
+  // Save permissions
+  const savePermissions = async () => {
+    if (!currentManagerItem) return;
+
+    try {
+      const updatePromises = managerPermissions.map((manager) => {
+        if (manager.permissions && manager.permission_id && manager.user.id) {
+          const payload: PermissionUpdatePayload = {
+            project: currentManagerItem.id,
+            user: manager.user.id,
+            canEdit: manager.permissions.canEdit,
+            canDelete: manager.permissions.canDelete,
+            canAdd: manager.permissions.canAdd,
+            canFinish: manager.permissions.canFinish,
+          };
+          return apiClient.put(`/api/permissions/${manager.permission_id}/`, payload); // Ensure correct API path
+        }
+        return Promise.resolve();
+      });
+
+      await Promise.all(updatePromises);
+      toast.success("Cập nhật quyền thành công!");
+      setShowManagers(false);
+    } catch (error) {
+      console.error("Permission update failed:", error);
+      toast.error("Cập nhật quyền không thành công");
+    }
+  };
+
+  // Handle Invite
+  const handleInvite = async () => {
+    if (!currentInviteItem) return;
+
+    try {
+      await apiClient.post("/api/invitation/", {
+        username: inviteUsername,
+        title: inviteTitle,
+        content: inviteContent,
+        project: currentInviteItem.id,
+      });
+      setShowInviteForm(false);
+      setInviteUsername("");
+      setInviteTitle("");
+      setInviteContent("");
+      toast.success("Lời mời đã được gửi thành công!");
+    } catch {
+      toast.error("Không thể gửi lời mời");
+    }
+  };
 
   const toggleColumn = (columnId: string) => {
     setSelectedColumns((prev) =>
@@ -144,7 +258,7 @@ export default function Table({
 
   const getProjects = async (url: string) => {
     try {
-      const { data } = await apiClient.get<Item[]>(url); // Specify the expected data type
+      const { data } = await apiClient.get<Item[]>(url);
       const newData = data.filter((item) => item.type !== "personal");
       newData.forEach((item, index) => {
         item.index = index;
@@ -244,12 +358,12 @@ export default function Table({
                 </th>
               )}
               {selectedColumns.includes("title") && (
-                <th className="py-3 px-6 text-left">
-                  Tiêu đề
-                </th>
+                <th className="py-3 px-6 text-left">Tiêu đề</th>
               )}
               {selectedColumns.includes("description") && (
-                <th className="py-3 px-6 text-left hidden md:table-cell">Nội dung</th>
+                <th className="py-3 px-6 text-left hidden md:table-cell">
+                  Nội dung
+                </th>
               )}
               {selectedColumns.includes("beginTime") && (
                 <th className="py-3 px-6 text-left">Ngày bắt đầu</th>
@@ -277,12 +391,15 @@ export default function Table({
                 setHistory={setHistory}
                 setReloadTableData={setReloadTableData}
                 handleUpdateProgress={handleUpdateProgress}
-                selectedColumns={selectedColumns} // Ensure this prop is passed
+                selectedColumns={selectedColumns}
+                openManagers={handleOpenManagers} // Pass handler
+                openInviteForm={handleOpenInviteForm} // Pass handler
               />
             ))}
           </tbody>
         </table>
       </div>
+
       {/* Column Selection Modal */}
       {isColumnSelectorOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
@@ -318,13 +435,43 @@ export default function Table({
           </div>
         </div>
       )}
+      {/* Managers Modal */}
+      {showManagers && currentManagerItem && (
+        <ManagersModal
+          currentManagerItem={currentManagerItem}
+          managerPermissions={managerPermissions}
+          handlePermissionChange={handlePermissionChange}
+          handleOpenInviteForm={handleOpenInviteForm}
+          savePermissions={savePermissions}
+          setShowManagers={setShowManagers}
+        />
+      )}
+
+      {/* Invite Modal */}
+      {showInviteForm && currentInviteItem && (
+        <InviteModal
+          inviteUsername={inviteUsername}
+          setInviteUsername={setInviteUsername}
+          inviteTitle={inviteTitle}
+          setInviteTitle={setInviteTitle}
+          inviteContent={inviteContent}
+          setInviteContent={setInviteContent}
+          handleInvite={handleInvite}
+          setShowInviteForm={setShowInviteForm}
+          currentInviteItem={currentInviteItem}
+        />
+      )}
       <div className="p-6 bg-gray-100 flex justify-center">
         <button
           className="p-2 bg-blue-500 text-white border-none rounded-full cursor-pointer shadow-md transition-transform transform hover:translate-y-[-3px] active:translate-y-3 flex items-center justify-center"
           onClick={handleCreateAndSaveItem}
           aria-label={isCreating ? "Save" : "Create"}
         >
-          {isCreating ? <FiSave className="w-5 h-5" /> : <FiPlus className="w-5 h-5" />}
+          {isCreating ? (
+            <FiSave className="w-5 h-5" />
+          ) : (
+            <FiPlus className="w-5 h-5" />
+          )}
         </button>
       </div>
     </div>
