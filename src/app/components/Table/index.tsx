@@ -1,6 +1,6 @@
 "use client";
 import React from "react"; // Added React import
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import apiClient from "@/utils";
 import { toast } from "react-toastify";
 import TableRow from "./TableRow";
@@ -8,6 +8,7 @@ import { Item, Current, HistoryItem, ItemProperty, Manager, PermissionUpdatePayl
 import { FiPlus, FiSave } from "react-icons/fi";
 import ManagersModal from "./ManagersModal";
 import ReactModal from 'react-modal';
+import { Switch } from '@headlessui/react'; // Add this import
 
 // Add this after imports
 ReactModal.setAppElement('body'); // Set the root element for accessibility
@@ -33,6 +34,9 @@ const modalStyles = {
   }
 };
 
+const STORAGE_KEY = 'table-column-preferences';
+const DEFAULT_COLUMNS = ["type", "title", "description", "beginTime", "endTime", "owner", "progress"];
+
 interface TableProps {
   current: Current;
   setHistory: React.Dispatch<React.SetStateAction<HistoryItem[]>>;
@@ -46,7 +50,6 @@ interface Column {
 }
 
 const allColumns: Column[] = [
-  { id: "type", label: "Loại" },
   { id: "title", label: "Tiêu đề" },
   { id: "description", label: "Nội dung" },
   { id: "beginTime", label: "Ngày bắt đầu" },
@@ -54,6 +57,26 @@ const allColumns: Column[] = [
   { id: "owner", label: "Người sở hữu" },
   { id: "progress", label: "Tình trạng" },
 ];
+
+// Add this component before the Table component
+const ColumnToggle = ({ enabled, onChange }: { enabled: boolean; onChange: (checked: boolean) => void }) => {
+  return (
+    <Switch
+      checked={enabled}
+      onChange={onChange}
+      className={`${
+        enabled ? 'bg-blue-500' : 'bg-gray-200'
+      } relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
+    >
+      <span className="sr-only">Enable column</span>
+      <span
+        className={`${
+          enabled ? 'translate-x-5' : 'translate-x-1'
+        } inline-block h-3 w-3 transform rounded-full bg-white transition-transform`}
+      />
+    </Switch>
+  );
+};
 
 export default function Table({
   current,
@@ -64,9 +87,22 @@ export default function Table({
   // Existing state variables
   const [isCreating, setIsCreating] = useState<boolean>(false);
   const [listProject, setListProject] = useState<Item[]>([]);
-  const [selectedColumns, setSelectedColumns] = useState<string[]>(
-    allColumns.map((col) => col.id)
-  );
+  const [selectedColumns, setSelectedColumns] = useState<string[]>(DEFAULT_COLUMNS);
+  
+  // Move localStorage logic to useEffect
+  useEffect(() => {
+    // Only run this effect on the client side
+    const savedColumns = localStorage.getItem(STORAGE_KEY);
+    if (savedColumns) {
+      try {
+        const parsed = JSON.parse(savedColumns);
+        setSelectedColumns(parsed);
+      } catch {
+        console.error('Failed to parse saved column preferences');
+      }
+    }
+  }, []); // Empty dependency array means this runs once on mount
+
   const [isColumnSelectorOpen, setIsColumnSelectorOpen] = useState<boolean>(false);
 
   // New state variables for modals
@@ -165,17 +201,32 @@ export default function Table({
     }
   };
 
-  const toggleColumn = (columnId: string) => {
-    setSelectedColumns((prev) =>
-      prev.includes(columnId)
+  // Modify the toggleColumn function to use useCallback and handle toasts properly
+  const toggleColumn = useCallback((columnId: string) => {
+    setSelectedColumns((prev) => {
+      const isRemoving = prev.includes(columnId);
+      
+      // Prevent removing if it would leave less than 1 column
+      if (isRemoving && prev.length <= 1) {
+        // Instead of showing toast immediately, return the same state
+        // and schedule the toast for the next tick
+        setTimeout(() => {
+          toast.warning('Phải hiển thị ít nhất 1 cột');
+        }, 0);
+        return prev;
+      }
+
+      const newColumns = isRemoving
         ? prev.filter((id) => id !== columnId)
-        : [...prev, columnId]
-    );
-  };
+        : [...prev, columnId];
+
+      return newColumns;
+    });
+  }, []); // Empty dependencies array since this function doesn't depend on any props or state
 
   const handleChange = (
     index: number,
-    name: ItemProperty, // Use ItemProperty union type
+    name: ItemProperty,
     value: string | number | boolean | null
   ) => {
     setListProject((prevList) => {
@@ -343,6 +394,21 @@ export default function Table({
     }
   };
 
+  // Add this effect to save changes to localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(selectedColumns));
+    }
+  }, [selectedColumns]);
+
+  // Modify the resetColumnPreferences function to use setTimeout for toast
+  const resetColumnPreferences = useCallback(() => {
+    setSelectedColumns(DEFAULT_COLUMNS);
+    setTimeout(() => {
+      toast.success('Đã khôi phục cài đặt mặc định');
+    }, 0);
+  }, []); // Empty dependencies array since this function doesn't depend on any props or state
+
   return (
     <div className="bg-white shadow-md rounded-lg overflow-hidden w-full">
       <div className="overflow-x-auto">
@@ -352,21 +418,22 @@ export default function Table({
         >
           <thead>
             <tr className="bg-gray-200 text-gray-800 uppercase text-sm leading-normal">
-              {selectedColumns.includes("type") && (
-                <th className="py-3 px-6 text-left flex items-center">
-                  Loại
-                  <button
-                    onClick={() => setIsColumnSelectorOpen(true)}
-                    className="ml-2 p-1 bg-gray-300 rounded hover:bg-gray-400"
-                    aria-label="Chọn cột hiển thị"
-                  >
-                    &#9881;
-                  </button>
-                </th>
-              )}
+              {/* Type column is always shown */}
+              <th className="py-3 px-6 text-left flex items-center">
+                Loại
+                <button
+                  onClick={() => setIsColumnSelectorOpen(true)}
+                  className="ml-2 p-1 bg-gray-300 rounded hover:bg-gray-400"
+                  aria-label="Chọn cột hiển thị"
+                >
+                  &#9881;
+                </button>
+              </th>
+              {/* Title column is now toggleable */}
               {selectedColumns.includes("title") && (
                 <th className="py-3 px-6 text-left">Tiêu đề</th>
               )}
+              {/* Other columns are toggleable */}
               {selectedColumns.includes("description") && (
                 <th className="py-3 px-6 text-left hidden md:table-cell">
                   Nội dung
@@ -410,36 +477,65 @@ export default function Table({
       <ReactModal
         isOpen={isColumnSelectorOpen}
         onRequestClose={() => setIsColumnSelectorOpen(false)}
-        style={modalStyles}
+        style={{
+          content: {
+            ...modalStyles.content,
+            padding: '1.5rem',
+            maxWidth: '600px', // Increased from 400px to 600px
+            minWidth: '500px', // Add minimum width
+          },
+          overlay: modalStyles.overlay
+        }}
         contentLabel="Column Selection Modal"
       >
-        <h3 className="text-lg font-semibold mb-4">Chọn cột hiển thị</h3>
-        <div className="flex flex-col space-y-2">
-          {allColumns.map((col) => (
-            <label key={col.id} className="flex items-center">
-              <input
-                type="checkbox"
-                checked={selectedColumns.includes(col.id)}
-                onChange={() => toggleColumn(col.id)}
-                className="mr-2"
-              />
-              {col.label}
-            </label>
-          ))}
-        </div>
-        <div className="mt-4 flex justify-end space-x-2">
-          <button
-            onClick={() => setIsColumnSelectorOpen(false)}
-            className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-          >
-            Đóng
-          </button>
-          <button
-            onClick={() => setIsColumnSelectorOpen(false)}
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-          >
-            Lưu
-          </button>
+        <div className="flex flex-col space-y-4">
+          <div className="flex justify-between items-center mb-2">
+            <button
+              onClick={resetColumnPreferences}
+              className="text-sm text-blue-500 hover:text-blue-600 flex items-center gap-1"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" 
+                />
+              </svg>
+              Khôi phục mặc định
+            </button>
+          </div>
+
+          <div className="grid grid-cols-2 gap-8">
+            {/* Left column */}
+            <div className="space-y-4">
+              {allColumns.slice(0, Math.ceil(allColumns.length / 2)).map((col) => (
+                <div 
+                  key={col.id} 
+                  className="flex items-center justify-between p-3 hover:bg-gray-50 rounded border border-gray-100"
+                >
+                  <span className="text-sm font-medium text-gray-700">{col.label}</span>
+                  <ColumnToggle
+                    enabled={selectedColumns.includes(col.id)}
+                    onChange={() => toggleColumn(col.id)}
+                  />
+                </div>
+              ))}
+            </div>
+
+            {/* Right column - same changes as left column */}
+            <div className="space-y-4">
+              {allColumns.slice(Math.ceil(allColumns.length / 2)).map((col) => (
+                <div 
+                  key={col.id} 
+                  className="flex items-center justify-between p-3 hover:bg-gray-50 rounded border border-gray-100"
+                >
+                  <span className="text-sm font-medium text-gray-700">{col.label}</span>
+                  <ColumnToggle
+                    enabled={selectedColumns.includes(col.id)}
+                    onChange={() => toggleColumn(col.id)}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </ReactModal>
 
