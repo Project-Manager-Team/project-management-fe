@@ -13,6 +13,21 @@ interface TableProps {
   setReloadTableData: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
+interface Column {
+  id: string;
+  label: string;
+}
+
+const allColumns: Column[] = [
+  { id: "type", label: "Lo���i" },
+  { id: "title", label: "Tiêu đề" },
+  { id: "description", label: "Nội dung" },
+  { id: "beginTime", label: "Ngày bắt đầu" },
+  { id: "endTime", label: "Ngày Kết thúc" },
+  { id: "owner", label: "Người sở hữu" },
+  { id: "progress", label: "Tình trạng" },
+];
+
 export default function Table({
   current,
   setHistory,
@@ -21,6 +36,16 @@ export default function Table({
 }: TableProps) {
   const [isCreating, setIsCreating] = useState<boolean>(false);
   const [listProject, setListProject] = useState<Item[]>([]);
+  const [selectedColumns, setSelectedColumns] = useState<string[]>(allColumns.map(col => col.id));
+  const [isColumnSelectorOpen, setIsColumnSelectorOpen] = useState<boolean>(false); // New state
+
+  const toggleColumn = (columnId: string) => {
+    setSelectedColumns((prev) =>
+      prev.includes(columnId)
+        ? prev.filter((id) => id !== columnId)
+        : [...prev, columnId]
+    );
+  };
 
   const handleChange = (
     index: number,
@@ -67,18 +92,27 @@ export default function Table({
       return;
     }
 
+    const itemToDelete = listProject.find((item) => item.id === id);
+    const isNewItem = isCreating && itemToDelete && itemToDelete.id === listProject[listProject.length - 1].id;
+
     const confirmDelete = () => {
-      apiClient
-        .delete(`project/${id}/`)
-        .then(() => {
-          toast.success("Xóa nhiệm vụ thành công!");
-          setListProject((prevList) =>
-            prevList.filter((item) => item.id !== id)
-          );
-        })
-        .catch(() => {
-          toast.error("Không thể xóa nhiệm vụ");
-        });
+      if (isNewItem) {
+        setListProject((prevList) => prevList.filter((item) => item.id !== id));
+        setIsCreating(false);
+        toast.success("Đã xoá nhiệm vụ mới tạo!");
+      } else {
+        apiClient
+          .delete(`project/${id}/`)
+          .then(() => {
+            toast.success("Xóa nhiệm vụ thành công!");
+            setListProject((prevList) =>
+              prevList.filter((item) => item.id !== id)
+            );
+          })
+          .catch(() => {
+            toast.error("Không thể xóa nhiệm vụ");
+          });
+      }
     };
 
     toast(
@@ -133,11 +167,17 @@ export default function Table({
         parentId: current.id || null,
         isEditing: true,
         managers: [],
+        owner: null, // Initialize owner as null
       };
       const newListProject = [...listProject, newItem];
       setListProject(newListProject);
       setIsCreating(true);
     } else {
+      const newItem = listProject[listProject.length - 1];
+      if (!newItem.title || newItem.title.trim() === "") {
+        toast.error("Tiêu đề là bắt buộc");
+        return;
+      }
       try {
         const response = await apiClient.post("project/", listProject[listProject.length - 1]);
         // Assuming the backend returns the created item with a unique ID
@@ -151,7 +191,7 @@ export default function Table({
         setIsCreating(false);
         getProjects(current.url); // Refresh table
       } catch {
-        toast.error("Không thể tạo mới task");
+        toast.error("Không thể tạo mới nhiệm vụ");
       }
     }
   };
@@ -173,6 +213,9 @@ export default function Table({
 
   return (
     <div className="bg-white shadow-md rounded-lg overflow-hidden w-full">
+      {/* Remove or comment out the existing Column Selection */}
+      {/* ...existing code... */}
+
       <div className="overflow-x-auto">
         <table
           className="min-w-full bg-white border-separate border-spacing-y-2"
@@ -180,13 +223,30 @@ export default function Table({
         >
           <thead>
             <tr className="bg-gray-200 text-gray-800 uppercase text-sm leading-normal">
-              <th className="py-3 px-6 text-left">Loại</th>
-              <th className="py-3 px-6 text-left">Tiêu đề</th>
-              <th className="py-3 px-6 text-left hidden md:table-cell">Nội dung</th>
-              <th className="py-3 px-6 text-left">Ngày bắt đầu</th>
-              <th className="py-3 px-6 text-left">Ngày Kết thúc</th>
-              <th className="py-3 px-6 text-left">Tình trạng</th>
-              <th className="py-3 px-6 text-left">Phụ trách</th>
+              {selectedColumns.includes("type") && (
+                <th className="py-3 px-6 text-left flex items-center">
+                  Loại
+                  <button
+                    onClick={() => setIsColumnSelectorOpen(true)}
+                    className="ml-2 p-1 bg-gray-300 rounded hover:bg-gray-400"
+                    aria-label="Chọn cột hiển thị"
+                  >
+                    &#9881;
+                  </button>
+                </th>
+              )}
+              {selectedColumns.includes("title") && (
+                <th className="py-3 px-6 text-left">
+                  Tiêu đề
+                </th>
+              )}
+              {selectedColumns.includes("description") && (
+                <th className="py-3 px-6 text-left hidden md:table-cell">Nội dung</th>
+              )}
+              {selectedColumns.includes("beginTime") && <th className="py-3 px-6 text-left">Ngày bắt đầu</th>}
+              {selectedColumns.includes("endTime") && <th className="py-3 px-6 text-left">Ngày Kết thúc</th>}
+              {selectedColumns.includes("owner") && <th className="py-3 px-6 text-left">Người sở hữu</th>}
+              {selectedColumns.includes("progress") && <th className="py-3 px-6 text-left">Tình trạng</th>}
               <th className="py-3 px-6 text-right"></th>
             </tr>
           </thead>
@@ -201,11 +261,47 @@ export default function Table({
                 setHistory={setHistory}
                 setReloadTableData={setReloadTableData}
                 handleUpdateProgress={handleUpdateProgress}
+                selectedColumns={selectedColumns}
               />
             ))}
           </tbody>
         </table>
       </div>
+      {/* Column Selection Modal */}
+      {isColumnSelectorOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-80">
+            <h3 className="text-lg font-semibold mb-4">Chọn cột hiển thị</h3>
+            <div className="flex flex-col space-y-2">
+              {allColumns.map((col) => (
+                <label key={col.id} className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={selectedColumns.includes(col.id)}
+                    onChange={() => toggleColumn(col.id)}
+                    className="mr-2"
+                  />
+                  {col.label}
+                </label>
+              ))}
+            </div>
+            <div className="mt-4 flex justify-end space-x-2">
+              <button
+                onClick={() => setIsColumnSelectorOpen(false)}
+                className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+              >
+                Đóng
+              </button>
+              <button
+                onClick={() => setIsColumnSelectorOpen(false)}
+                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              >
+                Lưu
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="p-6 bg-gray-100 flex justify-center">
         <button
           className="p-2 bg-blue-500 text-white border-none rounded-full cursor-pointer shadow-md transition-transform transform hover:translate-y-[-3px] active:translate-y-3 flex items-center justify-center"

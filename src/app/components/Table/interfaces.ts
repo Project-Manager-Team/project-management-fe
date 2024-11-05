@@ -10,8 +10,14 @@ export interface Item {
   manager: string | null;
   parentId: number | null;
   isEditing: boolean;
-  managers?: { username: string; avatar: string | null }[];
+  managers?: Manager[];
+  owner: Owner | null; // Added owner property
   [key: string]: unknown;
+}
+
+export interface Owner {
+  username: string;
+  avatar: string | null;
 }
 
 export interface HistoryItem {
@@ -39,3 +45,20 @@ export interface TableRowProps {
   setReloadTableData: React.Dispatch<React.SetStateAction<boolean>>;
   handleUpdateProgress: (id: number, progress: number) => void;
 }
+
+export interface Manager {
+  user: {
+    id: number;               // Ensure Manager has an ID
+    username: string;
+    avatar: string | null;
+  };
+  permission_id: number | null;
+  permissions: {
+    canEdit: boolean;
+    canDelete: boolean;
+    canAdd: boolean;
+    canFinish: boolean;
+  } | null;
+}
+
+export type PermissionKey = keyof NonNullable<Manager['permissions']>;
