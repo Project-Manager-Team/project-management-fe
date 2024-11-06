@@ -4,38 +4,53 @@ import { useState, useEffect, useCallback } from "react";
 import apiClient from "@/utils";
 import { toast } from "react-toastify";
 import TableRow from "./TableRow";
-import { Item, Current, HistoryItem, ItemProperty, Manager, PermissionUpdatePayload } from "./interfaces";
+import {
+  Item,
+  Current,
+  HistoryItem,
+  ItemProperty,
+  Manager,
+  PermissionUpdatePayload,
+} from "./interfaces";
 import { FiPlus, FiSave } from "react-icons/fi";
 import ManagersModal from "./ManagersModal";
-import ReactModal from 'react-modal';
-import { Switch } from '@headlessui/react'; // Add this import
+import ReactModal from "react-modal";
+import { Switch } from "@headlessui/react"; // Add this import
 
 // Add this after imports
-ReactModal.setAppElement('body'); // Set the root element for accessibility
+ReactModal.setAppElement("body"); // Set the root element for accessibility
 
 const modalStyles = {
   content: {
-    top: '50%',
-    left: '50%',
-    right: 'auto',
-    bottom: 'auto',
-    marginRight: '-50%',
-    transform: 'translate(-50%, -50%)',
-    backgroundColor: 'white',
-    borderRadius: '0.5rem',
-    padding: '2rem',
-    maxWidth: '90%',
-    maxHeight: '90vh',
-    overflow: 'auto'
+    top: "50%",
+    left: "50%",
+    right: "auto",
+    bottom: "auto",
+    marginRight: "-50%",
+    transform: "translate(-50%, -50%)",
+    backgroundColor: "white",
+    borderRadius: "0.5rem",
+    padding: "2rem",
+    maxWidth: "90%",
+    maxHeight: "90vh",
+    overflow: "auto",
   },
   overlay: {
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
-    zIndex: 1000
-  }
+    backgroundColor: "rgba(0, 0, 0, 0.75)",
+    zIndex: 1000,
+  },
 };
 
-const STORAGE_KEY = 'table-column-preferences';
-const DEFAULT_COLUMNS = ["type", "title", "description", "beginTime", "endTime", "owner", "progress"];
+const STORAGE_KEY = "table-column-preferences";
+const DEFAULT_COLUMNS = [
+  "type",
+  "title",
+  "description",
+  "beginTime",
+  "endTime",
+  "owner",
+  "progress",
+];
 
 interface TableProps {
   current: Current;
@@ -59,19 +74,25 @@ const allColumns: Column[] = [
 ];
 
 // Add this component before the Table component
-const ColumnToggle = ({ enabled, onChange }: { enabled: boolean; onChange: (checked: boolean) => void }) => {
+const ColumnToggle = ({
+  enabled,
+  onChange,
+}: {
+  enabled: boolean;
+  onChange: (checked: boolean) => void;
+}) => {
   return (
     <Switch
       checked={enabled}
       onChange={onChange}
       className={`${
-        enabled ? 'bg-blue-500' : 'bg-gray-200'
+        enabled ? "bg-blue-500" : "bg-gray-200"
       } relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
     >
       <span className="sr-only">Enable column</span>
       <span
         className={`${
-          enabled ? 'translate-x-5' : 'translate-x-1'
+          enabled ? "translate-x-5" : "translate-x-1"
         } inline-block h-3 w-3 transform rounded-full bg-white transition-transform`}
       />
     </Switch>
@@ -87,8 +108,9 @@ export default function Table({
   // Existing state variables
   const [isCreating, setIsCreating] = useState<boolean>(false);
   const [listProject, setListProject] = useState<Item[]>([]);
-  const [selectedColumns, setSelectedColumns] = useState<string[]>(DEFAULT_COLUMNS);
-  
+  const [selectedColumns, setSelectedColumns] =
+    useState<string[]>(DEFAULT_COLUMNS);
+
   // Move localStorage logic to useEffect
   useEffect(() => {
     // Only run this effect on the client side
@@ -98,16 +120,19 @@ export default function Table({
         const parsed = JSON.parse(savedColumns);
         setSelectedColumns(parsed);
       } catch {
-        console.error('Failed to parse saved column preferences');
+        console.error("Failed to parse saved column preferences");
       }
     }
   }, []); // Empty dependency array means this runs once on mount
 
-  const [isColumnSelectorOpen, setIsColumnSelectorOpen] = useState<boolean>(false);
+  const [isColumnSelectorOpen, setIsColumnSelectorOpen] =
+    useState<boolean>(false);
 
   // New state variables for modals
   const [showManagers, setShowManagers] = useState<boolean>(false);
-  const [currentManagerItem, setCurrentManagerItem] = useState<Item | null>(null);
+  const [currentManagerItem, setCurrentManagerItem] = useState<Item | null>(
+    null
+  );
   const [managerPermissions, setManagerPermissions] = useState<Manager[]>([]);
 
   const [inviteUsername, setInviteUsername] = useState<string>("");
@@ -154,8 +179,13 @@ export default function Table({
             canDelete: manager.permissions.canDelete,
             canAdd: manager.permissions.canAdd,
             canFinish: manager.permissions.canFinish,
+            canAddMember: manager.permissions.canAddMember,
+            canRemoveMember: manager.permissions.canRemoveMember,
           };
-          return apiClient.put(`/api/permissions/${manager.permission_id}/`, payload); // Ensure correct API path
+          return apiClient.put(
+            `/api/permissions/${manager.permission_id}/`,
+            payload
+          ); // Ensure correct API path
         }
         return Promise.resolve();
       });
@@ -185,12 +215,12 @@ export default function Table({
       });
 
       toast.success("Lời mời đã được gửi thành công!");
-      
+
       // Clear form fields
       setInviteUsername("");
       setInviteTitle("");
       setInviteContent("");
-      
+
       // Optionally refresh managers list
       const response = await apiClient.get<Manager[]>(
         `/api/project/${currentManagerItem.id}/managers_permissions/`
@@ -205,13 +235,13 @@ export default function Table({
   const toggleColumn = useCallback((columnId: string) => {
     setSelectedColumns((prev) => {
       const isRemoving = prev.includes(columnId);
-      
+
       // Prevent removing if it would leave less than 1 column
       if (isRemoving && prev.length <= 1) {
         // Instead of showing toast immediately, return the same state
         // and schedule the toast for the next tick
         setTimeout(() => {
-          toast.warning('Phải hiển thị ít nhất 1 cột');
+          toast.warning("Phải hiển thị ít nhất 1 cột");
         }, 0);
         return prev;
       }
@@ -277,9 +307,7 @@ export default function Table({
 
     const confirmDelete = () => {
       if (isNewItem) {
-        setListProject((prevList) =>
-          prevList.filter((item) => item.id !== id)
-        );
+        setListProject((prevList) => prevList.filter((item) => item.id !== id));
         setIsCreating(false);
         toast.success("Đã xoá nhiệm vụ mới tạo!");
       } else {
@@ -367,7 +395,9 @@ export default function Table({
         const createdItem: Item = response.data;
         setListProject((prevList) =>
           prevList.map((item) =>
-            item.id === listProject[listProject.length - 1].id ? createdItem : item
+            item.id === listProject[listProject.length - 1].id
+              ? createdItem
+              : item
           )
         );
         toast.success("Tạo mới nhiệm vụ thành công!");
@@ -384,9 +414,7 @@ export default function Table({
     try {
       await apiClient.patch(`/api/project/${id}/`, { progress }); // Ensure correct API path
       setListProject((prevList) =>
-        prevList.map((item) =>
-          item.id === id ? { ...item, progress } : item
-        )
+        prevList.map((item) => (item.id === id ? { ...item, progress } : item))
       );
       toast.success("Cập nhật tiến độ thành công!");
     } catch {
@@ -396,7 +424,7 @@ export default function Table({
 
   // Add this effect to save changes to localStorage
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(selectedColumns));
     }
   }, [selectedColumns]);
@@ -405,7 +433,7 @@ export default function Table({
   const resetColumnPreferences = useCallback(() => {
     setSelectedColumns(DEFAULT_COLUMNS);
     setTimeout(() => {
-      toast.success('Đã khôi phục cài đặt mặc định');
+      toast.success("Đã khôi phục cài đặt mặc định");
     }, 0);
   }, []); // Empty dependencies array since this function doesn't depend on any props or state
 
@@ -480,11 +508,11 @@ export default function Table({
         style={{
           content: {
             ...modalStyles.content,
-            padding: '1.5rem',
-            maxWidth: '600px', // Increased from 400px to 600px
-            minWidth: '500px', // Add minimum width
+            padding: "1.5rem",
+            maxWidth: "600px", // Increased from 400px to 600px
+            minWidth: "500px", // Add minimum width
           },
-          overlay: modalStyles.overlay
+          overlay: modalStyles.overlay,
         }}
         contentLabel="Column Selection Modal"
       >
@@ -494,9 +522,17 @@ export default function Table({
               onClick={resetColumnPreferences}
               className="text-sm text-blue-500 hover:text-blue-600 flex items-center gap-1"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" 
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
                 />
               </svg>
               Khôi phục mặc định
@@ -506,28 +542,34 @@ export default function Table({
           <div className="grid grid-cols-2 gap-8">
             {/* Left column */}
             <div className="space-y-4">
-              {allColumns.slice(0, Math.ceil(allColumns.length / 2)).map((col) => (
-                <div 
-                  key={col.id} 
-                  className="flex items-center justify-between p-3 hover:bg-gray-50 rounded border border-gray-100"
-                >
-                  <span className="text-sm font-medium text-gray-700">{col.label}</span>
-                  <ColumnToggle
-                    enabled={selectedColumns.includes(col.id)}
-                    onChange={() => toggleColumn(col.id)}
-                  />
-                </div>
-              ))}
+              {allColumns
+                .slice(0, Math.ceil(allColumns.length / 2))
+                .map((col) => (
+                  <div
+                    key={col.id}
+                    className="flex items-center justify-between p-3 hover:bg-gray-50 rounded border border-gray-100"
+                  >
+                    <span className="text-sm font-medium text-gray-700">
+                      {col.label}
+                    </span>
+                    <ColumnToggle
+                      enabled={selectedColumns.includes(col.id)}
+                      onChange={() => toggleColumn(col.id)}
+                    />
+                  </div>
+                ))}
             </div>
 
             {/* Right column - same changes as left column */}
             <div className="space-y-4">
               {allColumns.slice(Math.ceil(allColumns.length / 2)).map((col) => (
-                <div 
-                  key={col.id} 
+                <div
+                  key={col.id}
                   className="flex items-center justify-between p-3 hover:bg-gray-50 rounded border border-gray-100"
                 >
-                  <span className="text-sm font-medium text-gray-700">{col.label}</span>
+                  <span className="text-sm font-medium text-gray-700">
+                    {col.label}
+                  </span>
                   <ColumnToggle
                     enabled={selectedColumns.includes(col.id)}
                     onChange={() => toggleColumn(col.id)}
@@ -576,4 +618,3 @@ export default function Table({
     </div>
   );
 }
-

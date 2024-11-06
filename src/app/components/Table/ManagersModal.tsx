@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Manager, Item, PermissionKey } from "./interfaces";
 import Image from "next/image";
 import { DOMAIN } from "@/app/config";
-import { FiUser, FiX } from "react-icons/fi"; // Add this import
+import { FiUser, FiX } from "react-icons/fi";
 import { Dialog, DialogTitle, DialogPanel, Switch, Transition } from '@headlessui/react';
 import { toast } from "react-toastify";
 import apiClient from "@/utils";
@@ -11,12 +11,12 @@ import apiClient from "@/utils";
 interface ManagersModalProps {
   currentManagerItem: Item;
   managerPermissions: Manager[];
-  setManagerPermissions: React.Dispatch<React.SetStateAction<Manager[]>>; // Add this
+  setManagerPermissions: React.Dispatch<React.SetStateAction<Manager[]>>;
   handleOpenInviteForm: (item: Item) => void;
   savePermissions: () => void;
   setShowManagers: React.Dispatch<React.SetStateAction<boolean>>;
-  isOpen: boolean; // Add this prop
-  onClose: () => void; // Add this prop
+  isOpen: boolean;
+  onClose: () => void;
   inviteUsername: string;
   setInviteUsername: React.Dispatch<React.SetStateAction<string>>;
   inviteTitle: string;
@@ -52,7 +52,7 @@ const PermissionSwitch = ({
 const ManagersModal: React.FC<ManagersModalProps> = ({
   currentManagerItem,
   managerPermissions,
-  setManagerPermissions, // Add this to destructuring
+  setManagerPermissions,
   setShowManagers,
   isOpen,
   onClose,
@@ -66,7 +66,6 @@ const ManagersModal: React.FC<ManagersModalProps> = ({
 }) => {
   const [isInviteOpen, setIsInviteOpen] = useState(false);
 
-  // New handler that immediately updates permissions
   const handlePermissionChange = async (
     managerIndex: number,
     permissionType: PermissionKey,
@@ -84,7 +83,6 @@ const ManagersModal: React.FC<ManagersModalProps> = ({
 
       await apiClient.patch(`/api/permissions/${manager.permission_id}/`, payload);
       
-      // Update local state only after successful API call
       const updatedPermissions = [...managerPermissions];
       if (updatedPermissions[managerIndex].permissions) {
         updatedPermissions[managerIndex].permissions![permissionType] = value;
@@ -106,7 +104,6 @@ const ManagersModal: React.FC<ManagersModalProps> = ({
       <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
       <div className="fixed inset-0 flex items-center justify-center p-4">
         <DialogPanel className="bg-white w-full max-w-2xl mx-auto p-3 rounded-lg shadow-xl relative">
-          {/* Add close button */}
           <button
             onClick={() => setShowManagers(false)}
             className="absolute top-2 right-2 p-1 rounded-full hover:bg-gray-100 transition-colors"
@@ -128,6 +125,8 @@ const ManagersModal: React.FC<ManagersModalProps> = ({
                   <th className="py-1.5 px-1.5 border-b border-gray-200 w-16">Hoàn thành</th>
                   <th className="py-1.5 px-1.5 border-b border-gray-200 w-16">Thêm</th>
                   <th className="py-1.5 px-1.5 border-b border-gray-200 w-16">Xoá</th>
+                  <th className="py-1.5 px-1.5 border-b border-gray-200 w-16">Thêm thành viên</th>
+                  <th className="py-1.5 px-1.5 border-b border-gray-200 w-16">Xoá thành viên</th>
                 </tr>
               </thead>
               <tbody>
@@ -159,7 +158,7 @@ const ManagersModal: React.FC<ManagersModalProps> = ({
                         </span>
                       </div>
                     </td>
-                    {['canEdit', 'canFinish', 'canAdd', 'canDelete'].map((permission) => (
+                    {['canEdit', 'canFinish', 'canAdd', 'canDelete', 'canAddMember', 'canRemoveMember'].map((permission) => (
                       <td key={permission} className="py-1.5 px-1.5 border-b border-gray-200">
                         <div className="flex justify-center">
                           <PermissionSwitch
@@ -239,7 +238,6 @@ const ManagersModal: React.FC<ManagersModalProps> = ({
                   }
                   handleInvite();
                   setIsInviteOpen(false);
-                  console.log("fuck")
                 }}
                 className="w-full bg-green-500 text-white p-1.5 rounded text-xs hover:bg-green-600"
               >

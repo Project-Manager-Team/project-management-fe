@@ -1,10 +1,17 @@
 import React from "react";
-import { FiEdit, FiSave, FiTrash2, FiCheckSquare, FiFolder, FiUser } from "react-icons/fi";
+import {
+  FiEdit,
+  FiSave,
+  FiTrash2,
+  FiCheckSquare,
+  FiFolder,
+  FiUser,
+} from "react-icons/fi";
 import { toast } from "react-toastify";
 import Image from "next/image";
 import { DOMAIN } from "@/app/config";
-import ManagerButton from "./ManagerButton";
-import { HistoryItem, Item, ItemProperty } from "../interfaces";
+import { ManagerButton } from "./ManagerButton";
+import { HistoryItem, Item, ItemProperty } from "./interfaces";
 
 interface TableRowProps {
   item: Item;
@@ -97,7 +104,11 @@ const TableRow: React.FC<TableRowProps> = ({
             } focus:outline-none focus:ring-0 text-black rounded-lg`}
             value={item.title || ""}
             onChange={(e) =>
-              handleChange(item.index, e.target.name as keyof Item, e.target.value)
+              handleChange(
+                item.index,
+                e.target.name as keyof Item,
+                e.target.value
+              )
             }
             disabled={!item.isEditing}
           />
@@ -115,7 +126,11 @@ const TableRow: React.FC<TableRowProps> = ({
             } focus:outline-none focus:ring-0 text-black rounded-lg`}
             value={item.description || ""}
             onChange={(e) =>
-              handleChange(item.index, e.target.name as keyof Item, e.target.value)
+              handleChange(
+                item.index,
+                e.target.name as keyof Item,
+                e.target.value
+              )
             }
             disabled={!item.isEditing}
           />
@@ -134,7 +149,11 @@ const TableRow: React.FC<TableRowProps> = ({
               } focus:outline-none focus:ring-0 text-black rounded-lg`}
               value={item.beginTime ? item.beginTime.substring(0, 16) : ""}
               onChange={(e) =>
-                handleChange(item.index, e.target.name as keyof Item, e.target.value)
+                handleChange(
+                  item.index,
+                  e.target.name as keyof Item,
+                  e.target.value
+                )
               }
               disabled={!item.isEditing}
             />
@@ -162,7 +181,11 @@ const TableRow: React.FC<TableRowProps> = ({
               } focus:outline-none focus:ring-0 text-black rounded-lg`}
               value={item.endTime ? item.endTime.substring(0, 16) : ""}
               onChange={(e) =>
-                handleChange(item.index, e.target.name as keyof Item, e.target.value)
+                handleChange(
+                  item.index,
+                  e.target.name as keyof Item,
+                  e.target.value
+                )
               }
               disabled={!item.isEditing}
             />
@@ -196,8 +219,7 @@ const TableRow: React.FC<TableRowProps> = ({
                     e: React.SyntheticEvent<HTMLImageElement, Event>
                   ) => {
                     (e.target as HTMLImageElement).onerror = null;
-                    (e.target as HTMLImageElement).src =
-                      "/default-avatar.png";
+                    (e.target as HTMLImageElement).src = "/default-avatar.png";
                   }}
                 />
               ) : (
@@ -259,7 +281,10 @@ const TableRow: React.FC<TableRowProps> = ({
           >
             <FiTrash2 className="w-5 h-5" />
           </button>
-          <ManagerButton onClick={() => openManagers(item)} managersCount={item.managersCount} />
+          <ManagerButton
+            onClick={() => openManagers(item)}
+            managersCount={item.managersCount}
+          />
         </div>
       </td>
     </tr>

@@ -32,7 +32,13 @@ export interface Current {
   title: string;
 }
 
-export type PermissionKey = 'canEdit' | 'canFinish' | 'canAdd' | 'canDelete';
+export type PermissionKey = 
+  | 'canEdit' 
+  | 'canFinish' 
+  | 'canAdd' 
+  | 'canDelete'
+  | 'canAddMember'
+  | 'canRemoveMember';
 
 export interface User {
   id: number;
@@ -45,6 +51,8 @@ export interface Permissions {
   canFinish: boolean;
   canAdd: boolean;
   canDelete: boolean;
+  canAddMember: boolean;  // Add new permission
+  canRemoveMember: boolean;  // Add new permission
 }
 
 export interface Manager {
@@ -62,4 +70,6 @@ export interface PermissionUpdatePayload {
   canDelete: boolean;
   canAdd: boolean;
   canFinish: boolean;
+  canAddMember: boolean;  // Add new permission
+  canRemoveMember: boolean;  // Add new permission
 }
