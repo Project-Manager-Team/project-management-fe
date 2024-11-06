@@ -55,6 +55,37 @@ const TableRow: React.FC<TableRowProps> = ({
     handleUpdateProgress(item.id, newProgress);
   };
 
+  // Cập nhật helper functions với type safety
+  const getDiffLevelStyle = (level: number | null | undefined) => {
+    if (level === null || level === undefined) return 'bg-gray-100 text-gray-800';
+    
+    switch(level) {
+      case 1:
+        return 'bg-green-100 text-green-800';
+      case 2:
+        return 'bg-yellow-100 text-yellow-800';
+      case 3:
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+  
+  const getDiffLevelText = (level: number | null | undefined) => {
+    if (level === null || level === undefined) return 'Không xác định';
+    
+    switch(level) {
+      case 1:
+        return 'Dễ';
+      case 2:
+        return 'Trung bình';
+      case 3:
+        return 'Khó';
+      default:
+        return 'Không xác định';
+    }
+  };
+
   return (
     <tr
       key={`main-row-${item.id}`}
@@ -214,6 +245,38 @@ const TableRow: React.FC<TableRowProps> = ({
             </div>
           ) : (
             <span>Không có</span>
+          )}
+        </td>
+      )}
+      {selectedColumns.includes("diffLevel") && (
+        <td className="py-3 px-6 text-left bg-white rounded-lg">
+          {item.isEditing ? (
+            <select
+              name="diffLevel"
+              className={`w-full ${
+                item.isEditing
+                  ? "bg-yellow-50 border border-blue-500"
+                  : "bg-transparent"
+              } focus:outline-none focus:ring-0 text-black rounded-lg p-2`}
+              value={item.diffLevel || ''}
+              onChange={(e) =>
+                handleChange(
+                  item.index,
+                  e.target.name as keyof Item,
+                  e.target.value ? parseInt(e.target.value) : null
+                )
+              }
+              disabled={!item.isEditing}
+            >
+              <option value="">Chọn mức độ</option>
+              <option value="1">Dễ</option>
+              <option value="2">Trung bình</option>
+              <option value="3">Khó</option>
+            </select>
+          ) : (
+            <span className={`px-3 py-1 rounded-full text-sm ${getDiffLevelStyle(item.diffLevel)}`}>
+              {getDiffLevelText(item.diffLevel)}
+            </span>
           )}
         </td>
       )}

@@ -49,6 +49,7 @@ const DEFAULT_COLUMNS = [
   "beginTime",
   "endTime",
   "owner",
+  "diffLevel", // Move diffLevel before progress
   "progress",
 ];
 
@@ -58,7 +59,8 @@ const allColumns: Column[] = [
   { id: "beginTime", label: "Ngày bắt đầu" },
   { id: "endTime", label: "Ngày Kết thúc" },
   { id: "owner", label: "Người sở hữu" },
-  { id: "progress", label: "Tình trạng" },
+  { id: "diffLevel", label: "Mức độ" },  // Move diffLevel before progress
+  { id: "progress", label: "Tiến độ" },
 ];
 
 // Add this component before the Table component
@@ -294,6 +296,7 @@ export default function Table({
         managers: [],
         owner: null, // Initialize owner as null
         managersCount: 0, // Add managersCount property
+        diffLevel: null, // Add diffLevel property
       };
       const newListProject = [...listProject, newItem];
       setListProject(newListProject);
@@ -372,11 +375,10 @@ export default function Table({
                   &#9881;
                 </button>
               </th>
-              {/* Title column is now toggleable */}
+              {/* Other columns */}
               {selectedColumns.includes("title") && (
                 <th className="py-3 px-6 text-left">Tiêu đề</th>
               )}
-              {/* Other columns are toggleable */}
               {selectedColumns.includes("description") && (
                 <th className="py-3 px-6 text-left hidden md:table-cell">
                   Nội dung
@@ -391,8 +393,11 @@ export default function Table({
               {selectedColumns.includes("owner") && (
                 <th className="py-3 px-6 text-left">Người sở hữu</th>
               )}
+              {selectedColumns.includes("diffLevel") && (
+                <th className="py-3 px-6 text-left">Mức độ</th>
+              )}
               {selectedColumns.includes("progress") && (
-                <th className="py-3 px-6 text-left">Tình trạng</th>
+                <th className="py-3 px-6 text-left">Tiến độ</th>
               )}
               <th className="py-3 px-6 text-right"></th>
             </tr>

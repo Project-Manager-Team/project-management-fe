@@ -13,6 +13,7 @@ export interface Item {
   managers?: Manager[];
   owner: Owner | null;
   managersCount: number;
+  diffLevel: number | null;  // Change from string | null to number | null
 }
 
 export interface Owner {
@@ -124,3 +125,15 @@ export interface ManagersModalProps {
   onClose: () => void;
   handleInvite: (data: { username: string; title: string; content: string }) => Promise<void>;
 }
+
+// Thêm vào danh sách các cột có thể
+export const DEFAULT_COLUMNS = [
+  "type",
+  "title",
+  "description",
+  "beginTime",
+  "endTime",
+  "owner",
+  "progress",  // Đặt progress sau diffLevel
+  "diffLevel"  // Thay đổi thứ tự
+];
