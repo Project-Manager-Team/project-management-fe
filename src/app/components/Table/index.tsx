@@ -8,7 +8,6 @@ import {
   Item,
   ItemProperty,
   Manager,
-  PermissionUpdatePayload,
   TableProps,
   Column,
   ColumnToggleProps,
@@ -121,11 +120,6 @@ export default function Table({
   );
   const [managerPermissions, setManagerPermissions] = useState<Manager[]>([]);
 
-  const [inviteUsername, setInviteUsername] = useState<string>("");
-  const [inviteTitle, setInviteTitle] = useState<string>("");
-  const [inviteContent, setInviteContent] = useState<string>("");
-
-  // Handler to open Managers modal
   const handleOpenManagers = (item: Item) => {
     setCurrentManagerItem(item);
     setShowManagers(true);
@@ -151,72 +145,7 @@ export default function Table({
     }
   }, [showManagers, currentManagerItem]);
 
-  // Save permissions
-  const savePermissions = async () => {
-    if (!currentManagerItem) return;
-
-    try {
-      const updatePromises = managerPermissions.map((manager) => {
-        if (manager.permissions && manager.permission_id && manager.user.id) {
-          const payload: PermissionUpdatePayload = {
-            project: currentManagerItem.id,
-            user: manager.user.id,
-            canEdit: manager.permissions.canEdit,
-            canDelete: manager.permissions.canDelete,
-            canAdd: manager.permissions.canAdd,
-            canFinish: manager.permissions.canFinish,
-            canAddMember: manager.permissions.canAddMember,
-            canRemoveMember: manager.permissions.canRemoveMember,
-          };
-          return apiClient.put(
-            `/api/permissions/${manager.permission_id}/`,
-            payload
-          ); // Ensure correct API path
-        }
-        return Promise.resolve();
-      });
-
-      await Promise.all(updatePromises);
-      toast.success("Cập nhật quyền thành công!");
-      setShowManagers(false);
-    } catch (error) {
-      console.error("Permission update failed:", error);
-      toast.error("Cập nhật quyền không thành công");
-    }
-  };
-
-  // Handle Invite
-  const handleInvite = async () => {
-    try {
-      if (!currentManagerItem || !inviteUsername || !inviteTitle) {
-        toast.error("Vui lòng điền đầy đủ thông tin!");
-        return;
-      }
-
-      await apiClient.post("/api/invitation/", {
-        username: inviteUsername,
-        title: inviteTitle,
-        content: inviteContent,
-        project: currentManagerItem.id,
-      });
-
-      toast.success("Lời mời đã được gửi thành công!");
-
-      // Clear form fields
-      setInviteUsername("");
-      setInviteTitle("");
-      setInviteContent("");
-
-      // Optionally refresh managers list
-      const response = await apiClient.get<Manager[]>(
-        `/api/project/${currentManagerItem.id}/managers_permissions/`
-      );
-      setManagerPermissions(response.data);
-    } catch {
-      toast.error("Không thể gửi lời mời. Vui lòng thử lại!");
-    }
-  };
-
+ 
   // Modify the toggleColumn function to use useCallback and handle toasts properly
   const toggleColumn = useCallback((columnId: string) => {
     setSelectedColumns((prev) => {
@@ -572,18 +501,29 @@ export default function Table({
           currentManagerItem={currentManagerItem}
           managerPermissions={managerPermissions}
           setManagerPermissions={setManagerPermissions}
-          handleOpenInviteForm={() => {}} 
-          savePermissions={savePermissions}
           setShowManagers={setShowManagers}
           isOpen={showManagers}
           onClose={() => setShowManagers(false)}
-          inviteUsername={inviteUsername}
-          setInviteUsername={setInviteUsername}
-          inviteTitle={inviteTitle}
-          setInviteTitle={setInviteTitle}
-          inviteContent={inviteContent}
-          setInviteContent={setInviteContent}
-          handleInvite={handleInvite}
+          handleInvite={async (data) => {
+            try {
+              if (!currentManagerItem) return;
+      
+              await apiClient.post("/api/invitation/", {
+                ...data,
+                project: currentManagerItem.id,
+              });
+      
+              toast.success("Lời mời đã được gửi thành công!");
+              
+              // Refresh managers list
+              const response = await apiClient.get<Manager[]>(
+                `/api/project/${currentManagerItem.id}/managers_permissions/`
+              );
+              setManagerPermissions(response.data);
+            } catch {
+              toast.error("Không thể gửi lời mời. Vui lòng thử lại!");
+            }
+          }}
         />
       )}
 
