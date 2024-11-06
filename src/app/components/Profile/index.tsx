@@ -5,12 +5,15 @@ import { FaArrowAltCircleLeft, FaUserCircle } from "react-icons/fa";
 import { RxAvatar } from "react-icons/rx";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import apiClient from "@/utils";
+import apiClient from "@/utils/utils";
 import { useRouter } from "next/navigation";
-import { DOMAIN } from "@/app/config";
+import { DOMAIN } from "@/app/config/api";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { changePasswordSchema, type ChangePasswordInputs } from "@/app/schemas/form";
+import {
+  changePasswordSchema,
+  type ChangePasswordInputs,
+} from "@/app/schemas/form";
 
 interface User {
   username: string;
@@ -28,8 +31,13 @@ function Profile() {
   const router = useRouter();
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const { register, handleSubmit, formState: { errors }, reset } = useForm<ChangePasswordInputs>({
-    resolver: zodResolver(changePasswordSchema)
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm<ChangePasswordInputs>({
+    resolver: zodResolver(changePasswordSchema),
   });
 
   useEffect(() => {
@@ -59,7 +67,7 @@ function Profile() {
       });
       toast.success("Đổi mật khẩu thành công");
       reset();
-      setIsVisible(prev => ({ ...prev, changePass: false }));
+      setIsVisible((prev) => ({ ...prev, changePass: false }));
     } catch {
       toast.error("Đổi mật khẩu thất bại");
     }
@@ -282,7 +290,7 @@ function Profile() {
                 hidden
                 autoComplete="username"
               />
-              
+
               <div className="space-y-3">
                 <div>
                   <input
@@ -293,7 +301,9 @@ function Profile() {
                     autoComplete="current-password"
                   />
                   {errors.oldPassword && (
-                    <span className="text-xs text-red-500">{errors.oldPassword.message}</span>
+                    <span className="text-xs text-red-500">
+                      {errors.oldPassword.message}
+                    </span>
                   )}
                 </div>
 
@@ -306,7 +316,9 @@ function Profile() {
                     autoComplete="new-password"
                   />
                   {errors.newPassword && (
-                    <span className="text-xs text-red-500">{errors.newPassword.message}</span>
+                    <span className="text-xs text-red-500">
+                      {errors.newPassword.message}
+                    </span>
                   )}
                 </div>
 
@@ -319,7 +331,9 @@ function Profile() {
                     autoComplete="new-password"
                   />
                   {errors.newPassword2 && (
-                    <span className="text-xs text-red-500">{errors.newPassword2.message}</span>
+                    <span className="text-xs text-red-500">
+                      {errors.newPassword2.message}
+                    </span>
                   )}
                 </div>
               </div>

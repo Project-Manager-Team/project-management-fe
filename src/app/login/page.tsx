@@ -2,7 +2,7 @@
 import React, { useState } from "react"; // Added React and useState import
 import { useRouter } from "next/navigation"; // Ensure useRouter is imported
 import { FaUser, FaEnvelope, FaLock } from "react-icons/fa"; // Import missing icons
-import apiClient from "@/utils";
+import apiClient from "@/utils/utils";
 import { toast } from "react-toastify"; // Removed ToastContainer import
 import axios from "axios"; // Import axios
 import "react-toastify/dist/ReactToastify.css";
@@ -16,13 +16,17 @@ function LoginRegister() {
   const [rememberMe, setRememberMe] = useState<boolean>(false);
   const [isRegister, setIsRegister] = useState<boolean>(false);
 
-  const changeUsername = (e: React.ChangeEvent<HTMLInputElement>) => setUser(e.target.value);
-  const changePassword = (e: React.ChangeEvent<HTMLInputElement>) => setPass(e.target.value);
-  const changeEmail = (e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value);
-  const changeConfirmPassword = (e: React.ChangeEvent<HTMLInputElement>) => setConfirmPassword(e.target.value);
+  const changeUsername = (e: React.ChangeEvent<HTMLInputElement>) =>
+    setUser(e.target.value);
+  const changePassword = (e: React.ChangeEvent<HTMLInputElement>) =>
+    setPass(e.target.value);
+  const changeEmail = (e: React.ChangeEvent<HTMLInputElement>) =>
+    setEmail(e.target.value);
+  const changeConfirmPassword = (e: React.ChangeEvent<HTMLInputElement>) =>
+    setConfirmPassword(e.target.value);
 
-  const toggleRememberMe = () => setRememberMe(prev => !prev);
-  const toggleIsRegister = () => setIsRegister(prev => !prev);
+  const toggleRememberMe = () => setRememberMe((prev) => !prev);
+  const toggleIsRegister = () => setIsRegister((prev) => !prev);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -32,11 +36,20 @@ function LoginRegister() {
         return;
       }
       try {
-        await apiClient.post("/api/user/register/", { username, email, password });
+        await apiClient.post("/api/user/register/", {
+          username,
+          email,
+          password,
+        });
         toast.success("Đăng ký thành công!");
         setIsRegister(false);
-      } catch (error: unknown) { // Added error typing
-        if (axios.isAxiosError(error) && error.response && error.response.data) {
+      } catch (error: unknown) {
+        // Added error typing
+        if (
+          axios.isAxiosError(error) &&
+          error.response &&
+          error.response.data
+        ) {
           for (const value of Object.values(error.response.data)) {
             (value as string[]).forEach((element: string) => {
               toast.error(element);
@@ -46,7 +59,10 @@ function LoginRegister() {
       }
     } else {
       try {
-        const response = await apiClient.post("/api/user/token/", { username, password });
+        const response = await apiClient.post("/api/user/token/", {
+          username,
+          password,
+        });
         sessionStorage.setItem("access", response.data.access);
         if (rememberMe && response.data.refresh) {
           localStorage.setItem("refresh", response.data.refresh);
@@ -65,7 +81,9 @@ function LoginRegister() {
     <section className="min-h-screen flex items-center justify-center">
       <div className="w-full max-w-md">
         <div className="bg-white shadow-md rounded p-8">
-          <h3 className="text-2xl font-bold text-center mb-6">{isRegister ? "Đăng Ký" : "Đăng Nhập"}</h3>
+          <h3 className="text-2xl font-bold text-center mb-6">
+            {isRegister ? "Đăng Ký" : "Đăng Nhập"}
+          </h3>
           <form onSubmit={handleSubmit}>
             <div className="mb-4">
               <label className="block text-gray-700 mb-2" htmlFor="username">
@@ -128,7 +146,10 @@ function LoginRegister() {
 
             {isRegister && (
               <div className="mb-4">
-                <label className="block text-gray-700 mb-2" htmlFor="confirmPassword">
+                <label
+                  className="block text-gray-700 mb-2"
+                  htmlFor="confirmPassword"
+                >
                   Xác nhận mật khẩu
                 </label>
                 <div className="relative">
@@ -155,7 +176,10 @@ function LoginRegister() {
                   checked={rememberMe}
                   onChange={toggleRememberMe}
                 />
-                <label htmlFor="rememberMeCheckbox" className="text-gray-700">Ghi nhớ</label> {/* Added label */}
+                <label htmlFor="rememberMeCheckbox" className="text-gray-700">
+                  Ghi nhớ
+                </label>{" "}
+                {/* Added label */}
               </div>
             )}
 

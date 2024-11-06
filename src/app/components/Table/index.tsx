@@ -1,7 +1,7 @@
 "use client";
 import React from "react"; // Added React import
 import { useState, useEffect, useCallback } from "react";
-import apiClient from "@/utils";
+import apiClient from "@/utils/utils";
 import { toast } from "react-toastify";
 import TableRow from "./TableRow";
 import {
@@ -59,15 +59,12 @@ const allColumns: Column[] = [
   { id: "beginTime", label: "Ngày bắt đầu" },
   { id: "endTime", label: "Ngày Kết thúc" },
   { id: "owner", label: "Người sở hữu" },
-  { id: "diffLevel", label: "Mức độ" },  // Move diffLevel before progress
+  { id: "diffLevel", label: "Mức độ" }, // Move diffLevel before progress
   { id: "progress", label: "Tiến độ" },
 ];
 
 // Add this component before the Table component
-const ColumnToggle = ({
-  enabled,
-  onChange,
-}: ColumnToggleProps) => {
+const ColumnToggle = ({ enabled, onChange }: ColumnToggleProps) => {
   return (
     <Switch
       checked={enabled}
@@ -147,7 +144,6 @@ export default function Table({
     }
   }, [showManagers, currentManagerItem]);
 
- 
   // Modify the toggleColumn function to use useCallback and handle toasts properly
   const toggleColumn = useCallback((columnId: string) => {
     setSelectedColumns((prev) => {
@@ -512,14 +508,14 @@ export default function Table({
           handleInvite={async (data) => {
             try {
               if (!currentManagerItem) return;
-      
+
               await apiClient.post("/api/invitation/", {
                 ...data,
                 project: currentManagerItem.id,
               });
-      
+
               toast.success("Lời mời đã được gửi thành công!");
-              
+
               // Refresh managers list
               const response = await apiClient.get<Manager[]>(
                 `/api/project/${currentManagerItem.id}/managers_permissions/`

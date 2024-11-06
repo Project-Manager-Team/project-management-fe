@@ -9,7 +9,7 @@ import {
 } from "react-icons/fi";
 import { toast } from "react-toastify";
 import Image from "next/image";
-import { DOMAIN } from "@/app/config";
+import { DOMAIN } from "@/app/config/api";
 import { ManagerButton } from "./ManagerButton";
 import { TableRowProps } from "@/app/types/table";
 import { HistoryItem, Item } from "@/app/types/table";
@@ -57,32 +57,33 @@ const TableRow: React.FC<TableRowProps> = ({
 
   // Cập nhật helper functions với type safety
   const getDiffLevelStyle = (level: number | null | undefined) => {
-    if (level === null || level === undefined) return 'bg-gray-100 text-gray-800';
-    
-    switch(level) {
+    if (level === null || level === undefined)
+      return "bg-gray-100 text-gray-800";
+
+    switch (level) {
       case 1:
-        return 'bg-green-100 text-green-800';
+        return "bg-green-100 text-green-800";
       case 2:
-        return 'bg-yellow-100 text-yellow-800';
+        return "bg-yellow-100 text-yellow-800";
       case 3:
-        return 'bg-red-100 text-red-800';
+        return "bg-red-100 text-red-800";
       default:
-        return 'bg-gray-100 text-gray-800';
+        return "bg-gray-100 text-gray-800";
     }
   };
-  
+
   const getDiffLevelText = (level: number | null | undefined) => {
-    if (level === null || level === undefined) return 'Không xác định';
-    
-    switch(level) {
+    if (level === null || level === undefined) return "Không xác định";
+
+    switch (level) {
       case 1:
-        return 'Dễ';
+        return "Dễ";
       case 2:
-        return 'Trung bình';
+        return "Trung bình";
       case 3:
-        return 'Khó';
+        return "Khó";
       default:
-        return 'Không xác định';
+        return "Không xác định";
     }
   };
 
@@ -258,7 +259,7 @@ const TableRow: React.FC<TableRowProps> = ({
                   ? "bg-yellow-50 border border-blue-500"
                   : "bg-transparent"
               } focus:outline-none focus:ring-0 text-black rounded-lg p-2`}
-              value={item.diffLevel || ''}
+              value={item.diffLevel || ""}
               onChange={(e) =>
                 handleChange(
                   item.index,
@@ -274,7 +275,11 @@ const TableRow: React.FC<TableRowProps> = ({
               <option value="3">Khó</option>
             </select>
           ) : (
-            <span className={`px-3 py-1 rounded-full text-sm ${getDiffLevelStyle(item.diffLevel)}`}>
+            <span
+              className={`px-3 py-1 rounded-full text-sm ${getDiffLevelStyle(
+                item.diffLevel
+              )}`}
+            >
               {getDiffLevelText(item.diffLevel)}
             </span>
           )}

@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBell } from "@fortawesome/free-solid-svg-icons";
 import { FaTrashAlt } from "react-icons/fa";
-import apiClient from "@/utils";
+import apiClient from "@/utils/utils";
 import { toast } from "react-toastify"; // Ensure ToastContainer is not imported here
 
 interface NotificationProps {
@@ -19,7 +19,7 @@ interface Invitation {
 
 function Notification({ setReloadTableData }: NotificationProps) {
   const [notification, setNotification] = useState<boolean>(false);
-  const [invitations, setInvitations] = useState<Invitation[]>([]); 
+  const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [reloadAPI, setReloadAPI] = useState<boolean>(true);
   const notificationRef = useRef<HTMLDivElement>(null);
 
@@ -51,12 +51,18 @@ function Notification({ setReloadTableData }: NotificationProps) {
     setNotification(!notification);
   };
 
-  const editInvitation = async (item: Invitation, invitationID: number): Promise<void> => {
+  const editInvitation = async (
+    item: Invitation,
+    invitationID: number
+  ): Promise<void> => {
     await apiClient.patch(`/api/invitation/${invitationID}/`, item);
     setReloadAPI(!reloadAPI);
   };
 
-  const handleReply = async (item: Invitation, status: boolean): Promise<void> => {
+  const handleReply = async (
+    item: Invitation,
+    status: boolean
+  ): Promise<void> => {
     item.status = status;
     item.isReplied = true;
     if (status === true) {
@@ -72,7 +78,9 @@ function Notification({ setReloadTableData }: NotificationProps) {
 
   const deleteInvitation = async (invitationID: number) => {
     try {
-      const response = await apiClient.delete(`/api/invitation/${invitationID}/`);
+      const response = await apiClient.delete(
+        `/api/invitation/${invitationID}/`
+      );
       setReloadAPI(!reloadAPI);
       if (response.status !== 204) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -108,7 +116,9 @@ function Notification({ setReloadTableData }: NotificationProps) {
   }, []);
 
   return (
-    <div className="relative mb-4" ref={notificationRef}> {/* Added ref to wrapper div */}
+    <div className="relative mb-4" ref={notificationRef}>
+      {" "}
+      {/* Added ref to wrapper div */}
       <div className="relative">
         <FontAwesomeIcon
           icon={faBell}
@@ -122,19 +132,26 @@ function Notification({ setReloadTableData }: NotificationProps) {
         )}
       </div>
       {notification && (
-        <div className="absolute right-0 mt-2 bg-white border-2 border-gray-300 rounded-lg w-80 max-h-80 overflow-y-auto p-2 z-10"> {/* Changed background and border */}
+        <div className="absolute right-0 mt-2 bg-white border-2 border-gray-300 rounded-lg w-80 max-h-80 overflow-y-auto p-2 z-10">
+          {" "}
+          {/* Changed background and border */}
           {invitations.map((item: Invitation) => (
             <div
               className="mb-2 p-2 relative bg-white shadow-md rounded" /* Changed background and added shadow */
               key={item.id}
             >
-              <div className="font-bold mb-1 text-black">{item.title}</div> {/* Changed text color */}
-              <div className="text-sm text-gray-800 mb-2">{item.content}</div> {/* Changed text color */}
+              <div className="font-bold mb-1 text-black">{item.title}</div>{" "}
+              {/* Changed text color */}
+              <div className="text-sm text-gray-800 mb-2">
+                {item.content}
+              </div>{" "}
+              {/* Changed text color */}
               {!item.isReplied && (
                 <form
                   onSubmit={(e) => {
                     e.preventDefault();
-                    const submitter = (e.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null;
+                    const submitter = (e.nativeEvent as SubmitEvent)
+                      .submitter as HTMLButtonElement | null;
                     if (submitter) {
                       const status = JSON.parse(submitter.value);
                       handleReply(item, status);

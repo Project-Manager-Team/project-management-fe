@@ -1,11 +1,21 @@
 import React, { useState } from "react";
-import {  PermissionKey,  ManagersModalProps, ManagerButtonProps } from "@/app/types/table";
+import {
+  PermissionKey,
+  ManagersModalProps,
+  ManagerButtonProps,
+} from "@/app/types/table";
 import Image from "next/image";
-import { DOMAIN } from "@/app/config";
+import { DOMAIN } from "@/app/config/api";
 import { FiUser, FiX, FiTrash2 } from "react-icons/fi";
-import { Dialog, DialogTitle, DialogPanel, Switch, Transition } from '@headlessui/react';
+import {
+  Dialog,
+  DialogTitle,
+  DialogPanel,
+  Switch,
+  Transition,
+} from "@headlessui/react";
 import { toast } from "react-toastify";
-import apiClient from "@/utils";
+import apiClient from "@/utils/utils";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { inviteFormSchema, type InviteFormInputs } from "@/app/schemas/form";
@@ -22,20 +32,23 @@ const PermissionSwitch = ({
     checked={value}
     onChange={onChange}
     className={`${
-      value ? 'bg-green-500' : 'bg-gray-200'
+      value ? "bg-green-500" : "bg-gray-200"
     } relative inline-flex h-4 w-7 items-center rounded-full transition-colors focus:outline-none focus:ring-1 focus:ring-green-500 focus:ring-offset-1`}
   >
-    <span className="sr-only">{value ? 'Enabled' : 'Disabled'}</span>
+    <span className="sr-only">{value ? "Enabled" : "Disabled"}</span>
     <span
       className={`${
-        value ? 'translate-x-4' : 'translate-x-0.5'
+        value ? "translate-x-4" : "translate-x-0.5"
       } inline-block h-3 w-3 transform rounded-full bg-white transition-transform`}
     />
   </Switch>
 );
 
 // ManagerButton Component
-export const ManagerButton: React.FC<ManagerButtonProps> = ({ onClick, managersCount }) => {
+export const ManagerButton: React.FC<ManagerButtonProps> = ({
+  onClick,
+  managersCount,
+}) => {
   return (
     <button
       className="relative p-2 bg-blue-500 text-white border-none rounded-full cursor-pointer shadow-md transition-transform transform hover:translate-y-[-3px] active:translate-y-3 flex items-center justify-center"
@@ -65,20 +78,25 @@ const ManagersModal: React.FC<ManagersModalProps> = ({
   onClose,
 }) => {
   const [isInviteOpen, setIsInviteOpen] = useState(false);
-  
-  const { register, handleSubmit, formState: { errors }, reset } = useForm<InviteFormInputs>({
-    resolver: zodResolver(inviteFormSchema)
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm<InviteFormInputs>({
+    resolver: zodResolver(inviteFormSchema),
   });
 
   const onSubmit = async (data: InviteFormInputs) => {
     try {
-      await apiClient.post('/api/invitation/', {
+      await apiClient.post("/api/invitation/", {
         username: data.username,
         title: data.title,
         content: data.content,
-        project: currentManagerItem.id  // Thêm project ID vào payload
+        project: currentManagerItem.id, // Thêm project ID vào payload
       });
-      
+
       toast.success("Đã gửi lời mời thành công");
       setIsInviteOpen(false);
       reset();
@@ -99,17 +117,19 @@ const ManagersModal: React.FC<ManagersModalProps> = ({
       const payload = {
         project: currentManagerItem.id,
         user: manager.user.id,
-        [permissionType]: value
+        [permissionType]: value,
       };
 
-      await apiClient.patch(`/api/permissions/${manager.permission_id}/`, payload);
-      
+      await apiClient.patch(
+        `/api/permissions/${manager.permission_id}/`,
+        payload
+      );
+
       const updatedPermissions = [...managerPermissions];
       if (updatedPermissions[managerIndex].permissions) {
         updatedPermissions[managerIndex].permissions![permissionType] = value;
       }
       setManagerPermissions(updatedPermissions);
-
     } catch {
       toast.error(`Không thể cập nhật quyền ${permissionType}`);
       const updatedPermissions = [...managerPermissions];
@@ -155,17 +175,20 @@ const ManagersModal: React.FC<ManagersModalProps> = ({
   // Add helper function to handle actual removal
   const removeManager = async (managerId: number) => {
     try {
-      await apiClient.post(`/api/project/${currentManagerItem.id}/remove_manager/`, {
-        managerId
-      });
-      
+      await apiClient.post(
+        `/api/project/${currentManagerItem.id}/remove_manager/`,
+        {
+          managerId,
+        }
+      );
+
       const updatedPermissions = managerPermissions.filter(
-        manager => manager.user.id !== managerId
+        (manager) => manager.user.id !== managerId
       );
       setManagerPermissions(updatedPermissions);
-      toast.success('Đã xoá người quản lý');
+      toast.success("Đã xoá người quản lý");
     } catch {
-      toast.error('Không thể xoá người quản lý');
+      toast.error("Không thể xoá người quản lý");
     }
   };
 
@@ -185,18 +208,32 @@ const ManagersModal: React.FC<ManagersModalProps> = ({
           <DialogTitle className="text-base font-semibold mb-2 text-yellow-800 pr-8">
             Quản lý
           </DialogTitle>
-          
+
           <div className="overflow-x-auto relative">
             <table className="w-full text-xs bg-white border border-gray-200 text-yellow-800">
               <thead>
                 <tr>
-                  <th className="py-1.5 px-1.5 border-b border-gray-200 w-32">Quản lý</th>
-                  <th className="py-1.5 px-1.5 border-b border-gray-200 w-16">Sửa</th>
-                  <th className="py-1.5 px-1.5 border-b border-gray-200 w-16">Hoàn thành</th>
-                  <th className="py-1.5 px-1.5 border-b border-gray-200 w-16">Thêm</th>
-                  <th className="py-1.5 px-1.5 border-b border-gray-200 w-16">Xoá</th>
-                  <th className="py-1.5 px-1.5 border-b border-gray-200 w-16">Thêm thành viên</th>
-                  <th className="py-1.5 px-1.5 border-b border-gray-200 w-16">Xoá thành viên</th>
+                  <th className="py-1.5 px-1.5 border-b border-gray-200 w-32">
+                    Quản lý
+                  </th>
+                  <th className="py-1.5 px-1.5 border-b border-gray-200 w-16">
+                    Sửa
+                  </th>
+                  <th className="py-1.5 px-1.5 border-b border-gray-200 w-16">
+                    Hoàn thành
+                  </th>
+                  <th className="py-1.5 px-1.5 border-b border-gray-200 w-16">
+                    Thêm
+                  </th>
+                  <th className="py-1.5 px-1.5 border-b border-gray-200 w-16">
+                    Xoá
+                  </th>
+                  <th className="py-1.5 px-1.5 border-b border-gray-200 w-16">
+                    Thêm thành viên
+                  </th>
+                  <th className="py-1.5 px-1.5 border-b border-gray-200 w-16">
+                    Xoá thành viên
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -216,19 +253,25 @@ const ManagersModal: React.FC<ManagersModalProps> = ({
                               width={20}
                               height={20}
                               className="rounded-full"
-                              onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+                              onError={(
+                                e: React.SyntheticEvent<HTMLImageElement, Event>
+                              ) => {
                                 (e.target as HTMLImageElement).onerror = null;
-                                (e.target as HTMLImageElement).src = "/default-avatar.png";
+                                (e.target as HTMLImageElement).src =
+                                  "/default-avatar.png";
                               }}
                             />
                           ) : (
                             <FiUser className="w-5 h-5 text-gray-500" />
                           )}
-                          <span className="truncate max-w-[70px]" title={manager.user.username}>
+                          <span
+                            className="truncate max-w-[70px]"
+                            title={manager.user.username}
+                          >
                             {manager.user.username}
                           </span>
                         </div>
-                        
+
                         {/* Add delete button */}
                         <button
                           onClick={() => handleRemoveManager(manager.user.id)}
@@ -239,11 +282,25 @@ const ManagersModal: React.FC<ManagersModalProps> = ({
                         </button>
                       </div>
                     </td>
-                    {['canEdit', 'canFinish', 'canAdd', 'canDelete', 'canAddMember', 'canRemoveMember'].map((permission) => (
-                      <td key={permission} className="py-1.5 px-1.5 border-b border-gray-200">
+                    {[
+                      "canEdit",
+                      "canFinish",
+                      "canAdd",
+                      "canDelete",
+                      "canAddMember",
+                      "canRemoveMember",
+                    ].map((permission) => (
+                      <td
+                        key={permission}
+                        className="py-1.5 px-1.5 border-b border-gray-200"
+                      >
                         <div className="flex justify-center">
                           <PermissionSwitch
-                            value={manager.permissions?.[permission as PermissionKey] ?? false}
+                            value={
+                              manager.permissions?.[
+                                permission as PermissionKey
+                              ] ?? false
+                            }
                             onChange={(value) =>
                               handlePermissionChange(
                                 index,
@@ -265,14 +322,21 @@ const ManagersModal: React.FC<ManagersModalProps> = ({
                 onClick={() => setIsInviteOpen(!isInviteOpen)}
                 className="bg-green-500 text-white px-2 py-1 text-xs rounded hover:bg-green-600 inline-flex items-center gap-1"
               >
-                <span>{isInviteOpen ? 'Đóng' : 'Mời'}</span>
-                <svg 
-                  className={`w-3 h-3 transform transition-transform ${isInviteOpen ? 'rotate-45' : ''}`} 
-                  fill="none" 
-                  stroke="currentColor" 
+                <span>{isInviteOpen ? "Đóng" : "Mời"}</span>
+                <svg
+                  className={`w-3 h-3 transform transition-transform ${
+                    isInviteOpen ? "rotate-45" : ""
+                  }`}
+                  fill="none"
+                  stroke="currentColor"
                   viewBox="0 0 24 24"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 4v16m8-8H4"
+                  />
                 </svg>
               </button>
             </div>
@@ -297,7 +361,9 @@ const ManagersModal: React.FC<ManagersModalProps> = ({
                     className="w-full p-1.5 text-xs border rounded text-yellow-800 focus:border-green-500"
                   />
                   {errors.username && (
-                    <span className="text-xs text-red-500">{errors.username.message}</span>
+                    <span className="text-xs text-red-500">
+                      {errors.username.message}
+                    </span>
                   )}
                 </div>
 
@@ -309,7 +375,9 @@ const ManagersModal: React.FC<ManagersModalProps> = ({
                     className="w-full p-1.5 text-xs border rounded text-yellow-800 focus:border-green-500"
                   />
                   {errors.title && (
-                    <span className="text-xs text-red-500">{errors.title.message}</span>
+                    <span className="text-xs text-red-500">
+                      {errors.title.message}
+                    </span>
                   )}
                 </div>
 
@@ -321,7 +389,9 @@ const ManagersModal: React.FC<ManagersModalProps> = ({
                     rows={2}
                   />
                   {errors.content && (
-                    <span className="text-xs text-red-500">{errors.content.message}</span>
+                    <span className="text-xs text-red-500">
+                      {errors.content.message}
+                    </span>
                   )}
                 </div>
 

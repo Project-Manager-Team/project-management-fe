@@ -20,6 +20,17 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* Add Ant Design override styles if needed */
+.ant-btn-primary {
+  background-color: #1890ff;
+}
+
+.ant-table-wrapper {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
 .Toastify__toast-container {
   z-index: 9999; /* Ensure toast notifications are on top */
 }
