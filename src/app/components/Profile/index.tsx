@@ -8,6 +8,10 @@ import "react-toastify/dist/ReactToastify.css";
 import apiClient from "@/utils";
 import { useRouter } from "next/navigation";
 import { DOMAIN } from "@/app/config";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { changePasswordSchema, type ChangePasswordInputs } from "@/app/schemas/form";
+
 interface User {
   username: string;
   email: string;
@@ -16,11 +20,6 @@ interface User {
 
 function Profile() {
   const [user, setUser] = useState<User | null>(null);
-  const [passwords, setPasswords] = useState({
-    oldPassword: "",
-    newPassword: "",
-    newPassword2: "",
-  });
   const [isVisible, setIsVisible] = useState({
     showInfo: false,
     changePass: false,
@@ -28,6 +27,10 @@ function Profile() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const { register, handleSubmit, formState: { errors }, reset } = useForm<ChangePasswordInputs>({
+    resolver: zodResolver(changePasswordSchema)
+  });
 
   useEffect(() => {
     const getUser = async () => {
@@ -48,26 +51,15 @@ function Profile() {
     getUser();
   }, []);
 
-  const handlePasswordChange = async () => {
-    const { oldPassword, newPassword, newPassword2 } = passwords;
-    if (newPassword !== newPassword2) {
-      toast.error("Mật khẩu không khớp");
-      return;
-    }
-    if (newPassword.length < 8) {
-      toast.error("Mật khẩu phải có ít nhất 8 ký tự");
-      return;
-    }
-    if (newPassword === oldPassword) {
-      toast.error("Mật khẩu mới không được trùng với mật khẩu cũ");
-      return;
-    }
+  const onSubmit = async (data: ChangePasswordInputs) => {
     try {
       await apiClient.post("/api/user/change-password/", {
-        old_password: oldPassword,
-        new_password: newPassword,
+        old_password: data.oldPassword,
+        new_password: data.newPassword,
       });
       toast.success("Đổi mật khẩu thành công");
+      reset();
+      setIsVisible(prev => ({ ...prev, changePass: false }));
     } catch {
       toast.error("Đổi mật khẩu thất bại");
     }
@@ -175,11 +167,6 @@ function Profile() {
     };
   }, []);
 
-  const handleFormSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-    await handlePasswordChange();
-  };
-
   const handlePanelAvatarClick = () => {
     fileInputRef.current?.click();
   };
@@ -286,7 +273,7 @@ function Profile() {
                 Đổi Mật Khẩu
               </h3>
             </div>
-            <form onSubmit={handleFormSubmit}>
+            <form onSubmit={handleSubmit(onSubmit)}>
               <input
                 type="text"
                 name="username"
@@ -295,45 +282,48 @@ function Profile() {
                 hidden
                 autoComplete="username"
               />
-              <input
-                type="password"
-                placeholder="Mật khẩu cũ"
-                onChange={(e) =>
-                  setPasswords((prev) => ({
-                    ...prev,
-                    oldPassword: e.target.value,
-                  }))
-                }
-                className="mt-2 p-3 rounded-lg w-full focus:ring-2 focus:ring-blue-400 outline-none transition-all duration-200 text-black"
-                autoComplete="off"
-                required
-              />
-              <input
-                type="password"
-                placeholder="Mật khẩu mới"
-                onChange={(e) =>
-                  setPasswords((prev) => ({
-                    ...prev,
-                    newPassword: e.target.value,
-                  }))
-                }
-                className="mt-3 p-3 rounded-lg w-full focus:ring-2 focus:ring-blue-400 outline-none transition-all duration-200 text-black"
-                autoComplete="new-password"
-                required
-              />
-              <input
-                type="password"
-                placeholder="Nhập lại mật khẩu"
-                onChange={(e) =>
-                  setPasswords((prev) => ({
-                    ...prev,
-                    newPassword2: e.target.value,
-                  }))
-                }
-                className="mt-3 p-3 rounded-lg w-full focus:ring-2 focus:ring-blue-400 outline-none transition-all duration-200 text-black"
-                autoComplete="new-password"
-                required
-              />
+              
+              <div className="space-y-3">
+                <div>
+                  <input
+                    type="password"
+                    placeholder="Mật khẩu cũ"
+                    {...register("oldPassword")}
+                    className="mt-2 p-3 rounded-lg w-full focus:ring-2 focus:ring-blue-400 outline-none transition-all duration-200 text-black"
+                    autoComplete="current-password"
+                  />
+                  {errors.oldPassword && (
+                    <span className="text-xs text-red-500">{errors.oldPassword.message}</span>
+                  )}
+                </div>
+
+                <div>
+                  <input
+                    type="password"
+                    placeholder="Mật khẩu mới"
+                    {...register("newPassword")}
+                    className="mt-3 p-3 rounded-lg w-full focus:ring-2 focus:ring-blue-400 outline-none transition-all duration-200 text-black"
+                    autoComplete="new-password"
+                  />
+                  {errors.newPassword && (
+                    <span className="text-xs text-red-500">{errors.newPassword.message}</span>
+                  )}
+                </div>
+
+                <div>
+                  <input
+                    type="password"
+                    placeholder="Nhập lại mật khẩu"
+                    {...register("newPassword2")}
+                    className="mt-3 p-3 rounded-lg w-full focus:ring-2 focus:ring-blue-400 outline-none transition-all duration-200 text-black"
+                    autoComplete="new-password"
+                  />
+                  {errors.newPassword2 && (
+                    <span className="text-xs text-red-500">{errors.newPassword2.message}</span>
+                  )}
+                </div>
+              </div>
+
               <button
                 type="submit"
                 className="mt-4 w-full bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-lg transition-colors duration-200 active:bg-blue-700 shadow-md"

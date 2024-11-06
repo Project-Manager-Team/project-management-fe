@@ -6,6 +6,9 @@ import { FiUser, FiX, FiTrash2 } from "react-icons/fi";
 import { Dialog, DialogTitle, DialogPanel, Switch, Transition } from '@headlessui/react';
 import { toast } from "react-toastify";
 import apiClient from "@/utils";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { inviteFormSchema, type InviteFormInputs } from "@/app/schemas/form";
 
 // Permission Switch Component
 const PermissionSwitch = ({
@@ -60,15 +63,29 @@ const ManagersModal: React.FC<ManagersModalProps> = ({
   setShowManagers,
   isOpen,
   onClose,
-  inviteUsername,
-  setInviteUsername,
-  inviteTitle,
-  setInviteTitle,
-  inviteContent,
-  setInviteContent,
-  handleInvite,
 }) => {
   const [isInviteOpen, setIsInviteOpen] = useState(false);
+  
+  const { register, handleSubmit, formState: { errors }, reset } = useForm<InviteFormInputs>({
+    resolver: zodResolver(inviteFormSchema)
+  });
+
+  const onSubmit = async (data: InviteFormInputs) => {
+    try {
+      await apiClient.post('/api/invitation/', {
+        username: data.username,
+        title: data.title,
+        content: data.content,
+        project: currentManagerItem.id  // Thêm project ID vào payload
+      });
+      
+      toast.success("Đã gửi lời mời thành công");
+      setIsInviteOpen(false);
+      reset();
+    } catch {
+      toast.error("Không thể gửi lời mời");
+    }
+  };
 
   const handlePermissionChange = async (
     managerIndex: number,
@@ -271,42 +288,50 @@ const ManagersModal: React.FC<ManagersModalProps> = ({
             leaveTo="transform scale-95 opacity-0"
           >
             <div className="mt-3 space-y-2 border-t pt-3">
-              <input
-                type="text"
-                placeholder="Username"
-                value={inviteUsername}
-                onChange={(e) => setInviteUsername(e.target.value)}
-                className="w-full p-1.5 text-xs border rounded text-yellow-800 focus:border-green-500"
-                required
-              />
-              <input
-                type="text"
-                placeholder="Title"
-                value={inviteTitle}
-                onChange={(e) => setInviteTitle(e.target.value)}
-                className="w-full p-1.5 text-xs border rounded text-yellow-800 focus:border-green-500"
-                required
-              />
-              <textarea
-                placeholder="Content"
-                value={inviteContent}
-                onChange={(e) => setInviteContent(e.target.value)}
-                className="w-full p-1.5 text-xs border rounded text-yellow-800 focus:border-green-500"
-                rows={2}
-              />
-              <button
-                onClick={() => {
-                  if (!inviteUsername || !inviteTitle) {
-                    toast.error("Vui lòng điền Username và Title!");
-                    return;
-                  }
-                  handleInvite();
-                  setIsInviteOpen(false);
-                }}
-                className="w-full bg-green-500 text-white p-1.5 rounded text-xs hover:bg-green-600"
-              >
-                Gửi lời mời
-              </button>
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-2">
+                <div>
+                  <input
+                    type="text"
+                    placeholder="Tên người dùng *"
+                    {...register("username")}
+                    className="w-full p-1.5 text-xs border rounded text-yellow-800 focus:border-green-500"
+                  />
+                  {errors.username && (
+                    <span className="text-xs text-red-500">{errors.username.message}</span>
+                  )}
+                </div>
+
+                <div>
+                  <input
+                    type="text"
+                    placeholder="Tiêu đề *"
+                    {...register("title")}
+                    className="w-full p-1.5 text-xs border rounded text-yellow-800 focus:border-green-500"
+                  />
+                  {errors.title && (
+                    <span className="text-xs text-red-500">{errors.title.message}</span>
+                  )}
+                </div>
+
+                <div>
+                  <textarea
+                    placeholder="Nội dung *"
+                    {...register("content")}
+                    className="w-full p-1.5 text-xs border rounded text-yellow-800 focus:border-green-500"
+                    rows={2}
+                  />
+                  {errors.content && (
+                    <span className="text-xs text-red-500">{errors.content.message}</span>
+                  )}
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full bg-green-500 text-white p-1.5 rounded text-xs hover:bg-green-600"
+                >
+                  Gửi lời mời
+                </button>
+              </form>
             </div>
           </Transition>
         </DialogPanel>

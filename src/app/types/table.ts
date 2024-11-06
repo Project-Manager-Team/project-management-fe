@@ -119,16 +119,8 @@ export interface ManagersModalProps {
   currentManagerItem: Item;
   managerPermissions: Manager[];
   setManagerPermissions: React.Dispatch<React.SetStateAction<Manager[]>>;
-  handleOpenInviteForm: (item: Item) => void;
-  savePermissions: () => void;
   setShowManagers: React.Dispatch<React.SetStateAction<boolean>>;
   isOpen: boolean;
   onClose: () => void;
-  inviteUsername: string;
-  setInviteUsername: React.Dispatch<React.SetStateAction<string>>;
-  inviteTitle: string;
-  setInviteTitle: React.Dispatch<React.SetStateAction<string>>;
-  inviteContent: string;
-  setInviteContent: React.Dispatch<React.SetStateAction<string>>;
-  handleInvite: () => void;
+  handleInvite: (data: { username: string; title: string; content: string }) => Promise<void>;
 }

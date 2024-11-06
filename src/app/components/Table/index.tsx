@@ -567,13 +567,12 @@ export default function Table({
         </div>
       </ReactModal>
 
-      {/* Managers Modal */}
       {currentManagerItem && (
         <ManagersModal
           currentManagerItem={currentManagerItem}
           managerPermissions={managerPermissions}
           setManagerPermissions={setManagerPermissions}
-          handleOpenInviteForm={() => {}} // Add empty function since it's required by interface
+          handleOpenInviteForm={() => {}} 
           savePermissions={savePermissions}
           setShowManagers={setShowManagers}
           isOpen={showManagers}
