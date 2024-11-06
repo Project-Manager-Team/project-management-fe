@@ -119,7 +119,7 @@ function Profile() {
             formData.append("avatar", blob, "avatar.jpeg");
             try {
               const response = await apiClient.post(
-                "/user/profile/update-avatar/",
+                "/api/user/profile/update-avatar/",
                 formData,
                 {
                   headers: { "Content-Type": "multipart/form-data" },
