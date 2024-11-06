@@ -1,36 +1,11 @@
 import React, { useState } from "react";
-import { Manager, Item, PermissionKey } from "./interfaces";
+import {  PermissionKey,  ManagersModalProps, ManagerButtonProps } from "@/app/types/table";
 import Image from "next/image";
 import { DOMAIN } from "@/app/config";
 import { FiUser, FiX, FiTrash2 } from "react-icons/fi";
 import { Dialog, DialogTitle, DialogPanel, Switch, Transition } from '@headlessui/react';
 import { toast } from "react-toastify";
 import apiClient from "@/utils";
-
-// ManagerButton props
-interface ManagerButtonProps {
-  onClick: () => void;
-  managersCount: number;
-}
-
-// ManagersModal props
-interface ManagersModalProps {
-  currentManagerItem: Item;
-  managerPermissions: Manager[];
-  setManagerPermissions: React.Dispatch<React.SetStateAction<Manager[]>>;
-  handleOpenInviteForm: (item: Item) => void;
-  savePermissions: () => void;
-  setShowManagers: React.Dispatch<React.SetStateAction<boolean>>;
-  isOpen: boolean;
-  onClose: () => void;
-  inviteUsername: string;
-  setInviteUsername: React.Dispatch<React.SetStateAction<string>>;
-  inviteTitle: string;
-  setInviteTitle: React.Dispatch<React.SetStateAction<string>>;
-  inviteContent: string;
-  setInviteContent: React.Dispatch<React.SetStateAction<string>>;
-  handleInvite: () => void;
-}
 
 // Permission Switch Component
 const PermissionSwitch = ({

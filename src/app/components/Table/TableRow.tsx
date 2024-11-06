@@ -11,25 +11,8 @@ import { toast } from "react-toastify";
 import Image from "next/image";
 import { DOMAIN } from "@/app/config";
 import { ManagerButton } from "./ManagerButton";
-import { HistoryItem, Item, ItemProperty } from "./interfaces";
-
-interface TableRowProps {
-  item: Item;
-  handleChange: (
-    index: number,
-    name: ItemProperty,
-    value: string | number | boolean | null
-  ) => void;
-  handleEditItem: (index: number) => void;
-  handleDeleteItem: (id: number | null) => void;
-  setHistory: React.Dispatch<React.SetStateAction<HistoryItem[]>>;
-  setReloadTableData: React.Dispatch<React.SetStateAction<boolean>>;
-  handleUpdateProgress: (id: number, progress: number) => void;
-  selectedColumns: string[];
-  openManagers: (item: Item) => void; // New prop
-  openInviteForm?: (item: Item) => void; // Make this prop optional
-  // ...existing props...
-}
+import { TableRowProps } from "@/app/types/table";
+import { HistoryItem, Item } from "@/app/types/table";
 
 const TableRow: React.FC<TableRowProps> = ({
   item,

@@ -2,13 +2,7 @@ import { FiUser } from "react-icons/fi";
 import { Dialog, DialogPanel, Switch } from '@headlessui/react';
 import { toast } from "react-toastify";
 import apiClient from "@/utils";
-import { Manager, Item, PermissionKey } from "./interfaces";
-
-// Manager Button Props
-interface ManagerButtonProps {
-  onClick: () => void;
-  managersCount: number;
-}
+import { ManagerButtonProps, Manager, Item, PermissionKey } from "@/app/types/table";
 
 // Modal Props
 interface ManagersModalProps {

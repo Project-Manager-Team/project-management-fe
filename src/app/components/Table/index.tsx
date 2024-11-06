@@ -6,12 +6,13 @@ import { toast } from "react-toastify";
 import TableRow from "./TableRow";
 import {
   Item,
-  Current,
-  HistoryItem,
   ItemProperty,
   Manager,
   PermissionUpdatePayload,
-} from "./interfaces";
+  TableProps,
+  Column,
+  ColumnToggleProps,
+} from "@/app/types/table";
 import { FiPlus, FiSave } from "react-icons/fi";
 import ManagersModal from "./ManagersModal";
 import ReactModal from "react-modal";
@@ -52,18 +53,6 @@ const DEFAULT_COLUMNS = [
   "progress",
 ];
 
-interface TableProps {
-  current: Current;
-  setHistory: React.Dispatch<React.SetStateAction<HistoryItem[]>>;
-  reloadTableData: boolean;
-  setReloadTableData: React.Dispatch<React.SetStateAction<boolean>>;
-}
-
-interface Column {
-  id: string;
-  label: string;
-}
-
 const allColumns: Column[] = [
   { id: "title", label: "Tiêu đề" },
   { id: "description", label: "Nội dung" },
@@ -77,10 +66,7 @@ const allColumns: Column[] = [
 const ColumnToggle = ({
   enabled,
   onChange,
-}: {
-  enabled: boolean;
-  onChange: (checked: boolean) => void;
-}) => {
+}: ColumnToggleProps) => {
   return (
     <Switch
       checked={enabled}
