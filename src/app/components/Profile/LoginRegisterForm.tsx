@@ -1,11 +1,11 @@
 import React, { useEffect } from 'react';
-import { useForm } from "react-hook-form";
+import { useForm, FieldErrors } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FaUser, FaEnvelope, FaLock } from "react-icons/fa";
 import { toast } from "react-toastify";
 import axios from "axios";
 import apiClient from "@/app/utils/utils";
-import { loginFormSchema, type LoginFormInputs } from "@/app/schemas/form";
+import { loginFormSchema, type LoginFormInputs, type RegisterFormInputs } from "@/app/schemas/form";
 import { LoginRegisterFormProps } from "@/app/types/profile";
 
 export function LoginRegisterForm({
@@ -131,13 +131,11 @@ export function LoginRegisterForm({
               {...register("email", { required: isRegister })}
             />
             <FaEnvelope className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm" />
-            {isRegister
-              ? errors.email?.message && (
-                  <span className="text-xs text-red-500 mt-1">
-                    {errors.email.message}
-                  </span>
-                )
-              : null}
+            {(errors as FieldErrors<RegisterFormInputs>).email?.message && (
+              <span className="text-xs text-red-500 mt-1">
+                {(errors as FieldErrors<RegisterFormInputs>).email?.message}
+              </span>
+            )}
           </div>
         )}
 
@@ -165,9 +163,9 @@ export function LoginRegisterForm({
               {...register("confirmPassword")}
             />
             <FaLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm" />
-            {errors.confirmPassword?.message && (
+            {(errors as FieldErrors<RegisterFormInputs>).confirmPassword?.message && (
               <span className="text-xs text-red-500 mt-1">
-                {errors.confirmPassword.message}
+                {(errors as FieldErrors<RegisterFormInputs>).confirmPassword?.message}
               </span>
             )}
           </div>

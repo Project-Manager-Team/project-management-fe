@@ -9,10 +9,9 @@ export const inviteFormSchema = z.object({
 export const loginSchema = z.object({
   mode: z.literal("login"),
   username: z.string().min(1, "Tên đăng nhập là bắt buộc"),
-  password: z.string().min(6, "Mật khẩu phải có ít nhất 6 ký tự"),
+  password: z.string().min(8, "Mật khẩu phải có ít nhất 8 ký tự"),
   rememberMe: z.boolean().default(false),
-  email: z.string().email("Địa chỉ email không hợp lệ"),
-  confirmPassword: z.string().min(8, "Xác nhận mật khẩu là bắt buộc"),
+
 });
 
 export const registerSchema = z.object({
@@ -46,3 +45,4 @@ export const changePasswordSchema = z.object({
 export type InviteFormInputs = z.infer<typeof inviteFormSchema>;
 export type LoginFormInputs = z.infer<typeof loginFormSchema>;
 export type ChangePasswordInputs = z.infer<typeof changePasswordSchema>;
+export type RegisterFormInputs = z.infer<typeof registerSchema>;
