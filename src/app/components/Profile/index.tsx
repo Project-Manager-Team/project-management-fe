@@ -5,7 +5,7 @@ import { FaArrowAltCircleLeft, FaUserCircle } from "react-icons/fa";
 import { RxAvatar } from "react-icons/rx";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import apiClient from "@/utils/utils";
+import apiClient from "@/app/utils/utils";
 import { useRouter } from "next/navigation";
 import { DOMAIN } from "@/app/config/api";
 import { useForm } from "react-hook-form";
@@ -196,8 +196,8 @@ function Profile() {
                   : `${DOMAIN}${user.avatar}`
               }
               alt="Avatar"
-              width={48}
-              height={48}
+              width={36}  // Reduced from 48
+              height={36} // Reduced from 48
               className="rounded-full"
               priority
             />
@@ -215,8 +215,8 @@ function Profile() {
         {!isVisible.changePass ? (
           <div>
             {isVisible.showInfo && (
-              <div className="absolute right-0 mt-2 w-64 md:w-72 bg-white rounded-lg shadow-lg border border-gray-200 p-6 z-50 transform transition-all duration-300 ease-in-out profile-dropdown">
-                <div className="flex flex-col items-center mb-4">
+              <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 p-4 z-50 transform transition-all duration-300 ease-in-out profile-dropdown">
+                <div className="flex flex-col items-center mb-3">
                   {user?.avatar ? (
                     <div
                       className="cursor-pointer"
@@ -229,8 +229,8 @@ function Profile() {
                             : `${DOMAIN}${user.avatar}`
                         }
                         alt="Avatar"
-                        width={80}
-                        height={80}
+                        width={60}  // Reduced from 80
+                        height={60} // Reduced from 80
                         className="rounded-full mb-2"
                         loading="eager"
                         priority
@@ -255,13 +255,13 @@ function Profile() {
                   onClick={() =>
                     setIsVisible((prev) => ({ ...prev, changePass: true }))
                   }
-                  className="mt-2 w-full bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-lg transition-colors duration-200 active:bg-blue-700 shadow-md"
+                  className="mt-2 w-full bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-lg transition-colors duration-200 active:bg-blue-700 shadow-md text-sm"
                 >
                   Đổi mật khẩu
                 </button>
                 <button
                   onClick={handleSignOut}
-                  className="mt-2 w-full bg-red-500 hover:bg-red-600 text-white p-3 rounded-lg transition-colors duration-200 active:bg-red-700 shadow-md"
+                  className="mt-2 w-full bg-red-500 hover:bg-red-600 text-white p-2 rounded-lg transition-colors duration-200 active:bg-red-700 shadow-md text-sm"
                 >
                   Đăng xuất
                 </button>
@@ -269,7 +269,7 @@ function Profile() {
             )}
           </div>
         ) : (
-          <div className="absolute right-0 mt-2 w-64 md:w-72 bg-white rounded-lg shadow-lg border border-gray-200 p-6 z-50 transform transition-all duration-300 ease-in-out profile-dropdown">
+          <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 p-4 z-50 transform transition-all duration-300 ease-in-out profile-dropdown">
             <div className="flex items-center mb-4">
               <FaArrowAltCircleLeft
                 onClick={() =>
@@ -297,7 +297,7 @@ function Profile() {
                     type="password"
                     placeholder="Mật khẩu cũ"
                     {...register("oldPassword")}
-                    className="mt-2 p-3 rounded-lg w-full focus:ring-2 focus:ring-blue-400 outline-none transition-all duration-200 text-black"
+                    className="mt-2 p-2 rounded-lg w-full focus:ring-2 focus:ring-blue-400 outline-none transition-all duration-200 text-black text-sm"
                     autoComplete="current-password"
                   />
                   {errors.oldPassword && (
@@ -312,7 +312,7 @@ function Profile() {
                     type="password"
                     placeholder="Mật khẩu mới"
                     {...register("newPassword")}
-                    className="mt-3 p-3 rounded-lg w-full focus:ring-2 focus:ring-blue-400 outline-none transition-all duration-200 text-black"
+                    className="mt-3 p-2 rounded-lg w-full focus:ring-2 focus:ring-blue-400 outline-none transition-all duration-200 text-black text-sm"
                     autoComplete="new-password"
                   />
                   {errors.newPassword && (
@@ -327,7 +327,7 @@ function Profile() {
                     type="password"
                     placeholder="Nhập lại mật khẩu"
                     {...register("newPassword2")}
-                    className="mt-3 p-3 rounded-lg w-full focus:ring-2 focus:ring-blue-400 outline-none transition-all duration-200 text-black"
+                    className="mt-3 p-2 rounded-lg w-full focus:ring-2 focus:ring-blue-400 outline-none transition-all duration-200 text-black text-sm"
                     autoComplete="new-password"
                   />
                   {errors.newPassword2 && (

@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBell } from "@fortawesome/free-solid-svg-icons";
 import { FaTrashAlt } from "react-icons/fa";
-import apiClient from "@/utils/utils";
+import apiClient from "@/app/utils/utils";
 import { toast } from "react-toastify"; // Ensure ToastContainer is not imported here
 
 interface NotificationProps {

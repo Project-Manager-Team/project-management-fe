@@ -1,7 +1,7 @@
 "use client";
 import React from "react"; // Added React import
 import { useState, useEffect, useCallback } from "react";
-import apiClient from "@/utils/utils";
+import apiClient from "@/app/utils/utils";
 import { toast } from "react-toastify";
 import TableRow from "./TableRow";
 import {
