@@ -6,6 +6,31 @@ export const inviteFormSchema = z.object({
   content: z.string().min(1, "Nội dung là bắt buộc")
 });
 
+export const loginSchema = z.object({
+  mode: z.literal("login"),
+  username: z.string().min(1, "Tên đăng nhập là bắt buộc"),
+  password: z.string().min(6, "Mật khẩu phải có ít nhất 6 ký tự"),
+  rememberMe: z.boolean().default(false),
+  email: z.string().email("Địa chỉ email không hợp lệ"),
+  confirmPassword: z.string().min(8, "Xác nhận mật khẩu là bắt buộc"),
+});
+
+export const registerSchema = z.object({
+  mode: z.literal("register"),
+  username: z.string().min(1, "Tên đăng nhập là bắt buộc"),
+  email: z.string().email("Địa chỉ email không hợp lệ"),
+  password: z.string().min(8, "Mật khẩu phải có ít nhất 8 ký tự"),
+  confirmPassword: z.string().min(8, "Xác nhận mật khẩu là bắt buộc"),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Mật khẩu không khớp",
+  path: ["confirmPassword"],
+});
+
+export const loginFormSchema = z.union([
+  loginSchema,
+  registerSchema
+]);
+
 export const changePasswordSchema = z.object({
   oldPassword: z.string().min(1, "Mật khẩu cũ là bắt buộc"),
   newPassword: z.string().min(8, "Mật khẩu phải có ít nhất 8 ký tự"),
@@ -19,4 +44,5 @@ export const changePasswordSchema = z.object({
 });
 
 export type InviteFormInputs = z.infer<typeof inviteFormSchema>;
+export type LoginFormInputs = z.infer<typeof loginFormSchema>;
 export type ChangePasswordInputs = z.infer<typeof changePasswordSchema>;
