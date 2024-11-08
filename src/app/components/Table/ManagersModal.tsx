@@ -15,7 +15,7 @@ import {
   Transition,
 } from "@headlessui/react";
 import { toast } from "react-toastify";
-import apiClient from "@/app/utils/utils";
+import apiClient from "@/app/utils/apiClient";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { inviteFormSchema, type InviteFormInputs } from "@/app/schemas/form";

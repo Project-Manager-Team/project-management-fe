@@ -1,4 +1,3 @@
-
 export interface User {
   username: string;
   email: string;
@@ -33,4 +32,9 @@ export interface AvatarDisplayProps {
   avatar?: string;
   size?: number;
   onClick?: (event: React.MouseEvent<HTMLDivElement | HTMLImageElement>) => void;
+}
+
+export interface ProfileProps {
+  onSignOutCallback?: () => void;
+  onSignInCallback?: () => void;
 }

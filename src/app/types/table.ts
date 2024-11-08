@@ -13,7 +13,7 @@ export interface Item {
   managers?: Manager[];
   owner: Owner | null;
   managersCount: number;
-  diffLevel: number | null;  // Change from string | null to number | null
+  diffLevel: number | null; // Change from string | null to number | null
 }
 
 export interface Owner {
@@ -33,13 +33,13 @@ export interface Current {
   title: string;
 }
 
-export type PermissionKey = 
-  | 'canEdit' 
-  | 'canFinish' 
-  | 'canAdd' 
-  | 'canDelete'
-  | 'canAddMember'
-  | 'canRemoveMember';
+export type PermissionKey =
+  | "canEdit"
+  | "canFinish"
+  | "canAdd"
+  | "canDelete"
+  | "canAddMember"
+  | "canRemoveMember";
 
 export interface User {
   id: number;
@@ -103,8 +103,6 @@ export interface TableRowProps {
   ) => void;
   handleEditItem: (index: number) => void;
   handleDeleteItem: (id: number | null) => void;
-  setHistory: React.Dispatch<React.SetStateAction<HistoryItem[]>>;
-  setReloadTableData: React.Dispatch<React.SetStateAction<boolean>>;
   handleUpdateProgress: (id: number, progress: number) => void;
   selectedColumns: string[];
   openManagers: (item: Item) => void;
@@ -123,7 +121,11 @@ export interface ManagersModalProps {
   setShowManagers: React.Dispatch<React.SetStateAction<boolean>>;
   isOpen: boolean;
   onClose: () => void;
-  handleInvite: (data: { username: string; title: string; content: string }) => Promise<void>;
+  handleInvite: (data: {
+    username: string;
+    title: string;
+    content: string;
+  }) => Promise<void>;
 }
 
 // Thêm vào danh sách các cột có thể
@@ -134,6 +136,6 @@ export const DEFAULT_COLUMNS = [
   "beginTime",
   "endTime",
   "owner",
-  "progress",  // Đặt progress sau diffLevel
-  "diffLevel"  // Thay đổi thứ tự
+  "progress", // Đặt progress sau diffLevel
+  "diffLevel", // Thay đổi thứ tự
 ];

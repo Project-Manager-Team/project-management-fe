@@ -12,31 +12,29 @@ import Image from "next/image";
 import { DOMAIN } from "@/app/config/api";
 import { ManagerButton } from "./ManagerButton";
 import { TableRowProps } from "@/app/types/table";
-import { HistoryItem, Item } from "@/app/types/table";
+import { Item } from "@/app/types/table";
+import { formatDateTime } from "@/app/utils/formatDateTime";
+import { useAppStore } from '@/app/store/appStore'; // Add this import
 
 const TableRow: React.FC<TableRowProps> = ({
   item,
   handleChange,
   handleEditItem,
   handleDeleteItem,
-  setHistory,
-  setReloadTableData,
   handleUpdateProgress,
   selectedColumns,
   openManagers,
 }) => {
-  // Remove local state and modal references
+  const { history, setHistory, setShouldReloadTable } = useAppStore(); // Add history
 
   const handleTypeClick = () => {
-    setHistory((prevHistory: HistoryItem[]) => [
-      ...prevHistory,
-      {
-        id: item.id,
-        url: `/api/project/${item.id}/child`,
-        title: item.title || "",
-      },
-    ]);
-    setReloadTableData((prev) => !prev);
+    const newHistory = [...history, {
+      id: item.id,
+      url: `/api/project/${item.id}/child`,
+      title: item.title || "",
+    }];
+    setHistory(newHistory); // Pass the new array directly
+    setShouldReloadTable(true);
   };
 
   const renderTypeIcon = (type: string) => {
@@ -340,17 +338,6 @@ const TableRow: React.FC<TableRowProps> = ({
       </td>
     </tr>
   );
-};
-
-// Utility function moved inside or defined elsewhere
-const formatDateTime = (datetime: string): { time: string; date: string } => {
-  const dateObj = new Date(datetime);
-  const time = dateObj.toLocaleTimeString([], {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-  const date = dateObj.toLocaleDateString();
-  return { time, date };
 };
 
 export default TableRow;

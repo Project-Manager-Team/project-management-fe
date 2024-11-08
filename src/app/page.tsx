@@ -1,45 +1,53 @@
 'use client';
-import React, { useState } from "react";
+import { useAppStore } from './store/appStore';
+import React, { useEffect } from "react";
 import Notification from "./components/Notification";
 import Profile from "./components/Profile";
 import HistoryBar from "./components/HistoryBar";
 import Table from "./components/Table";
 
 export default function Home() {
-  const [reloadTableData, setReloadTableData] = useState<boolean>(false);
-  const [history, setHistory] = useState<HistoryItem[]>([
-    {
-      id: 0,
-      url: `/api/project/personal/`,
-      title: "Home",
-    },
-  ]);
+  const { history, setHistory } = useAppStore();
+
+  // Initialize history with a default item if empty
+  useEffect(() => {
+    if (!history || history.length === 0) {
+      setHistory([{
+        id: 0,
+        url: '/api/project/personal/',
+        title: 'Home'
+      }]);
+    }
+  }, [history, setHistory]);
+
+  const currentItem = history && history.length > 0 
+    ? history[history.length - 1] 
+    : { id: 0, url: '/api/project/personal/', title: 'Home' };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-gray-100 w-full">
-      <div className="fixed top-0 left-0 w-full bg-gray-900 z-50">
-        <div className="w-full p-2 flex justify-start items-center">
-          <HistoryBar history={history} setHistory={setHistory} />
-          <div className="flex space-x-4 ml-4">
-            <Notification setReloadTableData={setReloadTableData} />
-            <Profile />
+    <div className="min-h-screen bg-gray-900">
+      {/* Header Section */}
+      <header className="fixed top-0 left-0 right-0 bg-gray-900 z-50 border-b border-gray-800">
+        <div className="w-full px-4">  {/* Removed container class to allow full width */}
+          <div className="h-16 flex items-center">
+            {/* Left side - No extra wrapper div */}
+            <HistoryBar />
+            
+            {/* Right side - Push to the right */}
+            <div className="ml-auto flex items-center space-x-6">
+              <Notification />
+              <Profile />
+            </div>
           </div>
         </div>
-      </div>
-      <div className="w-full p-4 pt-20 sm:p-6 mt-16">
-        <Table
-          setHistory={setHistory}
-          reloadTableData={reloadTableData}
-          current={history[history.length - 1]}
-          setReloadTableData={setReloadTableData}
-        />
-      </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="container mx-auto px-4 pt-20">
+        <div className="bg-gray-800 rounded-lg shadow-lg">
+          <Table current={currentItem} />
+        </div>
+      </main>
     </div>
   );
-}
-
-interface HistoryItem {
-  id: number;
-  title: string;
-  url: string;
 }

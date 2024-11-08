@@ -2,7 +2,7 @@ import { FaArrowAltCircleLeft } from "react-icons/fa";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "react-toastify";
-import apiClient from "@/app/utils/utils";
+import apiClient from "@/app/utils/apiClient";
 import {
   changePasswordSchema,
   type ChangePasswordInputs,

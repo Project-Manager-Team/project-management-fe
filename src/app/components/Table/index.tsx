@@ -1,14 +1,13 @@
 "use client";
 import React from "react"; // Added React import
 import { useState, useEffect, useCallback } from "react";
-import apiClient from "@/app/utils/utils";
+import apiClient from "@/app/utils/apiClient";
 import { toast } from "react-toastify";
 import TableRow from "./TableRow";
 import {
   Item,
   ItemProperty,
   Manager,
-  TableProps,
   Column,
   ColumnToggleProps,
 } from "@/app/types/table";
@@ -16,6 +15,7 @@ import { FiPlus, FiSave } from "react-icons/fi";
 import ManagersModal from "./ManagersModal";
 import ReactModal from "react-modal";
 import { Switch } from "@headlessui/react"; // Add this import
+import { useAppStore } from '@/app/store/appStore'; // Add this import
 
 // Add this after imports
 ReactModal.setAppElement("body"); // Set the root element for accessibility
@@ -59,11 +59,10 @@ const allColumns: Column[] = [
   { id: "beginTime", label: "Ngày bắt đầu" },
   { id: "endTime", label: "Ngày Kết thúc" },
   { id: "owner", label: "Người sở hữu" },
-  { id: "diffLevel", label: "Mức độ" }, // Move diffLevel before progress
+  { id: "diffLevel", label: "Mức độ" },
   { id: "progress", label: "Tiến độ" },
 ];
 
-// Add this component before the Table component
 const ColumnToggle = ({ enabled, onChange }: ColumnToggleProps) => {
   return (
     <Switch
@@ -83,13 +82,18 @@ const ColumnToggle = ({ enabled, onChange }: ColumnToggleProps) => {
   );
 };
 
-export default function Table({
-  current,
-  setHistory,
-  reloadTableData,
-  setReloadTableData,
-}: TableProps) {
-  // Existing state variables
+// Cập nhật interface TableProps
+interface TableProps {
+  current: {
+    id: number;
+    url: string;
+    title: string;
+  };
+}
+
+export default function Table({ current }: TableProps) {
+  const { shouldReloadTable, setShouldReloadTable } = useAppStore();
+  
   const [isCreating, setIsCreating] = useState<boolean>(false);
   const [listProject, setListProject] = useState<Item[]>([]);
   const [selectedColumns, setSelectedColumns] =
@@ -258,7 +262,19 @@ export default function Table({
   };
 
   const getProjects = async (url: string) => {
+    if (!url) {
+      console.warn('No URL provided to getProjects');
+      return;
+    }
+
     try {
+      // Kiểm tra access token trước khi gọi API
+      const accessToken = sessionStorage.getItem('access');
+      if (!accessToken) {
+        setListProject([]); // Xóa dữ liệu bảng nếu không có token
+        return;
+      }
+
       const { data } = await apiClient.get<Item[]>(url);
       const newData = data.filter((item) => item.type !== "personal");
       newData.forEach((item, index) => {
@@ -267,13 +283,18 @@ export default function Table({
       });
       setListProject(newData);
     } catch {
+      setListProject([]); // Xóa dữ liệu bảng nếu có lỗi
       toast.error("Lấy dữ liệu không thành công");
+    } finally {
+      setShouldReloadTable(false); // Reset reloadTableData after fetching
     }
   };
 
   useEffect(() => {
-    getProjects(current.url);
-  }, [current.url, reloadTableData]);
+    if (current?.url) {
+      getProjects(current.url);
+    }
+  }, [current?.url, shouldReloadTable]);
 
   const handleCreateAndSaveItem = async () => {
     if (!isCreating) {
@@ -406,8 +427,6 @@ export default function Table({
                 handleChange={handleChange}
                 handleEditItem={handleEditItem}
                 handleDeleteItem={handleDeleteItem}
-                setHistory={setHistory}
-                setReloadTableData={setReloadTableData}
                 handleUpdateProgress={handleUpdateProgress}
                 selectedColumns={selectedColumns}
                 openManagers={handleOpenManagers} // Pass handler

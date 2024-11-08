@@ -1,11 +1,15 @@
-import React, { useEffect } from 'react';
+import React, { useEffect } from "react";
 import { useForm, FieldErrors } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FaUser, FaEnvelope, FaLock } from "react-icons/fa";
 import { toast } from "react-toastify";
 import axios from "axios";
-import apiClient from "@/app/utils/utils";
-import { loginFormSchema, type LoginFormInputs, type RegisterFormInputs } from "@/app/schemas/form";
+import apiClient from "@/app/utils/apiClient";
+import {
+  loginFormSchema,
+  type LoginFormInputs,
+  type RegisterFormInputs,
+} from "@/app/schemas/form";
 import { LoginRegisterFormProps } from "@/app/types/profile";
 
 export function LoginRegisterForm({
@@ -21,7 +25,7 @@ export function LoginRegisterForm({
   } = useForm<LoginFormInputs>({
     resolver: zodResolver(loginFormSchema),
     mode: "onChange",
-    defaultValues: isRegister 
+    defaultValues: isRegister
       ? {
           mode: "register",
           username: "",
@@ -59,7 +63,7 @@ export function LoginRegisterForm({
 
   const onSubmit = async (data: LoginFormInputs) => {
     console.log("Form data:", data); // Debugging line
-    if (data.mode === 'register') {
+    if (data.mode === "register") {
       try {
         await apiClient.post("/api/user/register/", {
           username: data.username,
@@ -163,9 +167,13 @@ export function LoginRegisterForm({
               {...register("confirmPassword")}
             />
             <FaLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm" />
-            {(errors as FieldErrors<RegisterFormInputs>).confirmPassword?.message && (
+            {(errors as FieldErrors<RegisterFormInputs>).confirmPassword
+              ?.message && (
               <span className="text-xs text-red-500 mt-1">
-                {(errors as FieldErrors<RegisterFormInputs>).confirmPassword?.message}
+                {
+                  (errors as FieldErrors<RegisterFormInputs>).confirmPassword
+                    ?.message
+                }
               </span>
             )}
           </div>
