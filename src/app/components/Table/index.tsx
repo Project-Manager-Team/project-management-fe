@@ -210,56 +210,62 @@ export default function Table({ current }: TableProps) {
     }
   };
 
-  const handleDeleteItem = (id: number | null) => {
+  const handleDeleteItem = useCallback((id: number | null) => {
     if (id === null) {
       toast.error("ID không hợp lệ");
       return;
     }
-
+  
     const itemToDelete = listProject.find((item) => item.id === id);
     const isNewItem =
       isCreating &&
       itemToDelete &&
       itemToDelete.id === listProject[listProject.length - 1].id;
-
-    const confirmDelete = () => {
-      if (isNewItem) {
-        setListProject((prevList) => prevList.filter((item) => item.id !== id));
-        setIsCreating(false);
-        toast.success("Đã xoá nhiệm vụ mới tạo!");
-      } else {
-        apiClient
-          .delete(`/api/project/${id}/`) // Ensure correct API path
-          .then(() => {
-            toast.success("Xóa nhiệm vụ thành công!");
-            setListProject((prevList) =>
-              prevList.filter((item) => item.id !== id)
-            );
-          })
-          .catch(() => {
-            toast.error("Không thể xóa nhiệm vụ");
-          });
-      }
-    };
-
-    toast(
-      <div className="flex flex-col items-start space-y-2">
-        <p>Bạn có chắc chắn muốn xóa nhiệm vụ này?</p>
-        <button
-          onClick={confirmDelete}
-          className="bg-red-600 text-white px-4 py-2 rounded shadow-lg bg-opacity-80 hover:bg-red-700 transition"
-        >
-          Xóa
-        </button>
-      </div>,
-      {
-        position: "bottom-right",
-        autoClose: false,
-        closeOnClick: true,
-        draggable: false,
-      }
+  
+    const ToastContent = (
+      <div>
+        <p>Bạn có muốn xóa không?</p>
+        <div className="mt-2 flex justify-end gap-2">
+          <button
+            onClick={() => {
+              toast.dismiss();
+              if (isNewItem) {
+                setListProject((prevList) => prevList.filter((item) => item.id !== id));
+                setIsCreating(false);
+                toast.success("Đã xoá nhiệm vụ mới tạo!");
+              } else {
+                apiClient
+                  .delete(`/api/project/${id}/`)
+                  .then(() => {
+                    toast.success("Xóa nhiệm vụ thành công!");
+                    setListProject((prevList) =>
+                      prevList.filter((item) => item.id !== id)
+                    );
+                  })
+                  .catch(() => {
+                    toast.error("Không thể xóa nhiệm vụ");
+                  });
+              }
+            }}
+            className="px-2 py-1 bg-red-500 text-white rounded"
+          >
+            Xóa
+          </button>
+          <button
+            onClick={() => toast.dismiss()}
+            className="px-2 py-1 bg-gray-500 text-white rounded"
+          >
+            Hủy
+          </button>
+        </div>
+      </div>
     );
-  };
+  
+    toast(ToastContent, {
+      autoClose: false,
+      closeButton: false,
+    });
+  }, [listProject, isCreating]);
 
   const getProjects = async (url: string) => {
     if (!url) {

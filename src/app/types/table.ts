@@ -112,6 +112,7 @@ export interface TableRowProps {
 export interface ManagerButtonProps {
   onClick: () => void;
   managersCount: number;
+  size?: 'small' | 'normal';
 }
 
 export interface ManagersModalProps {

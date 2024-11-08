@@ -304,10 +304,11 @@ const TableRow: React.FC<TableRowProps> = ({
           )}
         </td>
       )}
-      <td className="py-3 px-6 text-right">
-        <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex space-x-2">
+      <td className="py-3 px-2 text-right w-[120px] min-w-[120px]"> {/* Thay đổi padding và thêm width cố định */}
+        <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex space-x-1"> {/* Giảm space-x-2 thành space-x-1 */}
           <button
-            className="p-2 bg-gray-200 text-gray-800 border-none rounded-full cursor-pointer shadow-md transition-transform transform hover:translate-y-[-3px] active:translate-y-3 flex items-center justify-center"
+            className="p-1.5 bg-gray-200 text-gray-800 border-none rounded-full cursor-pointer shadow-sm hover:bg-gray-300 flex items-center justify-center" 
+            // Giảm padding và shadow
             onClick={() => {
               if (item.title && item.title.trim() === "") {
                 toast.error("Title is required");
@@ -318,21 +319,22 @@ const TableRow: React.FC<TableRowProps> = ({
             aria-label={item.isEditing ? "Save" : "Edit"}
           >
             {item.isEditing ? (
-              <FiSave className="w-5 h-5" />
+              <FiSave className="w-4 h-4" /> // Giảm kích thước icon
             ) : (
-              <FiEdit className="w-5 h-5" />
+              <FiEdit className="w-4 h-4" />
             )}
           </button>
           <button
-            className="p-2 bg-gray-200 text-gray-800 border-none rounded-full cursor-pointer shadow-md transition-transform transform hover:translate-y-[-3px] active:translate-y-3 flex items-center justify-center"
+            className="p-1.5 bg-gray-200 text-gray-800 border-none rounded-full cursor-pointer shadow-sm hover:bg-gray-300 flex items-center justify-center"
             onClick={() => handleDeleteItem(item.id)}
             aria-label="Delete"
           >
-            <FiTrash2 className="w-5 h-5" />
+            <FiTrash2 className="w-4 h-4" />
           </button>
           <ManagerButton
             onClick={() => openManagers(item)}
             managersCount={item.managersCount}
+            size="small" // Thêm prop size
           />
         </div>
       </td>

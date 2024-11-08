@@ -142,34 +142,33 @@ const ManagersModal: React.FC<ManagersModalProps> = ({
 
   // Update remove manager handler
   const handleRemoveManager = async (managerId: number) => {
-    // Custom toast for confirmation
-    const toastId = toast.info(
-      <div className="flex flex-col gap-2">
-        <p>Bạn có chắc chắn muốn xoá người quản lý này?</p>
-        <div className="flex justify-end gap-2">
+    const ToastContent = (
+      <div>
+        <p>Bạn có muốn xóa không?</p>
+        <div className="mt-2 flex justify-end gap-2">
           <button
             onClick={() => {
-              toast.dismiss(toastId);
+              toast.dismiss();
               removeManager(managerId);
             }}
-            className="px-3 py-1 bg-red-500 text-white rounded-md text-sm hover:bg-red-600"
+            className="px-2 py-1 bg-red-500 text-white rounded"
           >
-            Xoá
+            Xóa
           </button>
           <button
-            onClick={() => toast.dismiss(toastId)}
-            className="px-3 py-1 bg-gray-500 text-white rounded-md text-sm hover:bg-gray-600"
+            onClick={() => toast.dismiss()}
+            className="px-2 py-1 bg-gray-500 text-white rounded"
           >
-            Huỷ
+            Hủy
           </button>
         </div>
-      </div>,
-      {
-        autoClose: false,
-        closeButton: false,
-        closeOnClick: false,
-      }
+      </div>
     );
+
+    toast(ToastContent, {
+      autoClose: false,
+      closeButton: false,
+    });
   };
 
   // Add helper function to handle actual removal
