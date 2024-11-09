@@ -58,8 +58,6 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
   },
 
   handleDelete: async (item: Invitation) => {
-    if (!window.confirm("Bạn có muốn xóa không?")) return;
-
     try {
       await apiClient.delete(`/api/invitation/${item.id}/`);
       toast.success("Đã xóa thành công");

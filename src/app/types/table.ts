@@ -115,21 +115,75 @@ export interface ManagerButtonProps {
   size?: 'small' | 'normal';
 }
 
+// Update ManagersModalProps to remove duplicate props and fix conflicts
 export interface ManagersModalProps {
   currentManagerItem: Item;
   managerPermissions: Manager[];
   setManagerPermissions: React.Dispatch<React.SetStateAction<Manager[]>>;
-  setShowManagers: React.Dispatch<React.SetStateAction<boolean>>;
   isOpen: boolean;
   onClose: () => void;
-  handleInvite: (data: {
-    username: string;
-    title: string;
-    content: string;
-  }) => Promise<void>;
 }
 
-// Thêm vào danh sách các cột có thể
+// Update TableViewProps
+
+export interface TableViewProps extends CardViewProps {
+  selectedColumns: string[];
+}
+
+// Add EditableContentProps
+export interface EditableContentProps {
+  isEditing: boolean;
+  value: string | number | boolean | null;
+  onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  name: string;
+  type?: string;
+  className?: string;
+}
+
+// Add AutoResizeTextAreaProps
+export interface AutoResizeTextAreaProps {
+  content: string | null;
+}
+
+// Update ManagersModalProps
+export interface ManagersModalProps {
+  currentManagerItem: Item;
+  managerPermissions: Manager[];
+  setManagerPermissions: React.Dispatch<React.SetStateAction<Manager[]>>;
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+// Update PermissionSwitchProps
+export interface PermissionSwitchProps {
+  value: boolean;
+  onChange: (value: boolean) => void;
+}
+
+// Update all existing interfaces to match component needs
+export interface OwnerButtonProps {
+  owner: Owner | null;
+  managersCount: number;
+  onClick: () => void;
+  size?: 'small' | 'normal';
+}
+
+// Update CardViewProps and TableViewProps
+export interface CardViewProps {
+  items: Item[];
+  handleChange: (index: number, name: ItemProperty, value: string | number | boolean | null) => void;
+  handleEditItem: (index: number) => void;
+  handleDeleteItem: (id: number | null) => void;
+  handleUpdateProgress: (id: number, progress: number) => void;
+  openManagers: (item: Item) => void;
+}
+
+export interface TableViewProps extends CardViewProps {
+  selectedColumns: string[];
+}
+
+// Removed CardViewProps as it is equivalent to SharedViewProps
+
 export const DEFAULT_COLUMNS = [
   "type",
   "title",

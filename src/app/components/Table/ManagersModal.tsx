@@ -6,10 +6,9 @@ import {
 } from "@/app/types/table";
 import Image from "next/image";
 import { DOMAIN } from "@/app/config/api";
-import { FiUser, FiX, FiTrash2 } from "react-icons/fi";
+import { FiUser, FiTrash2 } from "react-icons/fi";
 import {
   Dialog,
-  DialogTitle,
   DialogPanel,
   Switch,
   Transition,
@@ -19,15 +18,10 @@ import apiClient from "@/app/utils/apiClient";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { inviteFormSchema, type InviteFormInputs } from "@/app/schemas/form";
+import { PermissionSwitchProps } from '@/app/types/table';
 
 // Permission Switch Component
-const PermissionSwitch = ({
-  value,
-  onChange,
-}: {
-  value: boolean;
-  onChange: (value: boolean) => void;
-}) => (
+const PermissionSwitch = ({ value, onChange }: PermissionSwitchProps) => (
   <Switch
     checked={value}
     onChange={onChange}
@@ -68,12 +62,11 @@ export const ManagerButton: React.FC<ManagerButtonProps> = ({
   );
 };
 
-// ManagersModal Component
+
 const ManagersModal: React.FC<ManagersModalProps> = ({
   currentManagerItem,
   managerPermissions,
   setManagerPermissions,
-  setShowManagers,
   isOpen,
   onClose,
 }) => {
@@ -140,23 +133,30 @@ const ManagersModal: React.FC<ManagersModalProps> = ({
     }
   };
 
-  // Update remove manager handler
-  const handleRemoveManager = async (managerId: number) => {
+  // Create a helper function to show confirmation toasts
+  const showConfirmationToast = (
+    message: string,
+    onConfirm: () => void,
+    onCancel?: () => void
+  ) => {
     const ToastContent = (
       <div>
-        <p>Bạn có muốn xóa không?</p>
+        <p>{message}</p>
         <div className="mt-2 flex justify-end gap-2">
           <button
             onClick={() => {
               toast.dismiss();
-              removeManager(managerId);
+              onConfirm();
             }}
             className="px-2 py-1 bg-red-500 text-white rounded"
           >
             Xóa
           </button>
           <button
-            onClick={() => toast.dismiss()}
+            onClick={() => {
+              toast.dismiss();
+              if (onCancel) onCancel();
+            }}
             className="px-2 py-1 bg-gray-500 text-white rounded"
           >
             Hủy
@@ -169,6 +169,11 @@ const ManagersModal: React.FC<ManagersModalProps> = ({
       autoClose: false,
       closeButton: false,
     });
+  };
+
+  // Update handleRemoveManager function to use the helper
+  const handleRemoveManager = async (managerId: number) => {
+    showConfirmationToast("Bạn có muốn xóa không?", () => removeManager(managerId));
   };
 
   // Add helper function to handle actual removal
@@ -192,24 +197,13 @@ const ManagersModal: React.FC<ManagersModalProps> = ({
   };
 
   return (
-    <Dialog open={isOpen} onClose={onClose} className="relative z-50">
-      <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+    <Dialog open={isOpen} onClose={onClose}>
+      <div className="fixed inset-0 bg-black/30 backdrop-blur-sm" aria-hidden="true" />
       <div className="fixed inset-0 flex items-center justify-center p-4">
-        <DialogPanel className="bg-white w-full max-w-2xl mx-auto p-3 rounded-lg shadow-xl relative">
-          <button
-            onClick={() => setShowManagers(false)}
-            className="absolute top-2 right-2 p-1 rounded-full hover:bg-gray-100 transition-colors"
-            aria-label="Close"
-          >
-            <FiX className="w-5 h-5 text-gray-500" />
-          </button>
-
-          <DialogTitle className="text-base font-semibold mb-2 text-yellow-800 pr-8">
-            Quản lý
-          </DialogTitle>
-
-          <div className="overflow-x-auto relative">
-            <table className="w-full text-xs bg-white border border-gray-200 text-yellow-800">
+        <DialogPanel className="bg-[var(--card)] text-[var(--card-foreground)] 
+                              w-full max-w-2xl p-6 rounded-lg shadow-xl">
+          <div className="space-y-4">
+            <table className="w-full border-collapse divide-y divide-[var(--muted)] text-[var(--foreground)]">
               <thead>
                 <tr>
                   <th className="py-1.5 px-1.5 border-b border-gray-200 w-32">

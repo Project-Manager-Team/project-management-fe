@@ -1,67 +1,26 @@
 "use client";
-import React from "react"; // Added React import
 import { useState, useEffect, useCallback } from "react";
 import apiClient from "@/app/utils/apiClient";
 import { toast } from "react-toastify";
-import TableRow from "./TableRow";
 import {
   Item,
   ItemProperty,
   Manager,
-  Column,
   ColumnToggleProps,
 } from "@/app/types/table";
 import { FiPlus, FiSave } from "react-icons/fi";
 import ManagersModal from "./ManagersModal";
 import ReactModal from "react-modal";
-import { Switch } from "@headlessui/react"; // Add this import
+import { Switch, Dialog } from "@headlessui/react"; // Add this import
 import { useAppStore } from '@/app/store/appStore'; // Add this import
+import CardView from './CardView';
+import {DEFAULT_COLUMNS, allColumns } from '@/app/constants/columns';
+import TableView from './TableView'; // Thêm import cho TableView
 
 // Add this after imports
 ReactModal.setAppElement("body"); // Set the root element for accessibility
 
-const modalStyles = {
-  content: {
-    top: "50%",
-    left: "50%",
-    right: "auto",
-    bottom: "auto",
-    marginRight: "-50%",
-    transform: "translate(-50%, -50%)",
-    backgroundColor: "white",
-    borderRadius: "0.5rem",
-    padding: "2rem",
-    maxWidth: "90%",
-    maxHeight: "90vh",
-    overflow: "auto",
-  },
-  overlay: {
-    backgroundColor: "rgba(0, 0, 0, 0.75)",
-    zIndex: 1000,
-  },
-};
-
 const STORAGE_KEY = "table-column-preferences";
-const DEFAULT_COLUMNS = [
-  "type",
-  "title",
-  "description",
-  "beginTime",
-  "endTime",
-  "owner",
-  "diffLevel", // Move diffLevel before progress
-  "progress",
-];
-
-const allColumns: Column[] = [
-  { id: "title", label: "Tiêu đề" },
-  { id: "description", label: "Nội dung" },
-  { id: "beginTime", label: "Ngày bắt đầu" },
-  { id: "endTime", label: "Ngày Kết thúc" },
-  { id: "owner", label: "Người sở hữu" },
-  { id: "diffLevel", label: "Mức độ" },
-  { id: "progress", label: "Tiến độ" },
-];
 
 const ColumnToggle = ({ enabled, onChange }: ColumnToggleProps) => {
   return (
@@ -91,6 +50,44 @@ interface TableProps {
   };
 }
 
+// Add this helper function
+const showConfirmationToast = (
+  message: string,
+  onConfirm: () => void,
+  onCancel?: () => void
+) => {
+  const ToastContent = (
+    <div>
+      <p>{message}</p>
+      <div className="mt-2 flex justify-end gap-2">
+        <button
+          onClick={() => {
+            toast.dismiss();
+            onConfirm();
+          }}
+          className="px-2 py-1 bg-red-500 text-white rounded"
+        >
+          Xóa
+        </button>
+        <button
+          onClick={() => {
+            toast.dismiss();
+            if (onCancel) onCancel();
+          }}
+          className="px-2 py-1 bg-gray-500 text-white rounded"
+        >
+          Hủy
+        </button>
+      </div>
+    </div>
+  );
+
+  toast(ToastContent, {
+    autoClose: false,
+    closeButton: false,
+  });
+};
+
 export default function Table({ current }: TableProps) {
   const { shouldReloadTable, setShouldReloadTable } = useAppStore();
   
@@ -98,6 +95,7 @@ export default function Table({ current }: TableProps) {
   const [listProject, setListProject] = useState<Item[]>([]);
   const [selectedColumns, setSelectedColumns] =
     useState<string[]>(DEFAULT_COLUMNS);
+  const [viewMode, setViewMode] = useState<'table' | 'card'>('table');
 
   // Move localStorage logic to useEffect
   useEffect(() => {
@@ -128,7 +126,6 @@ export default function Table({ current }: TableProps) {
     setShowManagers(true);
   };
 
-  // Fetch managers' permissions when modal opens
   useEffect(() => {
     const fetchManagersPermissions = async () => {
       if (currentManagerItem) {
@@ -222,57 +219,93 @@ export default function Table({ current }: TableProps) {
       itemToDelete &&
       itemToDelete.id === listProject[listProject.length - 1].id;
   
-    const ToastContent = (
-      <div>
-        <p>Bạn có muốn xóa không?</p>
-        <div className="mt-2 flex justify-end gap-2">
-          <button
-            onClick={() => {
-              toast.dismiss();
-              if (isNewItem) {
-                setListProject((prevList) => prevList.filter((item) => item.id !== id));
-                setIsCreating(false);
-                toast.success("Đã xoá nhiệm vụ mới tạo!");
-              } else {
-                apiClient
-                  .delete(`/api/project/${id}/`)
-                  .then(() => {
-                    toast.success("Xóa nhiệm vụ thành công!");
-                    setListProject((prevList) =>
-                      prevList.filter((item) => item.id !== id)
-                    );
-                  })
-                  .catch(() => {
-                    toast.error("Không thể xóa nhiệm vụ");
-                  });
-              }
-            }}
-            className="px-2 py-1 bg-red-500 text-white rounded"
-          >
-            Xóa
-          </button>
-          <button
-            onClick={() => toast.dismiss()}
-            className="px-2 py-1 bg-gray-500 text-white rounded"
-          >
-            Hủy
-          </button>
-        </div>
-      </div>
-    );
+    const confirmDelete = () => {
+      if (isNewItem) {
+        setListProject((prevList) => prevList.filter((item) => item.id !== id));
+        setIsCreating(false);
+        toast.success("Đã xoá nhiệm vụ mới tạo!");
+      } else {
+        apiClient
+          .delete(`/api/project/${id}/`)
+          .then(() => {
+            toast.success("Xóa nhiệm vụ thành công!");
+            setListProject((prevList) =>
+              prevList.filter((item) => item.id !== id)
+            );
+          })
+          .catch(() => {
+            toast.error("Không thể xóa nhiệm vụ");
+          });
+      }
+    };
   
-    toast(ToastContent, {
-      autoClose: false,
-      closeButton: false,
-    });
+    showConfirmationToast("Bạn có muốn xóa không?", confirmDelete);
   }, [listProject, isCreating]);
 
+  // Add this function to check if any item is being edited
+  const hasUnsavedChanges = useCallback(() => {
+    return isCreating || listProject.some(item => item.isEditing);
+  }, [isCreating, listProject]);
+
+  // Add this effect to handle navigation warning
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges()) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasUnsavedChanges]);
+
+  // Update getProjects to use toast
   const getProjects = async (url: string) => {
     if (!url) {
       console.warn('No URL provided to getProjects');
       return;
     }
 
+    if (hasUnsavedChanges()) {
+      const ToastContent = (
+        <div>
+          <p>Bạn có đang chỉnh sửa nội dung. Bạn có chắc muốn rời đi không?</p>
+          <div className="mt-2 flex justify-end gap-2">
+            <button
+              onClick={() => {
+                toast.dismiss();
+                getProjectsData(url);
+              }}
+              className="px-2 py-1 bg-blue-500 text-white rounded"
+            >
+              Đồng ý
+            </button>
+            <button
+              onClick={() => {
+                toast.dismiss();
+                setShouldReloadTable(false);
+              }}
+              className="px-2 py-1 bg-gray-500 text-white rounded"
+            >
+              Hủy
+            </button>
+          </div>
+        </div>
+      );
+      
+      toast(ToastContent, {
+        autoClose: false,
+        closeButton: false,
+      });
+      return;
+    }
+
+    getProjectsData(url);
+  };
+
+  // Separate data fetching logic
+  const getProjectsData = async (url: string) => {
     try {
       // Kiểm tra access token trước khi gọi API
       const accessToken = sessionStorage.getItem('access');
@@ -379,191 +412,168 @@ export default function Table({ current }: TableProps) {
   }, []); // Empty dependencies array since this function doesn't depend on any props or state
 
   return (
-    <div className="bg-white shadow-md rounded-lg overflow-hidden w-full">
-      <div className="overflow-x-auto">
-        <table
-          className="min-w-full bg-white border-separate border-spacing-y-2"
-          style={{ borderSpacing: "0 5px" }}
+    <div className="bg-[var(--card)] shadow-lg rounded-lg overflow-hidden">
+      {/* Header */}
+      <div className="p-4 border-b border-[var(--border)] flex justify-end">
+        <button
+          onClick={() => setIsColumnSelectorOpen(true)}
+          className="p-2 bg-[var(--muted)] hover:bg-[var(--muted-foreground)] 
+                    rounded transition-colors duration-200"
         >
-          <thead>
-            <tr className="bg-gray-200 text-gray-800 uppercase text-sm leading-normal">
-              {/* Type column is always shown */}
-              <th className="py-3 px-6 text-left flex items-center">
-                Loại
-                <button
-                  onClick={() => setIsColumnSelectorOpen(true)}
-                  className="ml-2 p-1 bg-gray-300 rounded hover:bg-gray-400"
-                  aria-label="Chọn cột hiển thị"
-                >
-                  &#9881;
-                </button>
-              </th>
-              {/* Other columns */}
-              {selectedColumns.includes("title") && (
-                <th className="py-3 px-6 text-left">Tiêu đề</th>
-              )}
-              {selectedColumns.includes("description") && (
-                <th className="py-3 px-6 text-left hidden md:table-cell">
-                  Nội dung
-                </th>
-              )}
-              {selectedColumns.includes("beginTime") && (
-                <th className="py-3 px-6 text-left">Ngày bắt đầu</th>
-              )}
-              {selectedColumns.includes("endTime") && (
-                <th className="py-3 px-6 text-left">Ngày Kết thúc</th>
-              )}
-              {selectedColumns.includes("owner") && (
-                <th className="py-3 px-6 text-left">Người sở hữu</th>
-              )}
-              {selectedColumns.includes("diffLevel") && (
-                <th className="py-3 px-6 text-left">Mức độ</th>
-              )}
-              {selectedColumns.includes("progress") && (
-                <th className="py-3 px-6 text-left">Tiến độ</th>
-              )}
-              <th className="py-3 px-6 text-right"></th>
-            </tr>
-          </thead>
-          <tbody className="text-gray-800 text-sm font-light">
-            {listProject.map((item) => (
-              <TableRow
-                key={item.id}
-                item={item}
-                handleChange={handleChange}
-                handleEditItem={handleEditItem}
-                handleDeleteItem={handleDeleteItem}
-                handleUpdateProgress={handleUpdateProgress}
-                selectedColumns={selectedColumns}
-                openManagers={handleOpenManagers} // Pass handler
-                openInviteForm={() => {}} // Add empty function since it's required by interface
-              />
-            ))}
-          </tbody>
-        </table>
+          <span className="sr-only">Mở cài đặt</span>
+          ⚙️
+        </button>
       </div>
 
-      <ReactModal
-        isOpen={isColumnSelectorOpen}
-        onRequestClose={() => setIsColumnSelectorOpen(false)}
-        style={{
-          content: {
-            ...modalStyles.content,
-            padding: "1.5rem",
-            maxWidth: "600px", // Increased from 400px to 600px
-            minWidth: "500px", // Add minimum width
-          },
-          overlay: modalStyles.overlay,
-        }}
-        contentLabel="Column Selection Modal"
-      >
-        <div className="flex flex-col space-y-4">
-          <div className="flex justify-between items-center mb-2">
-            <button
-              onClick={resetColumnPreferences}
-              className="text-sm text-blue-500 hover:text-blue-600 flex items-center gap-1"
-            >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                />
-              </svg>
-              Khôi phục mặc định
-            </button>
-          </div>
+      {/* View content */}
+      {viewMode === 'table' ? (
+        <TableView
+          items={listProject}
+          selectedColumns={selectedColumns}
+          handleChange={handleChange} // Now matches the expected signature
+          handleEditItem={handleEditItem}
+          handleDeleteItem={handleDeleteItem}
+          handleUpdateProgress={handleUpdateProgress}
+          openManagers={handleOpenManagers}
+        />
+      ) : (
+        <CardView 
+          items={listProject}
+          handleChange={handleChange}
+          handleEditItem={handleEditItem}
+          handleDeleteItem={handleDeleteItem}
+          handleUpdateProgress={handleUpdateProgress}
+          openManagers={handleOpenManagers}
+        />
+      )}
 
-          <div className="grid grid-cols-2 gap-8">
-            {/* Left column */}
-            <div className="space-y-4">
-              {allColumns
-                .slice(0, Math.ceil(allColumns.length / 2))
-                .map((col) => (
+      {/* Column Selection Modal */}
+      <Dialog
+        open={isColumnSelectorOpen}
+        onClose={() => setIsColumnSelectorOpen(false)}
+        className="relative z-50"
+      >
+        <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+        <div className="fixed inset-0 flex items-center justify-center p-4">
+          <Dialog.Panel className="w-full max-w-md rounded-lg bg-[var(--background)] p-6 shadow-xl">
+            <Dialog.Title className="text-lg font-medium mb-4 text-[var(--foreground)]">
+              Cài đặt hiển thị
+            </Dialog.Title>
+
+            <div className="space-y-6">
+              {/* View Mode Toggle */}
+              <div className="space-y-2">
+                <h3 className="text-sm font-medium text-[var(--foreground)]">
+                  Kiểu hiển thị
+                </h3>
+                <div className="flex gap-2">
+                  {/* Table View Button */}
+                  <button
+                    onClick={() => setViewMode('table')}
+                    className={`flex-1 p-3 rounded-lg transition-colors flex items-center justify-center gap-2
+                              ${viewMode === 'table' 
+                                ? 'bg-[var(--muted)] text-[var(--muted-foreground)] cursor-default' 
+                                : 'bg-[var(--primary)] text-white hover:bg-[var(--primary)/90]'}`}
+                    disabled={viewMode === 'table'}
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                            d="M3 10h18M3 14h18M3 18h18M3 6h18" />
+                    </svg>
+                    <span>Bảng</span>
+                  </button>
+                  
+                  {/* Card View Button */}
+                  <button
+                    onClick={() => setViewMode('card')}
+                    className={`flex-1 p-3 rounded-lg transition-colors flex items-center justify-center gap-2
+                              ${viewMode === 'card' 
+                                ? 'bg-[var(--muted)] text-[var(--muted-foreground)] cursor-default' 
+                                : 'bg-[var(--primary)] text-white hover:bg-[var(--primary)/90]'}`}
+                    disabled={viewMode === 'card'}
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                            d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                    </svg>
+                    <span>Thẻ</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Divider */}
+              <div className="border-t border-[var(--border)]" />
+
+              {/* Column Toggles */}
+              <div className="space-y-2">
+                {/* Column header */}
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-medium text-[var(--foreground)]">
+                    Cột hiển thị
+                  </h3>
+                  <button
+                    onClick={resetColumnPreferences}
+                    className="text-sm text-blue-500 hover:text-blue-600 flex items-center gap-1"
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                      />
+                    </svg>
+                    Mặc định
+                  </button>
+                </div>
+
+                {/* Column toggles */}
+                {allColumns.map((col) => (
                   <div
                     key={col.id}
-                    className="flex items-center justify-between p-3 hover:bg-gray-50 rounded border border-gray-100"
+                    className="flex items-center justify-between p-3
+                             bg-[var(--input)] hover:bg-[var(--muted)]
+                             rounded-lg transition-colors"
                   >
-                    <span className="text-sm font-medium text-gray-700">
-                      {col.label}
-                    </span>
+                    <span className="text-[var(--foreground)]">{col.label}</span>
                     <ColumnToggle
                       enabled={selectedColumns.includes(col.id)}
                       onChange={() => toggleColumn(col.id)}
                     />
                   </div>
                 ))}
+              </div>
             </div>
-
-            {/* Right column - same changes as left column */}
-            <div className="space-y-4">
-              {allColumns.slice(Math.ceil(allColumns.length / 2)).map((col) => (
-                <div
-                  key={col.id}
-                  className="flex items-center justify-between p-3 hover:bg-gray-50 rounded border border-gray-100"
-                >
-                  <span className="text-sm font-medium text-gray-700">
-                    {col.label}
-                  </span>
-                  <ColumnToggle
-                    enabled={selectedColumns.includes(col.id)}
-                    onChange={() => toggleColumn(col.id)}
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
+          </Dialog.Panel>
         </div>
-      </ReactModal>
+      </Dialog>
 
+      {/* Managers Modal */}
       {currentManagerItem && (
         <ManagersModal
           currentManagerItem={currentManagerItem}
           managerPermissions={managerPermissions}
           setManagerPermissions={setManagerPermissions}
-          setShowManagers={setShowManagers}
           isOpen={showManagers}
           onClose={() => setShowManagers(false)}
-          handleInvite={async (data) => {
-            try {
-              if (!currentManagerItem) return;
-
-              await apiClient.post("/api/invitation/", {
-                ...data,
-                project: currentManagerItem.id,
-              });
-
-              toast.success("Lời mời đã được gửi thành công!");
-
-              // Refresh managers list
-              const response = await apiClient.get<Manager[]>(
-                `/api/project/${currentManagerItem.id}/managers_permissions/`
-              );
-              setManagerPermissions(response.data);
-            } catch {
-              toast.error("Không thể gửi lời mời. Vui lòng thử lại!");
-            }
-          }}
         />
       )}
 
-      <div className="p-6 bg-gray-100 flex justify-center">
+      {/* Create/Save Button */}
+      <div className="p-6 bg-[var(--input)] flex justify-center">
         <button
-          className="p-2 bg-blue-500 text-white border-none rounded-full cursor-pointer shadow-md transition-transform transform hover:translate-y-[-3px] active:translate-y-3 flex items-center justify-center"
+          className="p-2 bg-blue-500 dark:bg-blue-600 text-white border-none rounded-full cursor-pointer 
+                    shadow-md transition-transform transform hover:translate-y-[-3px] active:translate-y-3 
+                    flex items-center justify-center"
           onClick={handleCreateAndSaveItem}
           aria-label={isCreating ? "Save" : "Create"}
         >
-          {isCreating ? (
-            <FiSave className="w-5 h-5" />
-          ) : (
-            <FiPlus className="w-5 h-5" />
-          )}
+          {isCreating ? <FiSave className="w-5 h-5" /> : <FiPlus className="w-5 h-5" />}
         </button>
       </div>
     </div>

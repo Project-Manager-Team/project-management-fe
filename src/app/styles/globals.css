@@ -2,21 +2,93 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@layer base {
+  /* Add transition class for all elements */
+  * {
+    @apply transition-all duration-200;
+  }
 
-@media (prefers-color-scheme: light) {
+  /* Root variables */
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --transition-timing: 200ms;
+    /* Light theme colors */
+    --background: #f8f9fa;
+    --foreground: #2d3748;
+    --card: #ffffff;
+    --card-foreground: #1a202c;
+    --muted: #f1f5f9;
+    --muted-foreground: #64748b;
+    --input: #ffffff;
+    --border: #e2e8f0;
+  }
+
+  .dark {
+    /* Dark theme colors */
+    --background: #111827;
+    --foreground: #f3f4f6;
+    --card: #1f2937;
+    --card-foreground: #f3f4f6;
+    --muted: #374151;
+    --muted-foreground: #9ca3af;
+    --input: #1f2937;
+    --border: #374151;
+  }
+
+  /* Add transition wrapper */
+  .theme-transition-wrapper {
+    @apply transition-all duration-200;
+  }
+
+  * {
+    @apply transition-colors duration-200;
+  }
+
+  body {
+    @apply text-[var(--foreground)] bg-[var(--background)];
+  }
+
+  input, select, textarea {
+    @apply text-[var(--foreground)] bg-[var(--background)] border-[var(--border)];
+  }
+
+  /* Override default datetime input styles */
+  input[type="datetime-local"] {
+    @apply bg-[var(--background)] text-[var(--foreground)] border-[var(--border)];
+    color-scheme: light dark;
+  }
+
+  /* Fix for dark mode datetime input */
+  .dark input[type="datetime-local"] {
+    @apply bg-[var(--background)] text-[var(--foreground)];
+  }
+
+  /* Thêm quy tắc này để tất cả các phần tử văn bản thừa hưởng màu chữ */
+  h1, h2, h3, h4, h5, h6,
+  p, span, a, li, dt, dd,
+  blockquote, pre, code, div,
+  input, textarea, select, button,
+  th, td {
+    @apply text-[var(--foreground)];
   }
 }
 
+.table-wrapper {
+  @apply rounded-lg overflow-hidden border border-[var(--border)];
+}
+
+.table-row {
+  @apply transition-all duration-200 hover:bg-[var(--input)];
+}
+
+.table-cell {
+  @apply px-6 py-4 whitespace-nowrap text-sm;
+}
+
+.input-field {
+  @apply bg-[var(--input)] text-[var(--foreground)] border-[var(--border)] rounded-md;
+}
+
 body {
-  color: #000000; /* Set default text color to black */
-  background: #ffffff; /* Changed to white background */
   font-family: Arial, Helvetica, sans-serif;
 }
 
@@ -87,7 +159,6 @@ body {
   pointer-events: none;
 }
 
-/* Điều chỉnh header */
 .header-blur {
   background: rgba(15, 23, 42, 0.8);  /* Darker background */
   backdrop-filter: blur(12px);

@@ -5,9 +5,11 @@ import Notification from "./components/Notification";
 import Profile from "./components/Profile";
 import HistoryBar from "./components/HistoryBar";
 import Table from "./components/Table";
+import ThemeToggle from "./components/ThemeToggle";
 
 export default function Home() {
   const { history, setHistory } = useAppStore();
+  // const { theme } = useTheme();
 
   // Initialize history with a default item if empty
   useEffect(() => {
@@ -25,9 +27,9 @@ export default function Home() {
     : { id: 0, url: '/api/project/personal/', title: 'Home' };
 
   return (
-    <div className="min-h-screen bg-gray-900">
+    <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
       {/* Header Section */}
-      <header className="fixed top-0 left-0 right-0 bg-gray-900 z-50 border-b border-gray-800">
+      <header className="fixed top-0 left-0 right-0 bg-[var(--background)] border-b border-gray-200 dark:border-gray-800 z-50">
         <div className="w-full px-4">  {/* Removed container class to allow full width */}
           <div className="h-16 flex items-center">
             {/* Left side - No extra wrapper div */}
@@ -35,6 +37,7 @@ export default function Home() {
             
             {/* Right side - Push to the right */}
             <div className="ml-auto flex items-center space-x-6">
+              <ThemeToggle />
               <Notification />
               <Profile />
             </div>
@@ -44,7 +47,7 @@ export default function Home() {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 pt-20">
-        <div className="bg-gray-800 rounded-lg shadow-lg">
+        <div className="bg-[var(--background)] text-[var(--foreground)] rounded-lg shadow-lg">
           <Table current={currentItem} />
         </div>
       </main>

@@ -6,11 +6,36 @@ const config: Config = {
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
+        // Light theme colors
+        light: {
+          background: '#ffffff',
+          foreground: '#000000',
+          primary: '#3b82f6',
+          secondary: '#64748b',
+          accent: '#f59e0b',
+        },
+        // Dark theme colors
+        dark: {
+          background: '#1a1a1a',
+          foreground: '#ffffff',
+          primary: '#60a5fa',
+          secondary: '#94a3b8',
+          accent: '#fbbf24',
+        },
         background: "var(--background)",
         foreground: "var(--foreground)",
+      },
+      backgroundColor: {
+        'primary': 'var(--background)',
+        'secondary': 'var(--foreground)',
+      },
+      textColor: {
+        'primary': 'var(--foreground)',
+        'secondary': 'var(--background)',
       },
       keyframes: {
         // Dropdown menu animations
@@ -57,4 +82,5 @@ const config: Config = {
   },
   plugins: [],
 };
+
 export default config;

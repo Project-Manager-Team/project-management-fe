@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "@/app/styles/globals.css"
 import ToastProvider from "./providers/ToastProvider";
+import { ThemeProvider } from "./providers/ThemeProvider";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -25,14 +26,20 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <meta name="color-scheme" content="light dark" />
+      </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-white text-black`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased text-[var(--foreground)]`}
+        suppressHydrationWarning
       >
-          <div id="root">
+        <ThemeProvider>
+          <div id="root" className="min-h-screen theme-transition-wrapper">
             {children}
             <ToastProvider />
           </div>
+        </ThemeProvider>
       </body>
     </html>
   );

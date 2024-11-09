@@ -5,35 +5,76 @@ import {
   FiTrash2,
   FiCheckSquare,
   FiFolder,
-  FiUser,
 } from "react-icons/fi";
 import { toast } from "react-toastify";
-import Image from "next/image";
-import { DOMAIN } from "@/app/config/api";
-import { ManagerButton } from "./ManagerButton";
-import { TableRowProps } from "@/app/types/table";
-import { Item } from "@/app/types/table";
+import { Item, TableRowProps } from "@/app/types/table";
 import { formatDateTime } from "@/app/utils/formatDateTime";
-import { useAppStore } from '@/app/store/appStore'; // Add this import
+import { useAppStore } from '@/app/store/appStore';
+import OwnerButton from './OwnerButton';
 
 const TableRow: React.FC<TableRowProps> = ({
   item,
+  selectedColumns,
   handleChange,
   handleEditItem,
   handleDeleteItem,
   handleUpdateProgress,
-  selectedColumns,
   openManagers,
 }) => {
-  const { history, setHistory, setShouldReloadTable } = useAppStore(); // Add history
+  const { history, setHistory, setShouldReloadTable } = useAppStore();
 
+  const dateTimeInputClass = `w-[160px] rounded-lg transition-colors
+    ${item.isEditing
+      ? "bg-yellow-50 dark:bg-yellow-900 border border-blue-500"
+      : "bg-[var(--background)]"
+    } focus:outline-none focus:ring-0 text-[var(--foreground)]`;
+
+  // Helper functions
   const handleTypeClick = () => {
+    if (item.isEditing) {
+      showNavigationConfirm();
+      return;
+    }
+    navigateToChild();
+  };
+
+  const showNavigationConfirm = () => {
+    const ToastContent = (
+      <div>
+        <p>Bạn có đang chỉnh sửa nội dung. Bạn có chắc muốn rời đi không?</p>
+        <div className="mt-2 flex justify-end gap-2">
+          <button
+            onClick={() => {
+              toast.dismiss();
+              navigateToChild();
+            }}
+            className="px-2 py-1 bg-blue-500 text-white rounded"
+          >
+            Đồng ý
+          </button>
+          <button
+            onClick={() => toast.dismiss()}
+            className="px-2 py-1 bg-gray-500 text-white rounded"
+          >
+            Hủy
+          </button>
+        </div>
+      </div>
+    );
+    
+    toast(ToastContent, {
+      autoClose: false,
+      closeButton: false,
+    });
+  };
+
+  const navigateToChild = () => {
     const newHistory = [...history, {
       id: item.id,
       url: `/api/project/${item.id}/child`,
       title: item.title || "",
     }];
-    setHistory(newHistory); // Pass the new array directly
+    setHistory(newHistory);
     setShouldReloadTable(true);
   };
 
@@ -53,68 +94,54 @@ const TableRow: React.FC<TableRowProps> = ({
     handleUpdateProgress(item.id, newProgress);
   };
 
-  // Cập nhật helper functions với type safety
   const getDiffLevelStyle = (level: number | null | undefined) => {
-    if (level === null || level === undefined)
-      return "bg-gray-100 text-gray-800";
-
+    if (level === null || level === undefined) return "bg-gray-100 text-gray-800";
     switch (level) {
-      case 1:
-        return "bg-green-100 text-green-800";
-      case 2:
-        return "bg-yellow-100 text-yellow-800";
-      case 3:
-        return "bg-red-100 text-red-800";
-      default:
-        return "bg-gray-100 text-gray-800";
+      case 1: return "bg-green-100 text-green-800";
+      case 2: return "bg-yellow-100 text-yellow-800";
+      case 3: return "bg-red-100 text-red-800";
+      default: return "bg-gray-100 text-gray-800";
     }
   };
 
   const getDiffLevelText = (level: number | null | undefined) => {
     if (level === null || level === undefined) return "Không xác định";
-
     switch (level) {
-      case 1:
-        return "Dễ";
-      case 2:
-        return "Trung bình";
-      case 3:
-        return "Khó";
-      default:
-        return "Không xác định";
+      case 1: return "Dễ";
+      case 2: return "Trung bình";
+      case 3: return "Khó";
+      default: return "Không xác định";
     }
   };
 
+  const onDelete = () => {
+    handleDeleteItem(item.id); // Assuming item.id is number | null
+  };
+
+  // Render table row
   return (
-    <tr
-      key={`main-row-${item.id}`}
-      className="
-        group transition-colors duration-300 rounded-lg 
-        transform hover:-translate-y-[3px] hover:shadow-md
-        bg-white text-black
-      "
-    >
+    <tr className="table-row hover:bg-[var(--muted)]">
       {selectedColumns.includes("type") && (
-        <td className="py-3 px-6 text-left bg-transparent">
+        <td className="table-cell">
           <button
-            className="p-2 bg-gray-200 text-gray-800 border-none rounded-full cursor-pointer shadow-md transition-transform transform hover:translate-y-[-3px] active:translate-y-3 flex items-center"
+            className="p-2 bg-[var(--input)] hover:bg-opacity-80 text-[var(--foreground)] 
+                     rounded-full transition-all duration-200"
             onClick={handleTypeClick}
-            aria-label={item.type}
           >
             {renderTypeIcon(item.type)}
           </button>
         </td>
       )}
       {selectedColumns.includes("title") && (
-        <td className="py-3 px-6 text-left bg-transparent">
+        <td className="table-cell">
           <input
             type="text"
             name="title"
-            className={`w-full ${
+            className={`input-field w-full ${
               item.isEditing
-                ? "bg-yellow-50 border border-blue-500"
+                ? "bg-yellow-50 dark:bg-yellow-900 border border-blue-500"
                 : "bg-transparent"
-            } focus:outline-none focus:ring-0 text-black rounded-lg`}
+            } focus:outline-none focus:ring-0 text-[var(--foreground)] rounded-lg`}
             value={item.title || ""}
             onChange={(e) =>
               handleChange(
@@ -128,15 +155,15 @@ const TableRow: React.FC<TableRowProps> = ({
         </td>
       )}
       {selectedColumns.includes("description") && (
-        <td className="py-3 px-6 text-left bg-white rounded-lg hidden md:table-cell">
+        <td className="table-cell hidden md:table-cell">
           <input
             type="text"
             name="description"
-            className={`w-full ${
+            className={`input-field w-full ${
               item.isEditing
-                ? "bg-yellow-50 border border-blue-500"
+                ? "bg-yellow-50 dark:bg-yellow-900 border border-blue-500"
                 : "bg-transparent"
-            } focus:outline-none focus:ring-0 text-black rounded-lg`}
+            } focus:outline-none focus:ring-0 text-[var(--foreground)] rounded-lg`}
             value={item.description || ""}
             onChange={(e) =>
               handleChange(
@@ -150,16 +177,12 @@ const TableRow: React.FC<TableRowProps> = ({
         </td>
       )}
       {selectedColumns.includes("beginTime") && (
-        <td className="py-3 px-6 text-left bg-white rounded-lg">
+        <td className="table-cell w-[160px] min-w-[160px]">
           {item.isEditing ? (
             <input
               type="datetime-local"
               name="beginTime"
-              className={`w-full ${
-                item.isEditing
-                  ? "bg-yellow-50 border border-blue-500"
-                  : "bg-transparent"
-              } focus:outline-none focus:ring-0 text-black rounded-lg`}
+              className={dateTimeInputClass}
               value={item.beginTime ? item.beginTime.substring(0, 16) : ""}
               onChange={(e) =>
                 handleChange(
@@ -172,7 +195,7 @@ const TableRow: React.FC<TableRowProps> = ({
             />
           ) : (
             item.beginTime && (
-              <div>
+              <div className="text-[var(--foreground)]">
                 <span>{formatDateTime(item.beginTime).time}</span>
                 <br />
                 <span>{formatDateTime(item.beginTime).date}</span>
@@ -182,16 +205,12 @@ const TableRow: React.FC<TableRowProps> = ({
         </td>
       )}
       {selectedColumns.includes("endTime") && (
-        <td className="py-3 px-6 text-left bg-white rounded-lg">
+        <td className="table-cell w-[160px] min-w-[160px]"> {/* Thêm width cố định */}
           {item.isEditing ? (
             <input
               type="datetime-local"
               name="endTime"
-              className={`w-full ${
-                item.isEditing
-                  ? "bg-yellow-50 border border-blue-500"
-                  : "bg-transparent"
-              } focus:outline-none focus:ring-0 text-black rounded-lg`}
+              className={dateTimeInputClass}
               value={item.endTime ? item.endTime.substring(0, 16) : ""}
               onChange={(e) =>
                 handleChange(
@@ -204,7 +223,7 @@ const TableRow: React.FC<TableRowProps> = ({
             />
           ) : (
             item.endTime && (
-              <div>
+              <div className="text-[var(--foreground)]">
                 <span>{formatDateTime(item.endTime).time}</span>
                 <br />
                 <span>{formatDateTime(item.endTime).date}</span>
@@ -214,49 +233,24 @@ const TableRow: React.FC<TableRowProps> = ({
         </td>
       )}
       {selectedColumns.includes("owner") && (
-        <td className="py-3 px-6 text-left bg-white rounded-lg">
-          {item.owner ? (
-            <div className="relative group">
-              {item.owner.avatar ? (
-                <Image
-                  src={
-                    item.owner.avatar.startsWith("http")
-                      ? item.owner.avatar
-                      : `${DOMAIN}${item.owner.avatar}`
-                  }
-                  alt={item.owner.username}
-                  width={32}
-                  height={32}
-                  className="rounded-full cursor-pointer"
-                  onError={(
-                    e: React.SyntheticEvent<HTMLImageElement, Event>
-                  ) => {
-                    (e.target as HTMLImageElement).onerror = null;
-                    (e.target as HTMLImageElement).src = "/default-avatar.png";
-                  }}
-                />
-              ) : (
-                <FiUser className="w-8 h-8 text-gray-500 cursor-pointer" />
-              )}
-              <span className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                {item.owner.username}
-              </span>
-            </div>
-          ) : (
-            <span>Không có</span>
-          )}
+        <td className="table-cell">
+          <OwnerButton
+            owner={item.owner}
+            managersCount={item.managersCount}
+            onClick={() => openManagers(item)}
+          />
         </td>
       )}
       {selectedColumns.includes("diffLevel") && (
-        <td className="py-3 px-6 text-left bg-white rounded-lg">
+        <td className="table-cell">
           {item.isEditing ? (
             <select
               name="diffLevel"
-              className={`w-full ${
+              className={`input-field w-full ${
                 item.isEditing
-                  ? "bg-yellow-50 border border-blue-500"
+                  ? "bg-yellow-50 dark:bg-yellow-900 border border-blue-500"
                   : "bg-transparent"
-              } focus:outline-none focus:ring-0 text-black rounded-lg p-2`}
+              } focus:outline-none focus:ring-0 text-gray-800 dark:text-gray-200 rounded-lg p-2`}
               value={item.diffLevel || ""}
               onChange={(e) =>
                 handleChange(
@@ -284,7 +278,7 @@ const TableRow: React.FC<TableRowProps> = ({
         </td>
       )}
       {selectedColumns.includes("progress") && (
-        <td className="py-3 px-6 text-left bg-white rounded-lg">
+        <td className="table-cell">
           {item.type.toLowerCase() === "task" ? (
             <input
               type="checkbox"
@@ -304,38 +298,24 @@ const TableRow: React.FC<TableRowProps> = ({
           )}
         </td>
       )}
-      <td className="py-3 px-2 text-right w-[120px] min-w-[120px]"> {/* Thay đổi padding và thêm width cố định */}
-        <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex space-x-1"> {/* Giảm space-x-2 thành space-x-1 */}
+      <td className="table-cell text-right w-[80px] min-w-[80px]">
+        <div className="flex space-x-1">
           <button
-            className="p-1.5 bg-gray-200 text-gray-800 border-none rounded-full cursor-pointer shadow-sm hover:bg-gray-300 flex items-center justify-center" 
-            // Giảm padding và shadow
-            onClick={() => {
-              if (item.title && item.title.trim() === "") {
-                toast.error("Title is required");
-              } else {
-                handleEditItem(item.index);
-              }
-            }}
+            className="p-1.5 bg-[var(--muted)] hover:bg-[var(--muted-foreground)]
+                      text-[var(--foreground)] rounded-full transition-all"
+            onClick={() => handleEditItem(item.index)}
             aria-label={item.isEditing ? "Save" : "Edit"}
           >
-            {item.isEditing ? (
-              <FiSave className="w-4 h-4" /> // Giảm kích thước icon
-            ) : (
-              <FiEdit className="w-4 h-4" />
-            )}
+            {item.isEditing ? <FiSave className="w-4 h-4" /> : <FiEdit className="w-4 h-4" />}
           </button>
           <button
-            className="p-1.5 bg-gray-200 text-gray-800 border-none rounded-full cursor-pointer shadow-sm hover:bg-gray-300 flex items-center justify-center"
-            onClick={() => handleDeleteItem(item.id)}
+            className="p-1.5 bg-[var(--muted)] hover:bg-[var(--muted-foreground)]
+                      text-[var(--foreground)] rounded-full transition-all"
+            onClick={onDelete}
             aria-label="Delete"
           >
             <FiTrash2 className="w-4 h-4" />
           </button>
-          <ManagerButton
-            onClick={() => openManagers(item)}
-            managersCount={item.managersCount}
-            size="small" // Thêm prop size
-          />
         </div>
       </td>
     </tr>
