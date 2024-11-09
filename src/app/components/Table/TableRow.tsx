@@ -9,8 +9,8 @@ import {
 import { toast } from "react-toastify";
 import { Item, TableRowProps } from "@/app/types/table";
 import { formatDateTime } from "@/app/utils/formatDateTime";
-import { useAppStore } from '@/app/store/appStore';
-import OwnerButton from './OwnerButton';
+import { useAppStore } from "@/app/store/appStore";
+import OwnerButton from "./OwnerButton";
 
 const TableRow: React.FC<TableRowProps> = ({
   item,
@@ -24,9 +24,10 @@ const TableRow: React.FC<TableRowProps> = ({
   const { history, setHistory, setShouldReloadTable } = useAppStore();
 
   const dateTimeInputClass = `w-[160px] rounded-lg transition-colors
-    ${item.isEditing
-      ? "bg-yellow-50 dark:bg-yellow-900 border border-blue-500"
-      : "bg-[var(--background)]"
+    ${
+      item.isEditing
+        ? "bg-yellow-50 dark:bg-yellow-900 border border-blue-500"
+        : "bg-[var(--background)]"
     } focus:outline-none focus:ring-0 text-[var(--foreground)]`;
 
   // Helper functions
@@ -61,7 +62,7 @@ const TableRow: React.FC<TableRowProps> = ({
         </div>
       </div>
     );
-    
+
     toast(ToastContent, {
       autoClose: false,
       closeButton: false,
@@ -69,11 +70,14 @@ const TableRow: React.FC<TableRowProps> = ({
   };
 
   const navigateToChild = () => {
-    const newHistory = [...history, {
-      id: item.id,
-      url: `/api/project/${item.id}/child`,
-      title: item.title || "",
-    }];
+    const newHistory = [
+      ...history,
+      {
+        id: item.id,
+        url: `/api/project/${item.id}/child`,
+        title: item.title || "",
+      },
+    ];
     setHistory(newHistory);
     setShouldReloadTable(true);
   };
@@ -95,22 +99,31 @@ const TableRow: React.FC<TableRowProps> = ({
   };
 
   const getDiffLevelStyle = (level: number | null | undefined) => {
-    if (level === null || level === undefined) return "bg-gray-100 text-gray-800";
+    if (level === null || level === undefined)
+      return "bg-gray-100 text-gray-800";
     switch (level) {
-      case 1: return "bg-green-100 text-green-800";
-      case 2: return "bg-yellow-100 text-yellow-800";
-      case 3: return "bg-red-100 text-red-800";
-      default: return "bg-gray-100 text-gray-800";
+      case 1:
+        return "bg-green-100 text-green-800";
+      case 2:
+        return "bg-yellow-100 text-yellow-800";
+      case 3:
+        return "bg-red-100 text-red-800";
+      default:
+        return "bg-gray-100 text-gray-800";
     }
   };
 
   const getDiffLevelText = (level: number | null | undefined) => {
     if (level === null || level === undefined) return "Không xác định";
     switch (level) {
-      case 1: return "Dễ";
-      case 2: return "Trung bình";
-      case 3: return "Khó";
-      default: return "Không xác định";
+      case 1:
+        return "Dễ";
+      case 2:
+        return "Trung bình";
+      case 3:
+        return "Khó";
+      default:
+        return "Không xác định";
     }
   };
 
@@ -205,7 +218,9 @@ const TableRow: React.FC<TableRowProps> = ({
         </td>
       )}
       {selectedColumns.includes("endTime") && (
-        <td className="table-cell w-[160px] min-w-[160px]"> {/* Thêm width cố định */}
+        <td className="table-cell w-[160px] min-w-[160px]">
+          {" "}
+          {/* Thêm width cố định */}
           {item.isEditing ? (
             <input
               type="datetime-local"
@@ -306,7 +321,11 @@ const TableRow: React.FC<TableRowProps> = ({
             onClick={() => handleEditItem(item.index)}
             aria-label={item.isEditing ? "Save" : "Edit"}
           >
-            {item.isEditing ? <FiSave className="w-4 h-4" /> : <FiEdit className="w-4 h-4" />}
+            {item.isEditing ? (
+              <FiSave className="w-4 h-4" />
+            ) : (
+              <FiEdit className="w-4 h-4" />
+            )}
           </button>
           <button
             className="p-1.5 bg-[var(--muted)] hover:bg-[var(--muted-foreground)]

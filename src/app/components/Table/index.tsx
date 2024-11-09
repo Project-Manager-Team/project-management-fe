@@ -207,6 +207,14 @@ export default function Table({ current }: TableProps) {
     }
   };
 
+  // Add this new function to update indexes
+  const updateIndexes = (items: Item[]) => {
+    return items.map((item, index) => ({
+      ...item,
+      index
+    }));
+  };
+
   const handleDeleteItem = useCallback((id: number | null) => {
     if (id === null) {
       toast.error("ID không hợp lệ");
@@ -221,17 +229,21 @@ export default function Table({ current }: TableProps) {
   
     const confirmDelete = () => {
       if (isNewItem) {
-        setListProject((prevList) => prevList.filter((item) => item.id !== id));
+        setListProject((prevList) => {
+          const filteredList = prevList.filter((item) => item.id !== id);
+          return updateIndexes(filteredList);
+        });
         setIsCreating(false);
         toast.success("Đã xoá nhiệm vụ mới tạo!");
       } else {
         apiClient
           .delete(`/api/project/${id}/`)
           .then(() => {
+            setListProject((prevList) => {
+              const filteredList = prevList.filter((item) => item.id !== id);
+              return updateIndexes(filteredList);
+            });
             toast.success("Xóa nhiệm vụ thành công!");
-            setListProject((prevList) =>
-              prevList.filter((item) => item.id !== id)
-            );
           })
           .catch(() => {
             toast.error("Không thể xóa nhiệm vụ");
@@ -316,11 +328,11 @@ export default function Table({ current }: TableProps) {
 
       const { data } = await apiClient.get<Item[]>(url);
       const newData = data.filter((item) => item.type !== "personal");
-      newData.forEach((item, index) => {
-        item.index = index;
-        item.isEditing = false;
-      });
-      setListProject(newData);
+      const indexedData = updateIndexes(newData.map(item => ({
+        ...item,
+        isEditing: false
+      })));
+      setListProject(indexedData);
     } catch {
       setListProject([]); // Xóa dữ liệu bảng nếu có lỗi
       toast.error("Lấy dữ liệu không thành công");
