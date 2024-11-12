@@ -153,7 +153,7 @@ const Profile = () => {
           }
         />
         {isVisible.showLogin && (
-          <div className="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-lg border border-gray-200 p-4 z-50">
+          <div className="absolute right-0 mt-2 w-72 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-4 z-50">
             <LoginRegisterForm
               isRegister={isRegister}
               toggleRegisterMode={() => setIsRegister(!isRegister)}
