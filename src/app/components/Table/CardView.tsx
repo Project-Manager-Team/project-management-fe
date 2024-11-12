@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { FiCheckSquare, FiFolder, FiEdit, FiSave, FiTrash2, FiCheck } from 'react-icons/fi';
+import { toast } from 'react-toastify';
 import { Item, ItemProperty } from '@/app/types/table';
 import OwnerButton from './OwnerButton'; // Change to default import
 import { useAppStore } from '@/app/store/appStore';
@@ -79,10 +80,9 @@ const CardView: React.FC<CardViewProps> = ({
 
   const handleCardClick = (item: Item, isEditing: boolean) => {
     if (isEditing || isCreating) {
-      navigateToChild(item); // Remove showNavigationConfirm here
+      toast.warning("Vui lòng lưu thay đổi trước khi chuyển trang!");
       return;
     }
-
     navigateToChild(item);
   };
 
@@ -104,6 +104,19 @@ const CardView: React.FC<CardViewProps> = ({
       case 2: return "bg-yellow-100 text-yellow-800";
       case 3: return "bg-red-100 text-red-800";
       default: return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  const getDiffLevelLabel = (level: number | null | undefined) => {
+    switch (level) {
+      case 1:
+        return 'Dễ';
+      case 2:
+        return 'Trung bình';
+      case 3:
+        return 'Khó';
+      default:
+        return 'Không xác định';
     }
   };
 
@@ -299,10 +312,29 @@ const CardView: React.FC<CardViewProps> = ({
             {/* Footer */}
             <div className="flex items-center justify-between gap-2">
               <div className="flex-1">
-                {item.diffLevel !== null && (
-                  <span className={`text-xs px-2 py-1 rounded-full ${getDiffLevelStyle(item.diffLevel)}`}>
-                    {['Dễ', 'Trung bình', 'Khó'][item.diffLevel - 1] || 'Không xác định'}
-                  </span>
+                {(item.diffLevel !== null || item.isEditing) && (
+                  item.isEditing ? (
+                    <select
+                      name="diffLevel"
+                      value={item.diffLevel === null ? "1" : item.diffLevel}
+                      onChange={(e) => handleChange(
+                        item.index,
+                        'diffLevel' as ItemProperty,
+                        e.target.value ? parseInt(e.target.value) : 1
+                      )}
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-xs px-2 py-1 rounded-full bg-yellow-50 dark:bg-yellow-900 
+                               border border-blue-500 focus:outline-none"
+                    >
+                      <option value="1">Dễ</option>
+                      <option value="2">Trung bình</option>
+                      <option value="3">Khó</option>
+                    </select>
+                  ) : (
+                    <span className={`text-xs px-2 py-1 rounded-full ${getDiffLevelStyle(item.diffLevel)}`}>
+                      {item.diffLevel !== null ? getDiffLevelLabel(item.diffLevel) : 'Không xác định'}
+                    </span>
+                  )
                 )}
               </div>
               

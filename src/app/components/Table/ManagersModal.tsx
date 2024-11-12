@@ -19,6 +19,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { inviteFormSchema, type InviteFormInputs } from "@/app/schemas/form";
 import { PermissionSwitchProps } from '@/app/types/table';
+import { showConfirmationToast } from '@/app/utils/toastUtils';
 
 // Permission Switch Component
 const PermissionSwitch = ({ value, onChange }: PermissionSwitchProps) => (
@@ -131,44 +132,6 @@ const ManagersModal: React.FC<ManagersModalProps> = ({
       }
       setManagerPermissions(updatedPermissions);
     }
-  };
-
-  // Create a helper function to show confirmation toasts
-  const showConfirmationToast = (
-    message: string,
-    onConfirm: () => void,
-    onCancel?: () => void
-  ) => {
-    const ToastContent = (
-      <div>
-        <p>{message}</p>
-        <div className="mt-2 flex justify-end gap-2">
-          <button
-            onClick={() => {
-              toast.dismiss();
-              onConfirm();
-            }}
-            className="px-2 py-1 bg-red-500 text-white rounded"
-          >
-            Xóa
-          </button>
-          <button
-            onClick={() => {
-              toast.dismiss();
-              if (onCancel) onCancel();
-            }}
-            className="px-2 py-1 bg-gray-500 text-white rounded"
-          >
-            Hủy
-          </button>
-        </div>
-      </div>
-    );
-
-    toast(ToastContent, {
-      autoClose: false,
-      closeButton: false,
-    });
   };
 
   // Update handleRemoveManager function to use the helper

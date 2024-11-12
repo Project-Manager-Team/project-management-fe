@@ -16,6 +16,7 @@ import { useAppStore } from '@/app/store/appStore'; // Add this import
 import CardView from './CardView';
 import {DEFAULT_COLUMNS, allColumns } from '@/app/constants/columns';
 import TableView from './TableView'; // Thêm import cho TableView
+import { showConfirmationToast } from "@/app/utils/toastUtils";
 
 // Add this after imports
 ReactModal.setAppElement("body"); // Set the root element for accessibility
@@ -51,44 +52,6 @@ interface TableProps {
     title: string;
   };
 }
-
-// Add this helper function
-const showConfirmationToast = (
-  message: string,
-  onConfirm: () => void,
-  onCancel?: () => void
-) => {
-  const ToastContent = (
-    <div>
-      <p>{message}</p>
-      <div className="mt-2 flex justify-end gap-2">
-        <button
-          onClick={() => {
-            toast.dismiss();
-            onConfirm();
-          }}
-          className="px-2 py-1 bg-red-500 text-white rounded"
-        >
-          Xóa
-        </button>
-        <button
-          onClick={() => {
-            toast.dismiss();
-            if (onCancel) onCancel();
-          }}
-          className="px-2 py-1 bg-gray-500 text-white rounded"
-        >
-          Hủy
-        </button>
-      </div>
-    </div>
-  );
-
-  toast(ToastContent, {
-    autoClose: false,
-    closeButton: false,
-  });
-};
 
 export default function Table({ current }: TableProps) {
   const { history, setHistory, shouldReloadTable, setShouldReloadTable } = useAppStore();
@@ -230,6 +193,16 @@ export default function Table({ current }: TableProps) {
       return;
     }
   
+    // Kiểm tra nếu có item khác đang được chỉnh sửa
+    const hasOtherEditingItems = listProject.some(item => 
+      item.id !== id && (item.isEditing || isCreating)
+    );
+  
+    if (hasOtherEditingItems) {
+      toast.warning("Vui lòng lưu các thay đổi trước khi xóa!");
+      return;
+    }
+  
     const itemToDelete = listProject.find((item) => item.id === id);
     const isNewItem =
       isCreating &&
@@ -289,10 +262,13 @@ export default function Table({ current }: TableProps) {
     }
   
     if (hasUnsavedChanges()) {
-      showNavigationConfirm(() => {
-        getProjectsData(url);
-        if (onConfirm) onConfirm();
-      });
+      showConfirmationToast(
+        "Bạn có đang chỉnh sửa nội dung. Bạn có chắc muốn rời đi không?",
+        () => {
+          getProjectsData(url);
+          if (onConfirm) onConfirm();
+        }
+      );
       return;
     }
   
@@ -324,40 +300,6 @@ export default function Table({ current }: TableProps) {
     } finally {
       setShouldReloadTable(false); // Reset reloadTableData after fetching
     }
-  };
-
-  // Add a new helper function for navigation confirmation
-  const showNavigationConfirm = (onConfirm: () => void) => {
-    const ToastContent = (
-      <div>
-        <p>Bạn có đang chỉnh sửa nội dung. Bạn có chắc muốn rời đi không?</p>
-        <div className="mt-2 flex justify-end gap-2">
-          <button
-            onClick={() => {
-              toast.dismiss();
-              onConfirm();
-            }}
-            className="px-2 py-1 bg-blue-500 text-white rounded"
-          >
-            Đồng ý
-          </button>
-          <button
-            onClick={() => {
-              toast.dismiss();
-              setShouldReloadTable(false);
-            }}
-            className="px-2 py-1 bg-gray-500 text-white rounded"
-          >
-            Hủy
-          </button>
-        </div>
-      </div>
-    );
-    
-    toast(ToastContent, {
-      autoClose: false,
-      closeButton: false,
-    });
   };
 
   useEffect(() => {
@@ -395,20 +337,12 @@ export default function Table({ current }: TableProps) {
         return;
       }
       try {
-        const response = await apiClient.post<Item>("/api/project/", newItem); // Ensure correct API path
-        // Assuming the backend returns the created item with a unique ID
-        const createdItem: Item = response.data;
-        setListProject((prevList) =>
-          prevList.map((item) =>
-            item.id === listProject[listProject.length - 1].id
-              ? createdItem
-              : item
-          )
-        );
-        toast.success("Tạo mới nhiệm vụ thành công!");
+        await apiClient.post<Item>("/api/project/", newItem); // Ensure correct API path
+        // Cập nhật state trước khi gọi getProjects
         setIsCreating(false);
-        // Gọi getProjects sau khi đã setIsCreating(false)
-        await getProjects(current.url);
+        // Gọi getProjects trực tiếp không cần confirm
+        await getProjectsData(current.url);
+        toast.success("Tạo mới nhiệm vụ thành công!");
       } catch {
         toast.error("Không thể tạo mới nhiệm vụ");
       }
@@ -452,12 +386,7 @@ export default function Table({ current }: TableProps) {
 
   const handleBack = () => {
     if (hasUnsavedChanges()) {
-      showNavigationConfirm(() => {
-        const newHistory = [...history];
-        newHistory.pop(); // Remove current page from history
-        setHistory(newHistory);
-        setShouldReloadTable(true);
-      });
+      toast.warning("Vui lòng lưu thay đổi trước khi quay lại!");
       return;
     }
 

@@ -9,6 +9,7 @@ import {
 import { Item, TableRowProps } from "@/app/types/table";
 import { formatDateTime } from "@/app/utils/formatDateTime";
 import { useAppStore } from "@/app/store/appStore";
+import { toast } from "react-toastify";
 import OwnerButton from "./OwnerButton";
 
 const TableRow: React.FC<TableRowProps> = ({
@@ -34,7 +35,7 @@ const TableRow: React.FC<TableRowProps> = ({
   // Helper functions
   const handleTypeClick = () => {
     if (item.isEditing || isCreating) {
-      navigateToChild(); // Remove showNavigationConfirm here
+      toast.warning("Vui lòng lưu thay đổi trước khi chuyển trang!");
       return;
     }
     navigateToChild();
