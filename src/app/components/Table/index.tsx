@@ -399,9 +399,9 @@ export default function Table({ current }: TableProps) {
   return (
     <div className="bg-[var(--card)] shadow-lg rounded-lg overflow-hidden">
       {/* Header với các nút điều khiển */}
-      <div className="p-4 border-b border-[var(--border)] flex justify-between items-center">
-        <div className="flex items-center gap-4">
-          {/* Back Button */}
+      <div className="p-4 border-b border-[var(--border)] flex items-center">
+        {/* Left section */}
+        <div className="flex items-center gap-4 flex-shrink-0">
           {history.length > 1 && (
             <button
               onClick={handleBack}
@@ -414,13 +414,13 @@ export default function Table({ current }: TableProps) {
           )}
 
           {/* View Mode Toggle */}
-          <div className="flex gap-2">
+          <div className="flex gap-2 p-1 bg-[var(--muted)] rounded-lg">
             <button
               onClick={() => setViewMode('table')}
-              className={`p-2 rounded transition-colors flex items-center justify-center gap-2
+              className={`px-3 py-1.5 rounded transition-colors flex items-center justify-center gap-2
                         ${viewMode === 'table' 
-                          ? 'bg-[var(--muted)] text-[var(--muted-foreground)]' 
-                          : 'bg-[var(--primary)] text-white hover:bg-[var(--primary)/90]'}`}
+                          ? 'bg-[var(--background)] text-[var(--foreground)] shadow-sm' 
+                          : 'text-[var(--muted-foreground)] hover:text-[var(--foreground)]'}`}
               disabled={viewMode === 'table'}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -431,10 +431,10 @@ export default function Table({ current }: TableProps) {
             
             <button
               onClick={() => setViewMode('card')}
-              className={`p-2 rounded transition-colors flex items-center justify-center gap-2
+              className={`px-3 py-1.5 rounded transition-colors flex items-center justify-center gap-2
                         ${viewMode === 'card' 
-                          ? 'bg-[var(--muted)] text-[var(--muted-foreground)]' 
-                          : 'bg-[var(--primary)] text-white hover:bg-[var(--primary)/90]'}`}
+                          ? 'bg-[var(--background)] text-[var(--foreground)] shadow-sm' 
+                          : 'text-[var(--muted-foreground)] hover:text-[var(--foreground)]'}`}
               disabled={viewMode === 'card'}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -445,15 +445,24 @@ export default function Table({ current }: TableProps) {
           </div>
         </div>
 
-        {/* Settings Button */}
-        <button
-          onClick={() => setIsColumnSelectorOpen(true)}
-          className="p-2 bg-[var(--muted)] hover:bg-[var(--muted-foreground)] 
-                    rounded transition-colors duration-200"
-        >
-          <span className="sr-only">Mở cài đặt</span>
-          ⚙️
-        </button>
+        {/* Center title */}
+        <div className="flex-1 px-4 text-center">
+          <h1 className="text-lg font-medium text-[var(--foreground)] truncate">
+            {current.title}
+          </h1>
+        </div>
+
+        {/* Right section */}
+        <div className="flex-shrink-0">
+          <button
+            onClick={() => setIsColumnSelectorOpen(true)}
+            className="p-2 bg-[var(--muted)] hover:bg-[var(--muted-foreground)] 
+                      rounded transition-colors duration-200"
+          >
+            <span className="sr-only">Mở cài đặt</span>
+            ⚙️
+          </button>
+        </div>
       </div>
 
       {/* View content */}
@@ -468,6 +477,7 @@ export default function Table({ current }: TableProps) {
           openManagers={handleOpenManagers}
           isCreating={isCreating} // Pass isCreating to TableView
           setIsCreating={setIsCreating}
+          parentTitle={current.title} // Add this prop
         />
       ) : (
         <CardView 

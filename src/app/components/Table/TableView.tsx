@@ -16,23 +16,25 @@ const TableView: React.FC<TableViewProps> = ({
   setIsCreating, // Add this prop
 }) => {
   return (
-    <div className={`${items.length > 0 ? 'overflow-x-auto' : ''}`}>
-      <table className="w-full table-auto">
-        <thead>
+    <div className="overflow-x-auto -mx-4 sm:mx-0">
+      <table className="w-full table-auto min-w-[800px]">
+        <thead className="sticky top-0 z-10">
           <tr className="bg-[var(--input)] text-[var(--foreground)]">
-            <th className="py-3 px-6 text-left">
-              <span>{COLUMNS.type.label}</span>
+            {/* Type column is always shown */}
+            <th className="p-3 text-left whitespace-nowrap">
+              <span className="text-xs font-medium">{COLUMNS.type.label}</span>
             </th>
-            {selectedColumns
-              .filter(colId => colId !== 'type')
-              .map(colId => 
-                COLUMNS[colId as keyof typeof COLUMNS] && (
-                  <th key={colId} className="py-3 px-6 text-left">
+            {/* Other columns are toggleable */}
+            {selectedColumns.map(colId => 
+              COLUMNS[colId as keyof typeof COLUMNS] && (
+                <th key={colId} className="p-3 text-left whitespace-nowrap">
+                  <span className="text-xs font-medium">
                     {COLUMNS[colId as keyof typeof COLUMNS].label}
-                  </th>
-                )
+                  </span>
+                </th>
+              )
             )}
-            <th className="py-3 px-6 text-right">
+            <th className="p-3 text-right whitespace-nowrap">
               <span className="sr-only">Actions</span>
             </th>
           </tr>

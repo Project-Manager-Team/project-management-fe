@@ -45,12 +45,22 @@ NotificationItem.displayName = 'NotificationItem';
 function Notification() {
   const { setShouldReloadTable } = useAppStore();
   const { invitations, reloadTrigger, fetchInvitations, handleReply, handleDelete } = useNotificationStore();
+  const [isOpen] = React.useState(false);
 
   useEffect(() => {
-    fetchInvitations();
-    const interval = setInterval(fetchInvitations, 60000);
+    if (isOpen) {
+      fetchInvitations();
+    }
+    const interval = setInterval(fetchInvitations, 30000); // changed from 60000 to 30000
     return () => clearInterval(interval);
-  }, [fetchInvitations, reloadTrigger]);
+  }, [fetchInvitations, reloadTrigger, isOpen]);
+
+  // Add this useEffect to handle isOpen state
+  useEffect(() => {
+    if (isOpen) {
+      fetchInvitations();
+    }
+  }, [isOpen, fetchInvitations]);
 
   const unreadCount = useMemo(() => 
     invitations.filter((inv) => !inv.isReplied).length,
@@ -62,6 +72,7 @@ function Notification() {
     if (status) {
       setTimeout(() => setShouldReloadTable(true), 200);
     }
+    fetchInvitations(); // Ensure invitations are fetched after reply
   };
 
   // Add confirmDelete function
@@ -98,29 +109,34 @@ function Notification() {
 
   return (
     <Popover className="relative">
-      {() => (
-        <>
-          <Popover.Button className="relative flex items-center outline-none">
-            <FaBell className="text-2xl p-1 text-gray-400 hover:text-white transition-colors" />
-            {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 bg-red-600 rounded-full">
-                {unreadCount}
-              </span>
-            )}
-          </Popover.Button>
+      <Popover.Button className="relative flex items-center outline-none"
+        onClick={() => fetchInvitations()}>
+        <FaBell className="text-2xl p-1 text-gray-400 hover:text-white transition-colors" />
+        {unreadCount > 0 && (
+          <span className="absolute -top-1 -right-1 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 bg-red-600 rounded-full">
+            {unreadCount}
+          </span>
+        )}
+      </Popover.Button>
 
-          <Popover.Panel className="absolute right-0 mt-2 bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-700 rounded-lg w-80 max-h-80 overflow-y-auto p-2 z-10">
-            {invitations.map((item) => (
-              <NotificationItem
-                key={item.id}
-                item={item}
-                onReply={onReply}
-                onDelete={confirmDelete} // Use confirmDelete here
-              />
-            ))}
-          </Popover.Panel>
-        </>
-      )}
+      <Popover.Panel className="absolute right-1/2 translate-x-[20%] mt-2 bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-700 rounded-lg w-80 max-h-80 overflow-y-auto p-2 z-10 
+        sm:w-80 sm:right-0 sm:translate-x-0
+        xs:w-[calc(100vw-32px)] xs:max-h-[calc(100vh-100px)]">
+        {invitations.length > 0 ? (
+          invitations.map((item) => (
+            <NotificationItem
+              key={item.id}
+              item={item}
+              onReply={onReply}
+              onDelete={confirmDelete}
+            />
+          ))
+        ) : (
+          <div className="flex items-center justify-center h-20 text-gray-500 dark:text-gray-400">
+            Không có thông báo mới
+          </div>
+        )}
+      </Popover.Panel>
     </Popover>
   );
 }

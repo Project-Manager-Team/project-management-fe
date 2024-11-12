@@ -182,85 +182,90 @@ const CardView: React.FC<CardViewProps> = ({
           key={item.id}
           onClick={() => handleCardClick(item, item.isEditing)}
           className={`group bg-[var(--card)] border border-[var(--border)] rounded-lg 
-                    shadow-sm transition-all duration-200 p-4 relative
+                    shadow-sm transition-all duration-200 flex flex-col
                     ${!item.isEditing ? 'hover:scale-[1.02] hover:shadow-lg cursor-pointer' : ''}
                     ${item.isEditing ? 'ring-2 ring-blue-500' : 'hover:bg-[var(--muted)]'}`}
         >
-          {/* Card Header */}
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              {item.type.toLowerCase() === 'task' ? (
-                <FiCheckSquare className="w-5 h-5" />
-              ) : (
-                <FiFolder className="w-5 h-5" />
-              )}
-              <EditableContent
-                isEditing={item.isEditing}
-                value={item.title}
-                name="title"
-                onChange={(e) =>
-                  handleChange(
-                    item.index,
-                    'title' as ItemProperty,
-                    e.target.value
-                  )
-                }
-                className="font-medium text-[var(--foreground)]"
-              />
-            </div>
-            {/* Action Buttons - Reordered */}
-            <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-              <button
-                className="p-1.5 bg-[var(--muted)] hover:bg-[var(--muted-foreground)]
-                          text-[var(--foreground)] rounded-full transition-all"
-                onClick={() => handleEditItem(item.index)}
-                aria-label={item.isEditing ? "Save" : "Edit"}
-              >
-                {item.isEditing ? (
-                  <FiSave className="w-4 h-4" />
+          {/* Header Section - No border */}
+          <div className="p-4">
+            {/* Title and Actions Row */}
+            <div className="flex items-center justify-between">
+              {/* Title and Icon */}
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                {item.type.toLowerCase() === 'task' ? (
+                  <FiCheckSquare className="w-5 h-5 flex-shrink-0" />
                 ) : (
-                  <FiEdit className="w-4 h-4" />
+                  <FiFolder className="w-5 h-5 flex-shrink-0" />
                 )}
-              </button>
-              <button
-                className="p-1.5 bg-[var(--muted)] hover:bg-[var(--muted-foreground)]
-                          text-[var(--foreground)] rounded-full transition-all"
-                onClick={() => handleDeleteItem(item.id)}
-                aria-label="Delete"
-              >
-                <FiTrash2 className="w-4 h-4" />
-              </button>
-              <OwnerButton
-                owner={item.owner}
-                managersCount={item.managersCount}
-                onClick={() => openManagers(item)}
-                size="small"
-              />
+                <EditableContent
+                  isEditing={item.isEditing}
+                  value={item.title}
+                  name="title"
+                  onChange={(e) =>
+                    handleChange(
+                      item.index,
+                      'title' as ItemProperty,
+                      e.target.value
+                    )
+                  }
+                  className="font-medium text-[var(--foreground)] truncate"
+                />
+              </div>
+              {/* Action Buttons */}
+              <div className="flex items-center gap-1 ml-2" onClick={(e) => e.stopPropagation()}>
+                <button
+                  className="p-1.5 bg-[var(--muted)] hover:bg-[var(--muted-foreground)]
+                            text-[var(--foreground)] rounded-full transition-all"
+                  onClick={() => handleEditItem(item.index)}
+                  aria-label={item.isEditing ? "Save" : "Edit"}
+                >
+                  {item.isEditing ? (
+                    <FiSave className="w-4 h-4" />
+                  ) : (
+                    <FiEdit className="w-4 h-4" />
+                  )}
+                </button>
+                <button
+                  className="p-1.5 bg-[var(--muted)] hover:bg-[var(--muted-foreground)]
+                            text-[var(--foreground)] rounded-full transition-all"
+                  onClick={() => handleDeleteItem(item.id)}
+                  aria-label="Delete"
+                >
+                  <FiTrash2 className="w-4 h-4" />
+                </button>
+                <OwnerButton
+                  owner={item.owner}
+                  managersCount={item.managersCount}
+                  onClick={() => openManagers(item)}
+                  size="small"
+                />
+              </div>
             </div>
-          </div>
 
-          {/* Card Content */}
-          <div className="space-y-3">
             {/* Description */}
             {(item.description || item.isEditing) && (
-              <EditableContent
-                isEditing={item.isEditing}
-                value={item.description}
-                name="description"
-                type="textarea"
-                onChange={(e) =>
-                  handleChange(
-                    item.index,
-                    'description' as ItemProperty,
-                    e.target.value
-                  )
-                }
-              />
+              <div className="mt-3">
+                <EditableContent
+                  isEditing={item.isEditing}
+                  value={item.description}
+                  name="description"
+                  type="textarea"
+                  onChange={(e) =>
+                    handleChange(
+                      item.index,
+                      'description' as ItemProperty,
+                      e.target.value
+                    )
+                  }
+                />
+              </div>
             )}
+          </div>
 
-            {/* Dates */}
-            {(item.beginTime || item.endTime || item.isEditing) && (
-              <div className="grid grid-cols-2 gap-4 my-3 p-2 bg-[var(--muted)] rounded-lg">
+          {/* Main Content Section - No padding if empty */}
+          {(item.beginTime || item.endTime || item.isEditing) && (
+            <div className="px-4">
+              <div className="grid grid-cols-2 gap-4 p-2 bg-[var(--muted)] rounded-lg">
                 <div className="space-y-1">
                   <span className="text-xs font-medium text-[var(--muted-foreground)]">
                     Bắt đầu
@@ -307,11 +312,14 @@ const CardView: React.FC<CardViewProps> = ({
                   )}
                 </div>
               </div>
-            )}
+            </div>
+          )}
 
-            {/* Footer */}
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex-1">
+          {/* Footer Section - No border */}
+          <div className="p-4 mt-auto">
+            <div className="grid grid-cols-2 gap-4">
+              {/* Difficulty Level */}
+              <div>
                 {(item.diffLevel !== null || item.isEditing) && (
                   item.isEditing ? (
                     <select
@@ -323,22 +331,24 @@ const CardView: React.FC<CardViewProps> = ({
                         e.target.value ? parseInt(e.target.value) : 1
                       )}
                       onClick={(e) => e.stopPropagation()}
-                      className="text-xs px-2 py-1 rounded-full bg-yellow-50 dark:bg-yellow-900 
-                               border border-blue-500 focus:outline-none"
+                      className="w-full text-xs px-2 py-1 rounded-full bg-yellow-50 
+                               dark:bg-yellow-900 border border-blue-500 focus:outline-none"
                     >
                       <option value="1">Dễ</option>
                       <option value="2">Trung bình</option>
                       <option value="3">Khó</option>
                     </select>
                   ) : (
-                    <span className={`text-xs px-2 py-1 rounded-full ${getDiffLevelStyle(item.diffLevel)}`}>
+                    <span className={`inline-block w-full text-center text-xs px-2 py-1 
+                                   rounded-full ${getDiffLevelStyle(item.diffLevel)}`}>
                       {item.diffLevel !== null ? getDiffLevelLabel(item.diffLevel) : 'Không xác định'}
                     </span>
                   )
                 )}
               </div>
-              
-              <div className="flex-1">
+
+              {/* Progress */}
+              <div>
                 {renderProgress(item)}
               </div>
             </div>

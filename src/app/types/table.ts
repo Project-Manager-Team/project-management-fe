@@ -131,6 +131,7 @@ export interface ManagersModalProps {
 export interface TableViewProps extends CardViewProps {
   selectedColumns: string[];
   isCreating: boolean;
+  parentTitle: string; // Add this prop
 }
 
 // Add EditableContentProps

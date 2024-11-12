@@ -163,124 +163,147 @@ const ManagersModal: React.FC<ManagersModalProps> = ({
     <Dialog open={isOpen} onClose={onClose}>
       <div className="fixed inset-0 bg-black/30 backdrop-blur-sm" aria-hidden="true" />
       <div className="fixed inset-0 flex items-center justify-center p-4">
-        <DialogPanel className="bg-[var(--card)] text-[var(--card-foreground)] 
-                              w-full max-w-2xl p-6 rounded-lg shadow-xl">
+        <DialogPanel className="w-full max-w-2xl bg-[var(--card)] text-[var(--card-foreground)]
+                              p-4 sm:p-6 rounded-lg shadow-xl overflow-y-auto max-h-[90vh]">
           <div className="space-y-4">
-            <table className="w-full border-collapse divide-y divide-[var(--muted)] text-[var(--foreground)]">
-              <thead>
-                <tr>
-                  <th className="py-1.5 px-1.5 border-b border-gray-200 w-32">
-                    Quản lý
-                  </th>
-                  <th className="py-1.5 px-1.5 border-b border-gray-200 w-16">
-                    Sửa
-                  </th>
-                  <th className="py-1.5 px-1.5 border-b border-gray-200 w-16">
-                    Hoàn thành
-                  </th>
-                  <th className="py-1.5 px-1.5 border-b border-gray-200 w-16">
-                    Thêm
-                  </th>
-                  <th className="py-1.5 px-1.5 border-b border-gray-200 w-16">
-                    Xoá
-                  </th>
-                  <th className="py-1.5 px-1.5 border-b border-gray-200 w-16">
-                    Thêm thành viên
-                  </th>
-                  <th className="py-1.5 px-1.5 border-b border-gray-200 w-16">
-                    Xoá thành viên
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {managerPermissions.map((manager, index) => (
-                  <tr key={manager.user.id}>
-                    <td className="py-1.5 px-1.5 border-b border-gray-200">
-                      <div className="flex items-center gap-1 group">
-                        <div className="flex items-center gap-1 flex-1">
+            {/* Mobile view */}
+            <div className="block sm:hidden space-y-4">
+              {managerPermissions.map((manager, index) => (
+                <div key={manager.user.id} className="p-4 bg-[var(--muted)] rounded-lg">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      {manager.user.avatar ? (
+                        <Image
+                          src={manager.user.avatar.startsWith("http")
+                            ? manager.user.avatar
+                            : `${DOMAIN}${manager.user.avatar}`}
+                          alt={manager.user.username}
+                          width={24}
+                          height={24}
+                          className="rounded-full"
+                          onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+                            const target = e.target as HTMLImageElement;
+                            target.onerror = null;
+                            target.src = "/default-avatar.png";
+                          }}
+                        />
+                      ) : (
+                        <FiUser className="w-6 h-6 text-gray-500" />
+                      )}
+                      <span className="font-medium">{manager.user.username}</span>
+                    </div>
+                    <button
+                      onClick={() => handleRemoveManager(manager.user.id)}
+                      className="p-1.5 hover:bg-red-100 rounded-full"
+                    >
+                      <FiTrash2 className="w-4 h-4 text-red-500" />
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      ["Sửa", "canEdit"],
+                      ["Hoàn thành", "canFinish"],
+                      ["Thêm", "canAdd"],
+                      ["Xoá", "canDelete"],
+                      ["Thêm TV", "canAddMember"],
+                      ["Xoá TV", "canRemoveMember"],
+                    ].map(([label, permission]) => (
+                      <div key={permission} 
+                           className="flex items-center justify-between p-2 bg-[var(--card)] rounded">
+                        <span className="text-xs">{label}</span>
+                        <PermissionSwitch
+                          value={manager.permissions?.[permission as PermissionKey] ?? false}
+                          onChange={(value) => handlePermissionChange(
+                            index,
+                            permission as PermissionKey,
+                            value
+                          )}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop view */}
+            <div className="hidden sm:block">
+              <table className="w-full border-collapse divide-y divide-[var(--muted)]">
+                <thead>
+                  <tr>
+                    <th className="py-2 px-3 text-left">Quản lý</th>
+                    <th className="py-2 px-3 text-center">Sửa</th>
+                    <th className="py-2 px-3 text-center">Hoàn thành</th>
+                    <th className="py-2 px-3 text-center">Thêm</th>
+                    <th className="py-2 px-3 text-center">Xoá</th>
+                    <th className="py-2 px-3 text-center">Thêm TV</th>
+                    <th className="py-2 px-3 text-center">Xoá TV</th>
+                    <th className="py-2 px-3"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {managerPermissions.map((manager, index) => (
+                    <tr key={manager.user.id}>
+                      <td className="py-2 px-3">
+                        <div className="flex items-center gap-2">
                           {manager.user.avatar ? (
                             <Image
-                              src={
-                                manager.user.avatar.startsWith("http")
-                                  ? manager.user.avatar
-                                  : `${DOMAIN}${manager.user.avatar}`
-                              }
+                              src={manager.user.avatar.startsWith("http")
+                                ? manager.user.avatar
+                                : `${DOMAIN}${manager.user.avatar}`}
                               alt={manager.user.username}
-                              width={20}
-                              height={20}
+                              width={24}
+                              height={24}
                               className="rounded-full"
-                              onError={(
-                                e: React.SyntheticEvent<HTMLImageElement, Event>
-                              ) => {
-                                (e.target as HTMLImageElement).onerror = null;
-                                (e.target as HTMLImageElement).src =
-                                  "/default-avatar.png";
+                              onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+                                const target = e.target as HTMLImageElement;
+                                target.onerror = null;
+                                target.src = "/default-avatar.png";
                               }}
                             />
                           ) : (
                             <FiUser className="w-5 h-5 text-gray-500" />
                           )}
-                          <span
-                            className="truncate max-w-[70px]"
-                            title={manager.user.username}
-                          >
-                            {manager.user.username}
-                          </span>
+                          <span>{manager.user.username}</span>
                         </div>
-
-                        {/* Add delete button */}
-                        <button
-                          onClick={() => handleRemoveManager(manager.user.id)}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-red-100 rounded-full"
-                          title="Xoá quản lý"
-                        >
-                          <FiTrash2 className="w-4 h-4 text-red-500" />
-                        </button>
-                      </div>
-                    </td>
-                    {[
-                      "canEdit",
-                      "canFinish",
-                      "canAdd",
-                      "canDelete",
-                      "canAddMember",
-                      "canRemoveMember",
-                    ].map((permission) => (
-                      <td
-                        key={permission}
-                        className="py-1.5 px-1.5 border-b border-gray-200"
-                      >
-                        <div className="flex justify-center">
-                          <PermissionSwitch
-                            value={
-                              manager.permissions?.[
-                                permission as PermissionKey
-                              ] ?? false
-                            }
-                            onChange={(value) =>
-                              handlePermissionChange(
+                      </td>
+                      {["canEdit", "canFinish", "canAdd", "canDelete", "canAddMember", "canRemoveMember"]
+                        .map((permission) => (
+                          <td key={permission} className="py-2 px-3 text-center">
+                            <PermissionSwitch
+                              value={manager.permissions?.[permission as PermissionKey] ?? false}
+                              onChange={(value) => handlePermissionChange(
                                 index,
                                 permission as PermissionKey,
                                 value
-                              )
-                            }
-                          />
-                        </div>
+                              )}
+                            />
+                          </td>
+                      ))}
+                      <td className="py-2 px-3">
+                        <button
+                          onClick={() => handleRemoveManager(manager.user.id)}
+                          className="p-1.5 hover:bg-red-100 rounded-full"
+                        >
+                          <FiTrash2 className="w-4 h-4 text-red-500" />
+                        </button>
                       </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
-            <div className="mt-2 flex justify-end">
+            {/* Invite Button */}
+            <div className="mt-4 flex justify-end">
               <button
                 onClick={() => setIsInviteOpen(!isInviteOpen)}
-                className="bg-green-500 text-white px-2 py-1 text-xs rounded hover:bg-green-600 inline-flex items-center gap-1"
+                className="bg-green-500 text-white px-3 py-1.5 text-sm rounded-lg 
+                          hover:bg-green-600 inline-flex items-center gap-2"
               >
                 <span>{isInviteOpen ? "Đóng" : "Mời"}</span>
                 <svg
-                  className={`w-3 h-3 transform transition-transform ${
+                  className={`w-4 h-4 transform transition-transform ${
                     isInviteOpen ? "rotate-45" : ""
                   }`}
                   fill="none"
@@ -296,70 +319,80 @@ const ManagersModal: React.FC<ManagersModalProps> = ({
                 </svg>
               </button>
             </div>
+
+            {/* Invite Form */}
+            <Transition
+              show={isInviteOpen}
+              enter="transition duration-100 ease-out"
+              enterFrom="transform scale-95 opacity-0"
+              enterTo="transform scale-100 opacity-100"
+              leave="transition duration-75 ease-out"
+              leaveFrom="transform scale-100 opacity-100"
+              leaveTo="transform scale-95 opacity-0"
+            >
+              <div className="mt-3 space-y-3 border-t pt-3">
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div>
+                      <input
+                        type="text"
+                        placeholder="Tên người dùng *"
+                        {...register("username")}
+                        className="w-full p-2 text-sm border rounded-lg bg-[var(--input)] 
+                                text-[var(--input-foreground)] focus:border-green-500 
+                                focus:ring-1 focus:ring-green-500"
+                      />
+                      {errors.username && (
+                        <span className="text-xs text-red-500 mt-1">
+                          {errors.username.message}
+                        </span>
+                      )}
+                    </div>
+
+                    <div>
+                      <input
+                        type="text"
+                        placeholder="Tiêu đề *"
+                        {...register("title")}
+                        className="w-full p-2 text-sm border rounded-lg bg-[var(--input)] 
+                                text-[var(--input-foreground)] focus:border-green-500 
+                                focus:ring-1 focus:ring-green-500"
+                      />
+                      {errors.title && (
+                        <span className="text-xs text-red-500 mt-1">
+                          {errors.title.message}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <textarea
+                      placeholder="Nội dung *"
+                      {...register("content")}
+                      className="w-full p-2 text-sm border rounded-lg bg-[var(--input)] 
+                              text-[var(--input-foreground)] focus:border-green-500 
+                              focus:ring-1 focus:ring-green-500"
+                      rows={3}
+                    />
+                    {errors.content && (
+                      <span className="text-xs text-red-500 mt-1">
+                        {errors.content.message}
+                      </span>
+                    )}
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="w-full bg-green-500 text-white p-2 rounded-lg text-sm 
+                            hover:bg-green-600 transition-colors"
+                  >
+                    Gửi lời mời
+                  </button>
+                </form>
+              </div>
+            </Transition>
           </div>
-
-          <Transition
-            show={isInviteOpen}
-            enter="transition duration-100 ease-out"
-            enterFrom="transform scale-95 opacity-0"
-            enterTo="transform scale-100 opacity-100"
-            leave="transition duration-75 ease-out"
-            leaveFrom="transform scale-100 opacity-100"
-            leaveTo="transform scale-95 opacity-0"
-          >
-            <div className="mt-3 space-y-2 border-t pt-3">
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-2">
-                <div>
-                  <input
-                    type="text"
-                    placeholder="Tên người dùng *"
-                    {...register("username")}
-                    className="w-full p-1.5 text-xs border rounded text-yellow-800 focus:border-green-500"
-                  />
-                  {errors.username && (
-                    <span className="text-xs text-red-500">
-                      {errors.username.message}
-                    </span>
-                  )}
-                </div>
-
-                <div>
-                  <input
-                    type="text"
-                    placeholder="Tiêu đề *"
-                    {...register("title")}
-                    className="w-full p-1.5 text-xs border rounded text-yellow-800 focus:border-green-500"
-                  />
-                  {errors.title && (
-                    <span className="text-xs text-red-500">
-                      {errors.title.message}
-                    </span>
-                  )}
-                </div>
-
-                <div>
-                  <textarea
-                    placeholder="Nội dung *"
-                    {...register("content")}
-                    className="w-full p-1.5 text-xs border rounded text-yellow-800 focus:border-green-500"
-                    rows={2}
-                  />
-                  {errors.content && (
-                    <span className="text-xs text-red-500">
-                      {errors.content.message}
-                    </span>
-                  )}
-                </div>
-
-                <button
-                  type="submit"
-                  className="w-full bg-green-500 text-white p-1.5 rounded text-xs hover:bg-green-600"
-                >
-                  Gửi lời mời
-                </button>
-              </form>
-            </div>
-          </Transition>
         </DialogPanel>
       </div>
     </Dialog>
