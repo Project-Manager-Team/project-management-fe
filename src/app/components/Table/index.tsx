@@ -8,7 +8,7 @@ import {
   Manager,
   ColumnToggleProps,
 } from "@/app/types/table";
-import { FiPlus, FiSave } from "react-icons/fi";
+import { FiPlus, FiSave, FiArrowLeft } from "react-icons/fi"; // Add this import
 import ManagersModal from "./ManagersModal";
 import ReactModal from "react-modal";
 import { Switch, Dialog } from "@headlessui/react"; // Add this import
@@ -20,7 +20,9 @@ import TableView from './TableView'; // Thêm import cho TableView
 // Add this after imports
 ReactModal.setAppElement("body"); // Set the root element for accessibility
 
+// Thêm VIEW_MODE_KEY vào cùng với STORAGE_KEY
 const STORAGE_KEY = "table-column-preferences";
+const VIEW_MODE_KEY = "table-view-mode";
 
 const ColumnToggle = ({ enabled, onChange }: ColumnToggleProps) => {
   return (
@@ -89,13 +91,20 @@ const showConfirmationToast = (
 };
 
 export default function Table({ current }: TableProps) {
-  const { shouldReloadTable, setShouldReloadTable } = useAppStore();
+  const { history, setHistory, shouldReloadTable, setShouldReloadTable } = useAppStore();
   
   const [isCreating, setIsCreating] = useState<boolean>(false);
   const [listProject, setListProject] = useState<Item[]>([]);
   const [selectedColumns, setSelectedColumns] =
     useState<string[]>(DEFAULT_COLUMNS);
-  const [viewMode, setViewMode] = useState<'table' | 'card'>('table');
+  const [viewMode, setViewMode] = useState<'table' | 'card'>(() => {
+    // Lấy chế độ hiển thị từ localStorage khi khởi tạo
+    if (typeof window !== 'undefined') {
+      const savedMode = localStorage.getItem(VIEW_MODE_KEY);
+      return (savedMode === 'table' || savedMode === 'card') ? savedMode : 'table';
+    }
+    return 'table';
+  });
 
   // Move localStorage logic to useEffect
   useEffect(() => {
@@ -272,53 +281,29 @@ export default function Table({ current }: TableProps) {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [hasUnsavedChanges]);
 
-  // Update getProjects to use toast
-  const getProjects = async (url: string) => {
+  // Update getProjects to pass a callback function
+  const getProjects = async (url: string, onConfirm?: () => void) => {
     if (!url) {
       console.warn('No URL provided to getProjects');
       return;
     }
-
+  
     if (hasUnsavedChanges()) {
-      const ToastContent = (
-        <div>
-          <p>Bạn có đang chỉnh sửa nội dung. Bạn có chắc muốn rời đi không?</p>
-          <div className="mt-2 flex justify-end gap-2">
-            <button
-              onClick={() => {
-                toast.dismiss();
-                getProjectsData(url);
-              }}
-              className="px-2 py-1 bg-blue-500 text-white rounded"
-            >
-              Đồng ý
-            </button>
-            <button
-              onClick={() => {
-                toast.dismiss();
-                setShouldReloadTable(false);
-              }}
-              className="px-2 py-1 bg-gray-500 text-white rounded"
-            >
-              Hủy
-            </button>
-          </div>
-        </div>
-      );
-      
-      toast(ToastContent, {
-        autoClose: false,
-        closeButton: false,
+      showNavigationConfirm(() => {
+        getProjectsData(url);
+        if (onConfirm) onConfirm();
       });
       return;
     }
-
+  
     getProjectsData(url);
+    if (onConfirm) onConfirm();
   };
 
   // Separate data fetching logic
   const getProjectsData = async (url: string) => {
     try {
+      setIsCreating(false); // Reset isCreating trước khi fetch data mới
       // Kiểm tra access token trước khi gọi API
       const accessToken = sessionStorage.getItem('access');
       if (!accessToken) {
@@ -339,6 +324,40 @@ export default function Table({ current }: TableProps) {
     } finally {
       setShouldReloadTable(false); // Reset reloadTableData after fetching
     }
+  };
+
+  // Add a new helper function for navigation confirmation
+  const showNavigationConfirm = (onConfirm: () => void) => {
+    const ToastContent = (
+      <div>
+        <p>Bạn có đang chỉnh sửa nội dung. Bạn có chắc muốn rời đi không?</p>
+        <div className="mt-2 flex justify-end gap-2">
+          <button
+            onClick={() => {
+              toast.dismiss();
+              onConfirm();
+            }}
+            className="px-2 py-1 bg-blue-500 text-white rounded"
+          >
+            Đồng ý
+          </button>
+          <button
+            onClick={() => {
+              toast.dismiss();
+              setShouldReloadTable(false);
+            }}
+            className="px-2 py-1 bg-gray-500 text-white rounded"
+          >
+            Hủy
+          </button>
+        </div>
+      </div>
+    );
+    
+    toast(ToastContent, {
+      autoClose: false,
+      closeButton: false,
+    });
   };
 
   useEffect(() => {
@@ -364,7 +383,7 @@ export default function Table({ current }: TableProps) {
         managers: [],
         owner: null, // Initialize owner as null
         managersCount: 0, // Add managersCount property
-        diffLevel: null, // Add diffLevel property
+        diffLevel: 1, // Set default difficulty to 1 (easy)
       };
       const newListProject = [...listProject, newItem];
       setListProject(newListProject);
@@ -388,7 +407,8 @@ export default function Table({ current }: TableProps) {
         );
         toast.success("Tạo mới nhiệm vụ thành công!");
         setIsCreating(false);
-        getProjects(current.url); // Refresh table
+        // Gọi getProjects sau khi đã setIsCreating(false)
+        await getProjects(current.url);
       } catch {
         toast.error("Không thể tạo mới nhiệm vụ");
       }
@@ -415,6 +435,13 @@ export default function Table({ current }: TableProps) {
     }
   }, [selectedColumns]);
 
+  // Thêm effect để lưu viewMode vào localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(VIEW_MODE_KEY, viewMode);
+    }
+  }, [viewMode]);
+
   // Modify the resetColumnPreferences function to use setTimeout for toast
   const resetColumnPreferences = useCallback(() => {
     setSelectedColumns(DEFAULT_COLUMNS);
@@ -423,10 +450,73 @@ export default function Table({ current }: TableProps) {
     }, 0);
   }, []); // Empty dependencies array since this function doesn't depend on any props or state
 
+  const handleBack = () => {
+    if (hasUnsavedChanges()) {
+      showNavigationConfirm(() => {
+        const newHistory = [...history];
+        newHistory.pop(); // Remove current page from history
+        setHistory(newHistory);
+        setShouldReloadTable(true);
+      });
+      return;
+    }
+
+    const newHistory = [...history];
+    newHistory.pop();
+    setHistory(newHistory);
+    setShouldReloadTable(true);
+  };
+
   return (
     <div className="bg-[var(--card)] shadow-lg rounded-lg overflow-hidden">
-      {/* Header */}
-      <div className="p-4 border-b border-[var(--border)] flex justify-end">
+      {/* Header với các nút điều khiển */}
+      <div className="p-4 border-b border-[var(--border)] flex justify-between items-center">
+        <div className="flex items-center gap-4">
+          {/* Back Button */}
+          {history.length > 1 && (
+            <button
+              onClick={handleBack}
+              className="p-2 bg-[var(--muted)] hover:bg-[var(--muted-foreground)] 
+                        rounded transition-colors duration-200 flex items-center gap-2
+                        text-[var(--foreground)]"
+            >
+              <FiArrowLeft className="w-4 h-4" />
+            </button>
+          )}
+
+          {/* View Mode Toggle */}
+          <div className="flex gap-2">
+            <button
+              onClick={() => setViewMode('table')}
+              className={`p-2 rounded transition-colors flex items-center justify-center gap-2
+                        ${viewMode === 'table' 
+                          ? 'bg-[var(--muted)] text-[var(--muted-foreground)]' 
+                          : 'bg-[var(--primary)] text-white hover:bg-[var(--primary)/90]'}`}
+              disabled={viewMode === 'table'}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                      d="M3 10h18M3 14h18M3 18h18M3 6h18" />
+              </svg>
+            </button>
+            
+            <button
+              onClick={() => setViewMode('card')}
+              className={`p-2 rounded transition-colors flex items-center justify-center gap-2
+                        ${viewMode === 'card' 
+                          ? 'bg-[var(--muted)] text-[var(--muted-foreground)]' 
+                          : 'bg-[var(--primary)] text-white hover:bg-[var(--primary)/90]'}`}
+              disabled={viewMode === 'card'}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                      d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        {/* Settings Button */}
         <button
           onClick={() => setIsColumnSelectorOpen(true)}
           className="p-2 bg-[var(--muted)] hover:bg-[var(--muted-foreground)] 
@@ -447,6 +537,8 @@ export default function Table({ current }: TableProps) {
           handleDeleteItem={handleDeleteItem}
           handleUpdateProgress={handleUpdateProgress}
           openManagers={handleOpenManagers}
+          isCreating={isCreating} // Pass isCreating to TableView
+          setIsCreating={setIsCreating}
         />
       ) : (
         <CardView 
@@ -456,6 +548,8 @@ export default function Table({ current }: TableProps) {
           handleDeleteItem={handleDeleteItem}
           handleUpdateProgress={handleUpdateProgress}
           openManagers={handleOpenManagers}
+          isCreating={isCreating} // Pass isCreating to CardView
+          setIsCreating={setIsCreating}
         />
       )}
 
@@ -469,53 +563,12 @@ export default function Table({ current }: TableProps) {
         <div className="fixed inset-0 flex items-center justify-center p-4">
           <Dialog.Panel className="w-full max-w-md rounded-lg bg-[var(--background)] p-6 shadow-xl">
             <Dialog.Title className="text-lg font-medium mb-4 text-[var(--foreground)]">
-              Cài đặt hiển thị
+              Cài đặt hiển thị cột
             </Dialog.Title>
 
             <div className="space-y-6">
-              {/* View Mode Toggle */}
-              <div className="space-y-2">
-                <h3 className="text-sm font-medium text-[var(--foreground)]">
-                  Kiểu hiển thị
-                </h3>
-                <div className="flex gap-2">
-                  {/* Table View Button */}
-                  <button
-                    onClick={() => setViewMode('table')}
-                    className={`flex-1 p-3 rounded-lg transition-colors flex items-center justify-center gap-2
-                              ${viewMode === 'table' 
-                                ? 'bg-[var(--muted)] text-[var(--muted-foreground)] cursor-default' 
-                                : 'bg-[var(--primary)] text-white hover:bg-[var(--primary)/90]'}`}
-                    disabled={viewMode === 'table'}
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-                            d="M3 10h18M3 14h18M3 18h18M3 6h18" />
-                    </svg>
-                    <span>Bảng</span>
-                  </button>
-                  
-                  {/* Card View Button */}
-                  <button
-                    onClick={() => setViewMode('card')}
-                    className={`flex-1 p-3 rounded-lg transition-colors flex items-center justify-center gap-2
-                              ${viewMode === 'card' 
-                                ? 'bg-[var(--muted)] text-[var(--muted-foreground)] cursor-default' 
-                                : 'bg-[var(--primary)] text-white hover:bg-[var(--primary)/90]'}`}
-                    disabled={viewMode === 'card'}
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                            d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                    </svg>
-                    <span>Thẻ</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Divider */}
-              <div className="border-t border-[var(--border)]" />
-
+              {/* Xóa phần View Mode ở đây */}
+              
               {/* Column Toggles */}
               <div className="space-y-2">
                 {/* Column header */}

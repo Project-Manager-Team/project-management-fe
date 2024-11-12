@@ -5,6 +5,7 @@ GitHub Copilot: Tôi sẽ giúp bạn cấu trúc lại code theo một cách t�
 1. Tổ chức cấu trúc thư mục:
 ```
 src/
+
   components/
     Table/
       components/
@@ -15,6 +16,7 @@ src/
           ManagersModal.tsx 
           ManagerButton.tsx
         TableRow/
+    
           TableRow.tsx
           TableCell.tsx
       hooks/

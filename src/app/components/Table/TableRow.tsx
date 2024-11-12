@@ -6,7 +6,6 @@ import {
   FiCheckSquare,
   FiFolder,
 } from "react-icons/fi";
-import { toast } from "react-toastify";
 import { Item, TableRowProps } from "@/app/types/table";
 import { formatDateTime } from "@/app/utils/formatDateTime";
 import { useAppStore } from "@/app/store/appStore";
@@ -20,6 +19,8 @@ const TableRow: React.FC<TableRowProps> = ({
   handleDeleteItem,
   handleUpdateProgress,
   openManagers,
+  isCreating, // Add this prop
+  setIsCreating, // Add this prop
 }) => {
   const { history, setHistory, setShouldReloadTable } = useAppStore();
 
@@ -32,44 +33,15 @@ const TableRow: React.FC<TableRowProps> = ({
 
   // Helper functions
   const handleTypeClick = () => {
-    if (item.isEditing) {
-      showNavigationConfirm();
+    if (item.isEditing || isCreating) {
+      navigateToChild(); // Remove showNavigationConfirm here
       return;
     }
     navigateToChild();
   };
 
-  const showNavigationConfirm = () => {
-    const ToastContent = (
-      <div>
-        <p>Bạn có đang chỉnh sửa nội dung. Bạn có chắc muốn rời đi không?</p>
-        <div className="mt-2 flex justify-end gap-2">
-          <button
-            onClick={() => {
-              toast.dismiss();
-              navigateToChild();
-            }}
-            className="px-2 py-1 bg-blue-500 text-white rounded"
-          >
-            Đồng ý
-          </button>
-          <button
-            onClick={() => toast.dismiss()}
-            className="px-2 py-1 bg-gray-500 text-white rounded"
-          >
-            Hủy
-          </button>
-        </div>
-      </div>
-    );
-
-    toast(ToastContent, {
-      autoClose: false,
-      closeButton: false,
-    });
-  };
-
   const navigateToChild = () => {
+    setIsCreating(false); // Reset isCreating state
     const newHistory = [
       ...history,
       {
@@ -266,17 +238,16 @@ const TableRow: React.FC<TableRowProps> = ({
                   ? "bg-yellow-50 dark:bg-yellow-900 border border-blue-500"
                   : "bg-transparent"
               } focus:outline-none focus:ring-0 text-gray-800 dark:text-gray-200 rounded-lg p-2`}
-              value={item.diffLevel || ""}
+              value={item.diffLevel === null ? "1" : item.diffLevel}
               onChange={(e) =>
                 handleChange(
                   item.index,
                   e.target.name as keyof Item,
-                  e.target.value ? parseInt(e.target.value) : null
+                  e.target.value ? parseInt(e.target.value) : 1
                 )
               }
               disabled={!item.isEditing}
             >
-              <option value="">Chọn mức độ</option>
               <option value="1">Dễ</option>
               <option value="2">Trung bình</option>
               <option value="3">Khó</option>

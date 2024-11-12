@@ -11,7 +11,9 @@ const TableView: React.FC<TableViewProps> = ({
   handleEditItem,
   handleDeleteItem,
   handleUpdateProgress,
-  openManagers
+  openManagers,
+  isCreating, // Add this prop
+  setIsCreating, // Add this prop
 }) => {
   return (
     <div className={`${items.length > 0 ? 'overflow-x-auto' : ''}`}>
@@ -47,6 +49,8 @@ const TableView: React.FC<TableViewProps> = ({
                 handleUpdateProgress={handleUpdateProgress}
                 selectedColumns={selectedColumns}
                 openManagers={openManagers}
+                isCreating={isCreating} // Pass isCreating to TableRow
+                setIsCreating={setIsCreating} // Pass setIsCreating to TableRow
               />
             ))
           ) : (

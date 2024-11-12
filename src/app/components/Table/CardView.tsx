@@ -1,10 +1,10 @@
 import React, { useEffect, useRef } from 'react';
-import { FiCheckSquare, FiFolder, FiEdit, FiSave, FiTrash2 } from 'react-icons/fi';
+import { FiCheckSquare, FiFolder, FiEdit, FiSave, FiTrash2, FiCheck } from 'react-icons/fi';
 import { Item, ItemProperty } from '@/app/types/table';
 import OwnerButton from './OwnerButton'; // Change to default import
 import { useAppStore } from '@/app/store/appStore';
-import { toast } from 'react-toastify'; // Add this import
 import { CardViewProps, EditableContentProps, AutoResizeTextAreaProps } from '@/app/types/table';
+import { formatDateTime } from "@/app/utils/formatDateTime"; // Add this import at the top
 
 const AutoResizeTextArea = ({ content }: AutoResizeTextAreaProps) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -64,42 +64,6 @@ const EditableContent = ({
   );
 };
 
-const showConfirmationToast = (
-  message: string,
-  onConfirm: () => void,
-  onCancel?: () => void
-) => {
-  const ToastContent = (
-    <div>
-      <p>{message}</p>
-      <div className="mt-2 flex justify-end gap-2">
-        <button
-          onClick={() => {
-            toast.dismiss();
-            onConfirm();
-          }}
-          className="px-2 py-1 bg-blue-500 text-white rounded"
-        >
-          Đồng ý
-        </button>
-        <button
-          onClick={() => {
-            toast.dismiss();
-            if (onCancel) onCancel();
-          }}
-          className="px-2 py-1 bg-gray-500 text-white rounded"
-        >
-          Hủy
-        </button>
-      </div>
-    </div>
-  );
-
-  toast(ToastContent, {
-    autoClose: false,
-    closeButton: false,
-  });
-};
 
 const CardView: React.FC<CardViewProps> = ({
   items,
@@ -108,15 +72,14 @@ const CardView: React.FC<CardViewProps> = ({
   handleDeleteItem,
   handleUpdateProgress,
   openManagers,
+  isCreating, // Add this prop
+  setIsCreating, // Add this prop
 }) => {
   const { history, setHistory, setShouldReloadTable } = useAppStore();
 
   const handleCardClick = (item: Item, isEditing: boolean) => {
-    if (isEditing) {
-      showConfirmationToast(
-        "Bạn có đang chỉnh sửa nội dung. Bạn có chắc muốn rời đi không?",
-        () => navigateToChild(item)
-      );
+    if (isEditing || isCreating) {
+      navigateToChild(item); // Remove showNavigationConfirm here
       return;
     }
 
@@ -124,6 +87,7 @@ const CardView: React.FC<CardViewProps> = ({
   };
 
   const navigateToChild = (item: Item) => {
+    setIsCreating(false); // Reset isCreating state
     const newHistory = [...history, {
       id: item.id,
       url: `/api/project/${item.id}/child`,
@@ -141,6 +105,61 @@ const CardView: React.FC<CardViewProps> = ({
       case 3: return "bg-red-100 text-red-800";
       default: return "bg-gray-100 text-gray-800";
     }
+  };
+
+  // Add this function to format date display
+  const renderDateContent = (dateString: string | null) => {
+    if (!dateString) return null;
+    const { date, time } = formatDateTime(dateString);
+    return (
+      <div className="flex flex-col">
+        <span className="text-xs text-[var(--muted-foreground)]">
+          {date}
+        </span>
+        <span className="text-sm font-medium text-[var(--foreground)]">
+          {time}
+        </span>
+      </div>
+    );
+  };
+
+  // Add this helper function
+  const renderProgress = (item: Item) => {
+    if (item.type.toLowerCase() === 'task') {
+      return (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            handleUpdateProgress(item.id, item.progress === 100 ? 0 : 100);
+          }}
+          className={`p-1.5 rounded-lg transition-all flex items-center gap-2 text-sm
+                     ${item.progress === 100 
+                       ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
+                       : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'}`}
+        >
+          <div className={`p-0.5 rounded ${item.progress === 100 ? 'bg-green-500' : 'bg-gray-400'}`}>
+            <FiCheck className="w-3 h-3 text-white" />
+          </div>
+          <span className="text-xs font-medium">
+            {item.progress === 100 ? 'Đã hoàn thành' : 'Chưa hoàn thành'}
+          </span>
+        </button>
+      );
+    }
+
+    return (
+      <div className="flex items-center gap-2">
+        <div className="flex-grow bg-gray-200 rounded-full h-2">
+          <div
+            className="bg-green-500 h-2 rounded-full transition-all"
+            style={{ width: `${item.progress}%` }}
+          />
+        </div>
+        <span className="text-xs text-[var(--muted-foreground)]">
+          {item.progress}%
+        </span>
+      </div>
+    );
   };
 
   return (
@@ -228,61 +247,67 @@ const CardView: React.FC<CardViewProps> = ({
 
             {/* Dates */}
             {(item.beginTime || item.endTime || item.isEditing) && (
-              <div className="grid grid-cols-2 gap-2">
-                <EditableContent
-                  isEditing={item.isEditing}
-                  value={item.beginTime ? item.beginTime.substring(0, 16) : ''}
-                  name="beginTime"
-                  type="datetime-local"
-                  onChange={(e) =>
-                    handleChange(
-                      item.index,
-                      'beginTime' as ItemProperty,
-                      e.target.value
-                    )
-                  }
-                />
-                <EditableContent
-                  isEditing={item.isEditing}
-                  value={item.endTime ? item.endTime.substring(0, 16) : ''}
-                  name="endTime"
-                  type="datetime-local"
-                  onChange={(e) =>
-                    handleChange(
-                      item.index,
-                      'endTime' as ItemProperty,
-                      e.target.value
-                    )
-                  }
-                />
+              <div className="grid grid-cols-2 gap-4 my-3 p-2 bg-[var(--muted)] rounded-lg">
+                <div className="space-y-1">
+                  <span className="text-xs font-medium text-[var(--muted-foreground)]">
+                    Bắt đầu
+                  </span>
+                  {item.isEditing ? (
+                    <EditableContent
+                      isEditing={item.isEditing}
+                      value={item.beginTime ? item.beginTime.substring(0, 16) : ''}
+                      name="beginTime"
+                      type="datetime-local"
+                      onChange={(e) =>
+                        handleChange(
+                          item.index,
+                          'beginTime' as ItemProperty,
+                          e.target.value
+                        )
+                      }
+                    />
+                  ) : (
+                    renderDateContent(item.beginTime)
+                  )}
+                </div>
+
+                <div className="space-y-1">
+                  <span className="text-xs font-medium text-[var(--muted-foreground)]">
+                    Kết thúc
+                  </span>
+                  {item.isEditing ? (
+                    <EditableContent
+                      isEditing={item.isEditing}
+                      value={item.endTime ? item.endTime.substring(0, 16) : ''}
+                      name="endTime"
+                      type="datetime-local"
+                      onChange={(e) =>
+                        handleChange(
+                          item.index,
+                          'endTime' as ItemProperty,
+                          e.target.value
+                        )
+                      }
+                    />
+                  ) : (
+                    renderDateContent(item.endTime)
+                  )}
+                </div>
               </div>
             )}
 
             {/* Footer */}
             <div className="flex items-center justify-between gap-2">
-              {item.diffLevel !== null && (
-                <span className={`text-xs px-2 py-1 rounded-full ${getDiffLevelStyle(item.diffLevel)}`}>
-                  {['Dễ', 'Trung bình', 'Khó'][item.diffLevel - 1] || 'Không xác định'}
-                </span>
-              )}
-              
-              <div className="flex-grow">
-                {item.type.toLowerCase() === 'task' ? (
-                  <input
-                    type="checkbox"
-                    checked={item.progress === 100}
-                    onChange={() => handleUpdateProgress(item.id, item.progress === 100 ? 0 : 100)}
-                    className="form-checkbox h-4 w-4 text-green-600"
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                ) : (
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div
-                      className="bg-green-500 h-2 rounded-full"
-                      style={{ width: `${item.progress}%` }}
-                    />
-                  </div>
+              <div className="flex-1">
+                {item.diffLevel !== null && (
+                  <span className={`text-xs px-2 py-1 rounded-full ${getDiffLevelStyle(item.diffLevel)}`}>
+                    {['Dễ', 'Trung bình', 'Khó'][item.diffLevel - 1] || 'Không xác định'}
+                  </span>
                 )}
+              </div>
+              
+              <div className="flex-1">
+                {renderProgress(item)}
               </div>
             </div>
           </div>

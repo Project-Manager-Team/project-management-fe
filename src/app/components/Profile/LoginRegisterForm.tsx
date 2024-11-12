@@ -115,7 +115,7 @@ export function LoginRegisterForm({
           <input
             type="text"
             placeholder="Tên đăng nhập"
-            className="w-full px-3 py-2 border rounded-lg pl-9 text-sm"
+            className="w-full px-3 py-2 border rounded-lg pl-9 text-sm dark:bg-gray-800 dark:text-white dark:border-gray-700"
             {...register("username")}
           />
           <FaUser className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm" />
@@ -131,7 +131,7 @@ export function LoginRegisterForm({
             <input
               type="email"
               placeholder="Email"
-              className="w-full px-3 py-2 border rounded-lg pl-9 text-sm"
+              className="w-full px-3 py-2 border rounded-lg pl-9 text-sm dark:bg-gray-800 dark:text-white dark:border-gray-700"
               {...register("email", { required: isRegister })}
             />
             <FaEnvelope className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm" />
@@ -147,7 +147,7 @@ export function LoginRegisterForm({
           <input
             type="password"
             placeholder="Mật khẩu"
-            className="w-full px-3 py-2 border rounded-lg pl-9 text-sm"
+            className="w-full px-3 py-2 border rounded-lg pl-9 text-sm dark:bg-gray-800 dark:text-white dark:border-gray-700"
             {...register("password")}
           />
           <FaLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm" />
@@ -163,7 +163,7 @@ export function LoginRegisterForm({
             <input
               type="password"
               placeholder="Xác nhận mật khẩu"
-              className="w-full px-3 py-2 border rounded-lg pl-9 text-sm"
+              className="w-full px-3 py-2 border rounded-lg pl-9 text-sm dark:bg-gray-800 dark:text-white dark:border-gray-700"
               {...register("confirmPassword")}
             />
             <FaLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm" />
@@ -197,7 +197,7 @@ export function LoginRegisterForm({
           {isRegister ? "Đăng Ký" : "Đăng Nhập"}
         </button>
 
-        <div className="text-center text-sm">
+        <div className="text-center text-sm dark:text-gray-300">
           <button
             type="button"
             className="text-blue-500 hover:underline"

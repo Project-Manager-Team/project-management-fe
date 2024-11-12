@@ -23,6 +23,7 @@ const Profile = () => {
   const [isRegister, setIsRegister] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
+  const profileRef = useRef<HTMLDivElement>(null);
 
   const fetchUserData = async () => {
     try {
@@ -129,9 +130,23 @@ const Profile = () => {
     };
   }, []);
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+        setIsVisible(initialProfileState);
+        setIsRegister(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   if (!user)
     return (
-      <div className="relative profile-avatar">
+      <div className="relative profile-avatar" ref={profileRef}>
         <AvatarDisplay
           onClick={() =>
             setIsVisible((prev) => ({ ...prev, showLogin: !prev.showLogin }))
@@ -154,7 +169,7 @@ const Profile = () => {
     );
 
   return (
-    <div className="relative profile-avatar">
+    <div className="relative profile-avatar" ref={profileRef}>
       <AvatarDisplay
         avatar={user.avatar}
         onClick={() =>

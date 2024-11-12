@@ -14,9 +14,9 @@ const NotificationItem = React.memo(({
   onReply: (item: Invitation, status: boolean) => Promise<void>;
   onDelete: (item: Invitation) => Promise<void>;
 }) => (
-  <div className="mb-2 p-2 relative bg-white shadow-md rounded">
-    <div className="font-bold mb-1 text-black">{item.title}</div>
-    <div className="text-sm text-gray-800 mb-2">{item.content}</div>
+  <div className="mb-2 p-2 relative bg-white dark:bg-gray-800 shadow-md rounded">
+    <div className="font-bold mb-1 text-black dark:text-white">{item.title}</div>
+    <div className="text-sm text-gray-800 dark:text-gray-300 mb-2">{item.content}</div>
     {!item.isReplied && (
       <div className="flex space-x-2">
         <button
@@ -109,7 +109,7 @@ function Notification() {
             )}
           </Popover.Button>
 
-          <Popover.Panel className="absolute right-0 mt-2 bg-white border-2 border-gray-300 rounded-lg w-80 max-h-80 overflow-y-auto p-2 z-10">
+          <Popover.Panel className="absolute right-0 mt-2 bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-700 rounded-lg w-80 max-h-80 overflow-y-auto p-2 z-10">
             {invitations.map((item) => (
               <NotificationItem
                 key={item.id}

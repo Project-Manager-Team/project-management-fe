@@ -107,6 +107,8 @@ export interface TableRowProps {
   selectedColumns: string[];
   openManagers: (item: Item) => void;
   openInviteForm?: (item: Item) => void;
+  isCreating: boolean;
+  setIsCreating: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export interface ManagerButtonProps {
@@ -128,6 +130,7 @@ export interface ManagersModalProps {
 
 export interface TableViewProps extends CardViewProps {
   selectedColumns: string[];
+  isCreating: boolean;
 }
 
 // Add EditableContentProps
@@ -176,10 +179,13 @@ export interface CardViewProps {
   handleDeleteItem: (id: number | null) => void;
   handleUpdateProgress: (id: number, progress: number) => void;
   openManagers: (item: Item) => void;
+  isCreating: boolean;
+  setIsCreating: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export interface TableViewProps extends CardViewProps {
   selectedColumns: string[];
+  isCreating: boolean;
 }
 
 // Removed CardViewProps as it is equivalent to SharedViewProps

@@ -37,16 +37,16 @@ export function ChangePasswordForm({
   };
 
   return (
-    <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 p-4 z-50">
+    <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-4 z-50">
       <div className="flex items-center mb-4">
         <FaArrowAltCircleLeft
           onClick={() => {
             onBack();
             reset();
           }}
-          className="cursor-pointer text-gray-600 hover:text-blue-600 transition-colors text-xl mr-3"
+          className="cursor-pointer text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-500 transition-colors text-xl mr-3"
         />
-        <h3 className="text-lg font-semibold text-gray-800">Đổi Mật Khẩu</h3>
+        <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Đổi Mật Khẩu</h3>
       </div>
       <form onSubmit={handleSubmit(onSubmit)}>
         <input
@@ -64,7 +64,7 @@ export function ChangePasswordForm({
               type="password"
               placeholder="Mật khẩu cũ"
               {...register("oldPassword")}
-              className="mt-2 p-2 rounded-lg w-full focus:ring-2 focus:ring-blue-400 outline-none transition-all duration-200 text-black text-sm"
+              className="mt-2 p-2 rounded-lg w-full focus:ring-2 focus:ring-blue-400 outline-none transition-all duration-200 dark:bg-gray-700 dark:text-white dark:border-gray-600"
               autoComplete="current-password"
             />
             {errors.oldPassword && (
@@ -79,7 +79,7 @@ export function ChangePasswordForm({
               type="password"
               placeholder="Mật khẩu mới"
               {...register("newPassword")}
-              className="mt-3 p-2 rounded-lg w-full focus:ring-2 focus:ring-blue-400 outline-none transition-all duration-200 text-black text-sm"
+              className="mt-3 p-2 rounded-lg w-full focus:ring-2 focus:ring-blue-400 outline-none transition-all duration-200 dark:bg-gray-700 dark:text-white dark:border-gray-600"
               autoComplete="new-password"
             />
             {errors.newPassword && (
@@ -94,7 +94,7 @@ export function ChangePasswordForm({
               type="password"
               placeholder="Nhập lại mật khẩu"
               {...register("newPassword2")}
-              className="mt-3 p-2 rounded-lg w-full focus:ring-2 focus:ring-blue-400 outline-none transition-all duration-200 text-black text-sm"
+              className="mt-3 p-2 rounded-lg w-full focus:ring-2 focus:ring-blue-400 outline-none transition-all duration-200 dark:bg-gray-700 dark:text-white dark:border-gray-600"
               autoComplete="new-password"
             />
             {errors.newPassword2 && (
