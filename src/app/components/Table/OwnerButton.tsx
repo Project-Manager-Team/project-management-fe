@@ -1,23 +1,25 @@
-import { FiUser } from 'react-icons/fi';
-import Image from 'next/image';
-import { DOMAIN } from '@/app/config/api';
-import { OwnerButtonProps } from '@/app/types/table';
+import { FiUser } from "react-icons/fi";
+import Image from "next/image";
+import { DOMAIN } from "@/app/config/api";
+import { OwnerButtonProps } from "@/app/components/Table/types/table";
 
-const OwnerButton: React.FC<OwnerButtonProps> = ({ 
-  owner, 
-  managersCount, 
+const OwnerButton: React.FC<OwnerButtonProps> = ({
+  owner,
+  managersCount,
   onClick,
-  size = 'normal'
+  size = "normal",
 }) => {
-  const sizeClasses = size === 'small' 
-    ? "w-7 h-7" // Reduced from w-9 h-9
-    : "w-8 h-8"; // Reduced from w-11 h-11
+  const sizeClasses =
+    size === "small"
+      ? "w-7 h-7" // Reduced from w-9 h-9
+      : "w-8 h-8"; // Reduced from w-11 h-11
 
-  const badgeClasses = size === 'small'
-    ? "px-1.5 py-0.5 text-xs min-w-[16px]" // Reduced min-width
-    : "px-2 py-0.5 text-xs min-w-[20px]"; // Reduced padding and min-width
+  const badgeClasses =
+    size === "small"
+      ? "px-1.5 py-0.5 text-xs min-w-[16px]" // Reduced min-width
+      : "px-2 py-0.5 text-xs min-w-[20px]"; // Reduced padding and min-width
 
-  const imageSize = size === 'small' ? 20 : 24; // Reduced from 24/32
+  const imageSize = size === "small" ? 20 : 24; // Reduced from 24/32
 
   return (
     <button
@@ -32,8 +34,12 @@ const OwnerButton: React.FC<OwnerButtonProps> = ({
       {owner?.avatar ? (
         <div className="w-full h-full">
           <Image
-            src={owner.avatar.startsWith('http') ? owner.avatar : `${DOMAIN}${owner.avatar}`}
-            alt={owner.username || 'User avatar'}
+            src={
+              owner.avatar.startsWith("http")
+                ? owner.avatar
+                : `${DOMAIN}${owner.avatar}`
+            }
+            alt={owner.username || "User avatar"}
             width={imageSize}
             height={imageSize}
             className="w-full h-full object-cover rounded-full"
@@ -41,7 +47,7 @@ const OwnerButton: React.FC<OwnerButtonProps> = ({
             onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
               const target = e.target as HTMLImageElement;
               target.onerror = null;
-              target.src = '/default-avatar.png';
+              target.src = "/default-avatar.png";
             }}
           />
         </div>

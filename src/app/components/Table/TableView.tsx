@@ -1,8 +1,8 @@
 "use client";
-import React from 'react';
-import TableRow from './TableRow';
-import {TableViewProps } from '@/app/types/table';
-import { COLUMNS } from '@/app/constants/columns';
+import React from "react";
+import TableRow from "./TableRow";
+import { TableViewProps } from "@/app/components/Table/types/table";
+import { COLUMNS } from "@/app/components/Table/constants/columns";
 
 const TableView: React.FC<TableViewProps> = ({
   items,
@@ -25,14 +25,15 @@ const TableView: React.FC<TableViewProps> = ({
               <span className="text-xs font-medium">{COLUMNS.type.label}</span>
             </th>
             {/* Other columns are toggleable */}
-            {selectedColumns.map(colId => 
-              COLUMNS[colId as keyof typeof COLUMNS] && (
-                <th key={colId} className="p-3 text-left whitespace-nowrap">
-                  <span className="text-xs font-medium">
-                    {COLUMNS[colId as keyof typeof COLUMNS].label}
-                  </span>
-                </th>
-              )
+            {selectedColumns.map(
+              (colId) =>
+                COLUMNS[colId as keyof typeof COLUMNS] && (
+                  <th key={colId} className="p-3 text-left whitespace-nowrap">
+                    <span className="text-xs font-medium">
+                      {COLUMNS[colId as keyof typeof COLUMNS].label}
+                    </span>
+                  </th>
+                )
             )}
             <th className="p-3 text-right whitespace-nowrap">
               <span className="sr-only">Actions</span>
@@ -57,7 +58,7 @@ const TableView: React.FC<TableViewProps> = ({
             ))
           ) : (
             <tr>
-              <td 
+              <td
                 colSpan={selectedColumns.length + 2}
                 className="py-8 text-center text-[var(--foreground)] text-sm"
               >

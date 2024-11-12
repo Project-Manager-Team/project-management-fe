@@ -6,7 +6,7 @@ import {
   FiCheckSquare,
   FiFolder,
 } from "react-icons/fi";
-import { Item, TableRowProps } from "@/app/types/table";
+import { Item, TableRowProps } from "@/app/components/Table/types/table";
 import { formatDateTime } from "@/app/utils/formatDateTime";
 import { useAppStore } from "@/app/store/appStore";
 import { toast } from "react-toastify";
@@ -118,9 +118,9 @@ const TableRow: React.FC<TableRowProps> = ({
         </button>
       </td>
       {/* Other columns are toggleable */}
-      {selectedColumns.map(colId => {
-        switch(colId) {
-          case 'title':
+      {selectedColumns.map((colId) => {
+        switch (colId) {
+          case "title":
             return (
               <td key={colId} className="p-3 align-middle min-w-[200px]">
                 <input
@@ -143,7 +143,7 @@ const TableRow: React.FC<TableRowProps> = ({
                 />
               </td>
             );
-          case 'description':
+          case "description":
             return (
               <td key={colId} className="p-3 align-middle hidden md:table-cell">
                 <input
@@ -166,15 +166,20 @@ const TableRow: React.FC<TableRowProps> = ({
                 />
               </td>
             );
-          case 'beginTime':
+          case "beginTime":
             return (
-              <td key={colId} className="p-3 align-middle w-[160px] min-w-[160px]">
+              <td
+                key={colId}
+                className="p-3 align-middle w-[160px] min-w-[160px]"
+              >
                 {item.isEditing ? (
                   <input
                     type="datetime-local"
                     name="beginTime"
                     className={dateTimeInputClass}
-                    value={item.beginTime ? item.beginTime.substring(0, 16) : ""}
+                    value={
+                      item.beginTime ? item.beginTime.substring(0, 16) : ""
+                    }
                     onChange={(e) =>
                       handleChange(
                         item.index,
@@ -195,9 +200,12 @@ const TableRow: React.FC<TableRowProps> = ({
                 )}
               </td>
             );
-          case 'endTime':
+          case "endTime":
             return (
-              <td key={colId} className="p-3 align-middle w-[160px] min-w-[160px]">
+              <td
+                key={colId}
+                className="p-3 align-middle w-[160px] min-w-[160px]"
+              >
                 {item.isEditing ? (
                   <input
                     type="datetime-local"
@@ -224,7 +232,7 @@ const TableRow: React.FC<TableRowProps> = ({
                 )}
               </td>
             );
-          case 'owner':
+          case "owner":
             return (
               <td key={colId} className="p-3 align-middle">
                 <OwnerButton
@@ -234,7 +242,7 @@ const TableRow: React.FC<TableRowProps> = ({
                 />
               </td>
             );
-          case 'diffLevel':
+          case "diffLevel":
             return (
               <td key={colId} className="p-3 align-middle">
                 {item.isEditing ? (
@@ -270,7 +278,7 @@ const TableRow: React.FC<TableRowProps> = ({
                 )}
               </td>
             );
-          case 'progress':
+          case "progress":
             return (
               <td key={colId} className="p-3 align-middle">
                 {item.type.toLowerCase() === "task" ? (

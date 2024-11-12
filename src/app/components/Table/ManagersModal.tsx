@@ -3,23 +3,18 @@ import {
   PermissionKey,
   ManagersModalProps,
   ManagerButtonProps,
-} from "@/app/types/table";
+} from "@/app/components/Table/types/table";
 import Image from "next/image";
 import { DOMAIN } from "@/app/config/api";
 import { FiUser, FiTrash2 } from "react-icons/fi";
-import {
-  Dialog,
-  DialogPanel,
-  Switch,
-  Transition,
-} from "@headlessui/react";
+import { Dialog, DialogPanel, Switch, Transition } from "@headlessui/react";
 import { toast } from "react-toastify";
 import apiClient from "@/app/utils/apiClient";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { inviteFormSchema, type InviteFormInputs } from "@/app/schemas/form";
-import { PermissionSwitchProps } from '@/app/types/table';
-import { showConfirmationToast } from '@/app/utils/toastUtils';
+import { PermissionSwitchProps } from "@/app/components/Table/types/table";
+import { showConfirmationToast } from "@/app/utils/toastUtils";
 
 // Permission Switch Component
 const PermissionSwitch = ({ value, onChange }: PermissionSwitchProps) => (
@@ -62,7 +57,6 @@ export const ManagerButton: React.FC<ManagerButtonProps> = ({
     </button>
   );
 };
-
 
 const ManagersModal: React.FC<ManagersModalProps> = ({
   currentManagerItem,
@@ -136,7 +130,9 @@ const ManagersModal: React.FC<ManagersModalProps> = ({
 
   // Update handleRemoveManager function to use the helper
   const handleRemoveManager = async (managerId: number) => {
-    showConfirmationToast("Bạn có muốn xóa không?", () => removeManager(managerId));
+    showConfirmationToast("Bạn có muốn xóa không?", () =>
+      removeManager(managerId)
+    );
   };
 
   // Add helper function to handle actual removal
@@ -161,27 +157,39 @@ const ManagersModal: React.FC<ManagersModalProps> = ({
 
   return (
     <Dialog open={isOpen} onClose={onClose}>
-      <div className="fixed inset-0 bg-black/30 backdrop-blur-sm" aria-hidden="true" />
+      <div
+        className="fixed inset-0 bg-black/30 backdrop-blur-sm"
+        aria-hidden="true"
+      />
       <div className="fixed inset-0 flex items-center justify-center p-4">
-        <DialogPanel className="w-full max-w-2xl bg-[var(--card)] text-[var(--card-foreground)]
-                              p-4 sm:p-6 rounded-lg shadow-xl overflow-y-auto max-h-[90vh]">
+        <DialogPanel
+          className="w-full max-w-2xl bg-[var(--card)] text-[var(--card-foreground)]
+                              p-4 sm:p-6 rounded-lg shadow-xl overflow-y-auto max-h-[90vh]"
+        >
           <div className="space-y-4">
             {/* Mobile view */}
             <div className="block sm:hidden space-y-4">
               {managerPermissions.map((manager, index) => (
-                <div key={manager.user.id} className="p-4 bg-[var(--muted)] rounded-lg">
+                <div
+                  key={manager.user.id}
+                  className="p-4 bg-[var(--muted)] rounded-lg"
+                >
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
                       {manager.user.avatar ? (
                         <Image
-                          src={manager.user.avatar.startsWith("http")
-                            ? manager.user.avatar
-                            : `${DOMAIN}${manager.user.avatar}`}
+                          src={
+                            manager.user.avatar.startsWith("http")
+                              ? manager.user.avatar
+                              : `${DOMAIN}${manager.user.avatar}`
+                          }
                           alt={manager.user.username}
                           width={24}
                           height={24}
                           className="rounded-full"
-                          onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+                          onError={(
+                            e: React.SyntheticEvent<HTMLImageElement, Event>
+                          ) => {
                             const target = e.target as HTMLImageElement;
                             target.onerror = null;
                             target.src = "/default-avatar.png";
@@ -190,7 +198,9 @@ const ManagersModal: React.FC<ManagersModalProps> = ({
                       ) : (
                         <FiUser className="w-6 h-6 text-gray-500" />
                       )}
-                      <span className="font-medium">{manager.user.username}</span>
+                      <span className="font-medium">
+                        {manager.user.username}
+                      </span>
                     </div>
                     <button
                       onClick={() => handleRemoveManager(manager.user.id)}
@@ -208,16 +218,24 @@ const ManagersModal: React.FC<ManagersModalProps> = ({
                       ["Thêm TV", "canAddMember"],
                       ["Xoá TV", "canRemoveMember"],
                     ].map(([label, permission]) => (
-                      <div key={permission} 
-                           className="flex items-center justify-between p-2 bg-[var(--card)] rounded">
+                      <div
+                        key={permission}
+                        className="flex items-center justify-between p-2 bg-[var(--card)] rounded"
+                      >
                         <span className="text-xs">{label}</span>
                         <PermissionSwitch
-                          value={manager.permissions?.[permission as PermissionKey] ?? false}
-                          onChange={(value) => handlePermissionChange(
-                            index,
-                            permission as PermissionKey,
-                            value
-                          )}
+                          value={
+                            manager.permissions?.[
+                              permission as PermissionKey
+                            ] ?? false
+                          }
+                          onChange={(value) =>
+                            handlePermissionChange(
+                              index,
+                              permission as PermissionKey,
+                              value
+                            )
+                          }
                         />
                       </div>
                     ))}
@@ -248,14 +266,18 @@ const ManagersModal: React.FC<ManagersModalProps> = ({
                         <div className="flex items-center gap-2">
                           {manager.user.avatar ? (
                             <Image
-                              src={manager.user.avatar.startsWith("http")
-                                ? manager.user.avatar
-                                : `${DOMAIN}${manager.user.avatar}`}
+                              src={
+                                manager.user.avatar.startsWith("http")
+                                  ? manager.user.avatar
+                                  : `${DOMAIN}${manager.user.avatar}`
+                              }
                               alt={manager.user.username}
                               width={24}
                               height={24}
                               className="rounded-full"
-                              onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+                              onError={(
+                                e: React.SyntheticEvent<HTMLImageElement, Event>
+                              ) => {
                                 const target = e.target as HTMLImageElement;
                                 target.onerror = null;
                                 target.src = "/default-avatar.png";
@@ -267,18 +289,30 @@ const ManagersModal: React.FC<ManagersModalProps> = ({
                           <span>{manager.user.username}</span>
                         </div>
                       </td>
-                      {["canEdit", "canFinish", "canAdd", "canDelete", "canAddMember", "canRemoveMember"]
-                        .map((permission) => (
-                          <td key={permission} className="py-2 px-3 text-center">
-                            <PermissionSwitch
-                              value={manager.permissions?.[permission as PermissionKey] ?? false}
-                              onChange={(value) => handlePermissionChange(
+                      {[
+                        "canEdit",
+                        "canFinish",
+                        "canAdd",
+                        "canDelete",
+                        "canAddMember",
+                        "canRemoveMember",
+                      ].map((permission) => (
+                        <td key={permission} className="py-2 px-3 text-center">
+                          <PermissionSwitch
+                            value={
+                              manager.permissions?.[
+                                permission as PermissionKey
+                              ] ?? false
+                            }
+                            onChange={(value) =>
+                              handlePermissionChange(
                                 index,
                                 permission as PermissionKey,
                                 value
-                              )}
-                            />
-                          </td>
+                              )
+                            }
+                          />
+                        </td>
                       ))}
                       <td className="py-2 px-3">
                         <button

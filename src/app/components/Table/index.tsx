@@ -4,19 +4,21 @@ import apiClient from "@/app/utils/apiClient";
 import { toast } from "react-toastify";
 import {
   Item,
-  ItemProperty,
   Manager,
   ColumnToggleProps,
-} from "@/app/types/table";
+} from "@/app/components/Table/types/table";
 import { FiPlus, FiSave, FiArrowLeft } from "react-icons/fi"; // Add this import
 import ManagersModal from "./ManagersModal";
 import ReactModal from "react-modal";
 import { Switch, Dialog } from "@headlessui/react"; // Add this import
-import { useAppStore } from '@/app/store/appStore'; // Add this import
-import CardView from './CardView';
-import {DEFAULT_COLUMNS, allColumns } from '@/app/constants/columns';
-import TableView from './TableView'; // Thêm import cho TableView
-import { showConfirmationToast } from "@/app/utils/toastUtils";
+import { useAppStore } from "@/app/store/appStore"; // Add this import
+import CardView from "./CardView";
+import {
+  DEFAULT_COLUMNS,
+  allColumns,
+} from "@/app/components/Table/constants/columns";
+import TableView from "./TableView"; // Thêm import cho TableView
+import { useProject } from "./hooks/useProject";
 
 // Add this after imports
 ReactModal.setAppElement("body"); // Set the root element for accessibility
@@ -54,19 +56,30 @@ interface TableProps {
 }
 
 export default function Table({ current }: TableProps) {
-  const { history, setHistory, shouldReloadTable, setShouldReloadTable } = useAppStore();
-  
-  const [isCreating, setIsCreating] = useState<boolean>(false);
-  const [listProject, setListProject] = useState<Item[]>([]);
+  const { history, setHistory, setShouldReloadTable } = useAppStore();
+  const {
+    listProject,
+    isCreating,
+    setIsCreating, // Add this
+    hasUnsavedChanges,
+    handleChange,
+    handleEditItem,
+    handleDeleteItem,
+    handleCreateAndSaveItem,
+    handleUpdateProgress,
+  } = useProject(current.id, current.url);
+
   const [selectedColumns, setSelectedColumns] =
     useState<string[]>(DEFAULT_COLUMNS);
-  const [viewMode, setViewMode] = useState<'table' | 'card'>(() => {
+  const [viewMode, setViewMode] = useState<"table" | "card">(() => {
     // Lấy chế độ hiển thị từ localStorage khi khởi tạo
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       const savedMode = localStorage.getItem(VIEW_MODE_KEY);
-      return (savedMode === 'table' || savedMode === 'card') ? savedMode : 'table';
+      return savedMode === "table" || savedMode === "card"
+        ? savedMode
+        : "table";
     }
-    return 'table';
+    return "table";
   });
 
   // Move localStorage logic to useEffect
@@ -140,227 +153,18 @@ export default function Table({ current }: TableProps) {
     });
   }, []); // Empty dependencies array since this function doesn't depend on any props or state
 
-  const handleChange = (
-    index: number,
-    name: ItemProperty,
-    value: string | number | boolean | null
-  ) => {
-    setListProject((prevList) => {
-      const currentItem = prevList[index];
-      if (currentItem[name] === value) {
-        return prevList;
-      }
-
-      const updatedItem = { ...currentItem, [name]: value };
-      const updatedList = [...prevList];
-      updatedList[index] = updatedItem;
-      return updatedList;
-    });
-  };
-
-  const handleEditItem = async (index: number) => {
-    const currentItem = listProject[index];
-    setListProject((prevList) => {
-      const updatedList = [...prevList];
-      updatedList[index] = {
-        ...currentItem,
-        isEditing: !currentItem.isEditing,
-      };
-      return updatedList;
-    });
-
-    if (currentItem.isEditing) {
-      try {
-        await apiClient.put(`/api/project/${currentItem.id}/`, currentItem); // Ensure correct API path
-        toast.success("Cập nhật thành công!");
-      } catch {
-        toast.error("Cập nhật không thành công");
-      }
-    }
-  };
-
-  // Add this new function to update indexes
-  const updateIndexes = (items: Item[]) => {
-    return items.map((item, index) => ({
-      ...item,
-      index
-    }));
-  };
-
-  const handleDeleteItem = useCallback((id: number | null) => {
-    if (id === null) {
-      toast.error("ID không hợp lệ");
-      return;
-    }
-  
-    // Kiểm tra nếu có item khác đang được chỉnh sửa
-    const hasOtherEditingItems = listProject.some(item => 
-      item.id !== id && (item.isEditing || isCreating)
-    );
-  
-    if (hasOtherEditingItems) {
-      toast.warning("Vui lòng lưu các thay đổi trước khi xóa!");
-      return;
-    }
-  
-    const itemToDelete = listProject.find((item) => item.id === id);
-    const isNewItem =
-      isCreating &&
-      itemToDelete &&
-      itemToDelete.id === listProject[listProject.length - 1].id;
-  
-    const confirmDelete = () => {
-      if (isNewItem) {
-        setListProject((prevList) => {
-          const filteredList = prevList.filter((item) => item.id !== id);
-          return updateIndexes(filteredList);
-        });
-        setIsCreating(false);
-        toast.success("Đã xoá nhiệm vụ mới tạo!");
-      } else {
-        apiClient
-          .delete(`/api/project/${id}/`)
-          .then(() => {
-            setListProject((prevList) => {
-              const filteredList = prevList.filter((item) => item.id !== id);
-              return updateIndexes(filteredList);
-            });
-            toast.success("Xóa nhiệm vụ thành công!");
-          })
-          .catch(() => {
-            toast.error("Không thể xóa nhiệm vụ");
-          });
-      }
-    };
-  
-    showConfirmationToast("Bạn có muốn xóa không?", confirmDelete);
-  }, [listProject, isCreating]);
-
-  // Add this function to check if any item is being edited
-  const hasUnsavedChanges = useCallback(() => {
-    return isCreating || listProject.some(item => item.isEditing);
-  }, [isCreating, listProject]);
-
   // Add this effect to handle navigation warning
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (hasUnsavedChanges()) {
         e.preventDefault();
-        e.returnValue = '';
+        e.returnValue = "";
       }
     };
 
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [hasUnsavedChanges]);
-
-  // Update getProjects to pass a callback function
-  const getProjects = async (url: string, onConfirm?: () => void) => {
-    if (!url) {
-      console.warn('No URL provided to getProjects');
-      return;
-    }
-  
-    if (hasUnsavedChanges()) {
-      showConfirmationToast(
-        "Bạn có đang chỉnh sửa nội dung. Bạn có chắc muốn rời đi không?",
-        () => {
-          getProjectsData(url);
-          if (onConfirm) onConfirm();
-        }
-      );
-      return;
-    }
-  
-    getProjectsData(url);
-    if (onConfirm) onConfirm();
-  };
-
-  // Separate data fetching logic
-  const getProjectsData = async (url: string) => {
-    try {
-      setIsCreating(false); // Reset isCreating trước khi fetch data mới
-      // Kiểm tra access token trước khi gọi API
-      const accessToken = sessionStorage.getItem('access');
-      if (!accessToken) {
-        setListProject([]); // Xóa dữ liệu bảng nếu không có token
-        return;
-      }
-
-      const { data } = await apiClient.get<Item[]>(url);
-      const newData = data.filter((item) => item.type !== "personal");
-      const indexedData = updateIndexes(newData.map(item => ({
-        ...item,
-        isEditing: false
-      })));
-      setListProject(indexedData);
-    } catch {
-      setListProject([]); // Xóa dữ liệu bảng nếu có lỗi
-      toast.error("Lấy dữ liệu không thành công");
-    } finally {
-      setShouldReloadTable(false); // Reset reloadTableData after fetching
-    }
-  };
-
-  useEffect(() => {
-    if (current?.url) {
-      getProjects(current.url);
-    }
-  }, [current?.url, shouldReloadTable]);
-
-  const handleCreateAndSaveItem = async () => {
-    if (!isCreating) {
-      const newItem: Item = {
-        id: Date.now(), // Assign a unique temporary ID
-        index: listProject.length,
-        type: "task",
-        title: null,
-        description: null,
-        beginTime: null,
-        endTime: null,
-        progress: 0,
-        manager: null,
-        parentId: current.id || null,
-        isEditing: true,
-        managers: [],
-        owner: null, // Initialize owner as null
-        managersCount: 0, // Add managersCount property
-        diffLevel: 1, // Set default difficulty to 1 (easy)
-      };
-      const newListProject = [...listProject, newItem];
-      setListProject(newListProject);
-      setIsCreating(true);
-    } else {
-      const newItem = listProject[listProject.length - 1];
-      if (!newItem.title || newItem.title.trim() === "") {
-        toast.error("Tiêu đề là bắt buộc");
-        return;
-      }
-      try {
-        await apiClient.post<Item>("/api/project/", newItem); // Ensure correct API path
-        // Cập nhật state trước khi gọi getProjects
-        setIsCreating(false);
-        // Gọi getProjects trực tiếp không cần confirm
-        await getProjectsData(current.url);
-        toast.success("Tạo mới nhiệm vụ thành công!");
-      } catch {
-        toast.error("Không thể tạo mới nhiệm vụ");
-      }
-    }
-  };
-
-  // Function to handle progress updates
-  const handleUpdateProgress = async (id: number, progress: number) => {
-    try {
-      await apiClient.patch(`/api/project/${id}/`, { progress }); // Ensure correct API path
-      setListProject((prevList) =>
-        prevList.map((item) => (item.id === id ? { ...item, progress } : item))
-      );
-      toast.success("Cập nhật tiến độ thành công!");
-    } catch {
-      toast.error("Cập nhật tiến độ không thành công");
-    }
-  };
 
   // Add this effect to save changes to localStorage
   useEffect(() => {
@@ -371,7 +175,7 @@ export default function Table({ current }: TableProps) {
 
   // Thêm effect để lưu viewMode vào localStorage
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       localStorage.setItem(VIEW_MODE_KEY, viewMode);
     }
   }, [viewMode]);
@@ -398,9 +202,7 @@ export default function Table({ current }: TableProps) {
 
   return (
     <div className="bg-[var(--card)] shadow-lg rounded-lg overflow-hidden">
-      {/* Header với các nút điều khiển */}
       <div className="p-4 border-b border-[var(--border)] flex items-center">
-        {/* Left section */}
         <div className="flex items-center gap-4 flex-shrink-0">
           {history.length > 1 && (
             <button
@@ -416,30 +218,52 @@ export default function Table({ current }: TableProps) {
           {/* View Mode Toggle */}
           <div className="flex gap-2 p-1 bg-[var(--muted)] rounded-lg">
             <button
-              onClick={() => setViewMode('table')}
+              onClick={() => setViewMode("table")}
               className={`px-3 py-1.5 rounded transition-colors flex items-center justify-center gap-2
-                        ${viewMode === 'table' 
-                          ? 'bg-[var(--background)] text-[var(--foreground)] shadow-sm' 
-                          : 'text-[var(--muted-foreground)] hover:text-[var(--foreground)]'}`}
-              disabled={viewMode === 'table'}
+                        ${
+                          viewMode === "table"
+                            ? "bg-[var(--background)] text-[var(--foreground)] shadow-sm"
+                            : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
+                        }`}
+              disabled={viewMode === "table"}
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-                      d="M3 10h18M3 14h18M3 18h18M3 6h18" />
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3 10h18M3 14h18M3 18h18M3 6h18"
+                />
               </svg>
             </button>
-            
+
             <button
-              onClick={() => setViewMode('card')}
+              onClick={() => setViewMode("card")}
               className={`px-3 py-1.5 rounded transition-colors flex items-center justify-center gap-2
-                        ${viewMode === 'card' 
-                          ? 'bg-[var(--background)] text-[var(--foreground)] shadow-sm' 
-                          : 'text-[var(--muted-foreground)] hover:text-[var(--foreground)]'}`}
-              disabled={viewMode === 'card'}
+                        ${
+                          viewMode === "card"
+                            ? "bg-[var(--background)] text-[var(--foreground)] shadow-sm"
+                            : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
+                        }`}
+              disabled={viewMode === "card"}
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                      d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
+                />
               </svg>
             </button>
           </div>
@@ -466,7 +290,7 @@ export default function Table({ current }: TableProps) {
       </div>
 
       {/* View content */}
-      {viewMode === 'table' ? (
+      {viewMode === "table" ? (
         <TableView
           items={listProject}
           selectedColumns={selectedColumns}
@@ -480,7 +304,7 @@ export default function Table({ current }: TableProps) {
           parentTitle={current.title} // Add this prop
         />
       ) : (
-        <CardView 
+        <CardView
           items={listProject}
           handleChange={handleChange}
           handleEditItem={handleEditItem}
@@ -507,7 +331,7 @@ export default function Table({ current }: TableProps) {
 
             <div className="space-y-6">
               {/* Xóa phần View Mode ở đây */}
-              
+
               {/* Column Toggles */}
               <div className="space-y-2">
                 {/* Column header */}
@@ -544,7 +368,9 @@ export default function Table({ current }: TableProps) {
                              bg-[var(--input)] hover:bg-[var(--muted)]
                              rounded-lg transition-colors"
                   >
-                    <span className="text-[var(--foreground)]">{col.label}</span>
+                    <span className="text-[var(--foreground)]">
+                      {col.label}
+                    </span>
                     <ColumnToggle
                       enabled={selectedColumns.includes(col.id)}
                       onChange={() => toggleColumn(col.id)}
@@ -577,7 +403,11 @@ export default function Table({ current }: TableProps) {
           onClick={handleCreateAndSaveItem}
           aria-label={isCreating ? "Save" : "Create"}
         >
-          {isCreating ? <FiSave className="w-5 h-5" /> : <FiPlus className="w-5 h-5" />}
+          {isCreating ? (
+            <FiSave className="w-5 h-5" />
+          ) : (
+            <FiPlus className="w-5 h-5" />
+          )}
         </button>
       </div>
     </div>

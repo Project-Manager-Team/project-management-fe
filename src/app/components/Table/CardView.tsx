@@ -1,10 +1,21 @@
-import React, { useEffect, useRef } from 'react';
-import { FiCheckSquare, FiFolder, FiEdit, FiSave, FiTrash2, FiCheck } from 'react-icons/fi';
-import { toast } from 'react-toastify';
-import { Item, ItemProperty } from '@/app/types/table';
-import OwnerButton from './OwnerButton'; // Change to default import
-import { useAppStore } from '@/app/store/appStore';
-import { CardViewProps, EditableContentProps, AutoResizeTextAreaProps } from '@/app/types/table';
+import React, { useEffect, useRef, useState } from "react";
+import {
+  FiCheckSquare,
+  FiFolder,
+  FiEdit,
+  FiSave,
+  FiTrash2,
+  FiCheck,
+} from "react-icons/fi";
+import { toast } from "react-toastify";
+import { Item, ItemProperty } from "@/app/components/Table/types/table";
+import OwnerButton from "./OwnerButton"; // Change to default import
+import { useAppStore } from "@/app/store/appStore";
+import {
+  CardViewProps,
+  EditableContentProps,
+  AutoResizeTextAreaProps,
+} from "@/app/components/Table/types/table";
 import { formatDateTime } from "@/app/utils/formatDateTime"; // Add this import at the top
 
 const AutoResizeTextArea = ({ content }: AutoResizeTextAreaProps) => {
@@ -13,28 +24,28 @@ const AutoResizeTextArea = ({ content }: AutoResizeTextAreaProps) => {
   useEffect(() => {
     const textarea = textareaRef.current;
     if (textarea) {
-      textarea.style.height = 'auto';
-      textarea.style.height = textarea.scrollHeight + 'px';
+      textarea.style.height = "auto";
+      textarea.style.height = textarea.scrollHeight + "px";
     }
   }, [content]);
 
   return (
     <div className="text-sm text-[var(--muted-foreground)]">
-      {content || ''}
+      {content || ""}
     </div>
   );
 };
 
-const EditableContent = ({ 
-  isEditing, 
-  value, 
-  onChange, 
+const EditableContent = ({
+  isEditing,
+  value,
+  onChange,
   name,
-  type = 'text',
-  className = ''
+  type = "text",
+  className = "",
 }: EditableContentProps) => {
   if (!isEditing) {
-    return type === 'textarea' ? (
+    return type === "textarea" ? (
       <div className="min-h-[1.5rem]">
         <AutoResizeTextArea content={value ? String(value) : null} />
       </div>
@@ -43,10 +54,10 @@ const EditableContent = ({
     );
   }
 
-  return type === 'textarea' ? (
+  return type === "textarea" ? (
     <textarea
       name={name}
-      value={value === true ? '' : value || ''}
+      value={value === true ? "" : value || ""}
       onChange={onChange}
       className={`w-full p-2 bg-yellow-50 dark:bg-yellow-900 border border-blue-500 
                 rounded-lg focus:outline-none ${className}`}
@@ -56,7 +67,7 @@ const EditableContent = ({
     <input
       type={type}
       name={name}
-      value={value === true ? '' : value || ''}
+      value={value === true ? "" : value || ""}
       onChange={onChange}
       className={`w-full p-2 bg-yellow-50 dark:bg-yellow-900 border border-blue-500 
                 rounded-lg focus:outline-none ${className}`}
@@ -64,7 +75,6 @@ const EditableContent = ({
     />
   );
 };
-
 
 const CardView: React.FC<CardViewProps> = ({
   items,
@@ -77,6 +87,7 @@ const CardView: React.FC<CardViewProps> = ({
   setIsCreating, // Add this prop
 }) => {
   const { history, setHistory, setShouldReloadTable } = useAppStore();
+  const [isNavigating, setIsNavigating] = useState(false);
 
   const handleCardClick = (item: Item, isEditing: boolean) => {
     if (isEditing || isCreating) {
@@ -87,36 +98,52 @@ const CardView: React.FC<CardViewProps> = ({
   };
 
   const navigateToChild = (item: Item) => {
-    setIsCreating(false); // Reset isCreating state
-    const newHistory = [...history, {
-      id: item.id,
-      url: `/api/project/${item.id}/child`,
-      title: item.title || "",
-    }];
+    if (isNavigating) return; // Prevent rapid navigation
+    setIsNavigating(true);
+
+    setIsCreating(false);
+    const newHistory = [
+      ...history,
+      {
+        id: item.id,
+        url: `/api/project/${item.id}/child`,
+        title: item.title || "",
+      },
+    ];
     setHistory(newHistory);
     setShouldReloadTable(true);
+
+    // Reset the navigation lock after a delay
+    setTimeout(() => {
+      setIsNavigating(false);
+    }, 500); // 500ms delay
   };
 
   const getDiffLevelStyle = (level: number | null | undefined) => {
-    if (level === null || level === undefined) return "bg-gray-100 text-gray-800";
+    if (level === null || level === undefined)
+      return "bg-gray-100 text-gray-800";
     switch (level) {
-      case 1: return "bg-green-100 text-green-800";
-      case 2: return "bg-yellow-100 text-yellow-800";
-      case 3: return "bg-red-100 text-red-800";
-      default: return "bg-gray-100 text-gray-800";
+      case 1:
+        return "bg-green-100 text-green-800";
+      case 2:
+        return "bg-yellow-100 text-yellow-800";
+      case 3:
+        return "bg-red-100 text-red-800";
+      default:
+        return "bg-gray-100 text-gray-800";
     }
   };
 
   const getDiffLevelLabel = (level: number | null | undefined) => {
     switch (level) {
       case 1:
-        return 'Dễ';
+        return "Dễ";
       case 2:
-        return 'Trung bình';
+        return "Trung bình";
       case 3:
-        return 'Khó';
+        return "Khó";
       default:
-        return 'Không xác định';
+        return "Không xác định";
     }
   };
 
@@ -126,9 +153,7 @@ const CardView: React.FC<CardViewProps> = ({
     const { date, time } = formatDateTime(dateString);
     return (
       <div className="flex flex-col">
-        <span className="text-xs text-[var(--muted-foreground)]">
-          {date}
-        </span>
+        <span className="text-xs text-[var(--muted-foreground)]">{date}</span>
         <span className="text-sm font-medium text-[var(--foreground)]">
           {time}
         </span>
@@ -138,7 +163,7 @@ const CardView: React.FC<CardViewProps> = ({
 
   // Add this helper function
   const renderProgress = (item: Item) => {
-    if (item.type.toLowerCase() === 'task') {
+    if (item.type.toLowerCase() === "task") {
       return (
         <button
           onClick={(e) => {
@@ -146,15 +171,21 @@ const CardView: React.FC<CardViewProps> = ({
             handleUpdateProgress(item.id, item.progress === 100 ? 0 : 100);
           }}
           className={`p-1.5 rounded-lg transition-all flex items-center gap-2 text-sm
-                     ${item.progress === 100 
-                       ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
-                       : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'}`}
+                     ${
+                       item.progress === 100
+                         ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                         : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
+                     }`}
         >
-          <div className={`p-0.5 rounded ${item.progress === 100 ? 'bg-green-500' : 'bg-gray-400'}`}>
+          <div
+            className={`p-0.5 rounded ${
+              item.progress === 100 ? "bg-green-500" : "bg-gray-400"
+            }`}
+          >
             <FiCheck className="w-3 h-3 text-white" />
           </div>
           <span className="text-xs font-medium">
-            {item.progress === 100 ? 'Đã hoàn thành' : 'Chưa hoàn thành'}
+            {item.progress === 100 ? "Đã hoàn thành" : "Chưa hoàn thành"}
           </span>
         </button>
       );
@@ -178,13 +209,21 @@ const CardView: React.FC<CardViewProps> = ({
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
       {items.map((item) => (
-        <div 
+        <div
           key={item.id}
           onClick={() => handleCardClick(item, item.isEditing)}
           className={`group bg-[var(--card)] border border-[var(--border)] rounded-lg 
                     shadow-sm transition-all duration-200 flex flex-col
-                    ${!item.isEditing ? 'hover:scale-[1.02] hover:shadow-lg cursor-pointer' : ''}
-                    ${item.isEditing ? 'ring-2 ring-blue-500' : 'hover:bg-[var(--muted)]'}`}
+                    ${
+                      !item.isEditing
+                        ? "hover:scale-[1.02] hover:shadow-lg cursor-pointer"
+                        : ""
+                    }
+                    ${
+                      item.isEditing
+                        ? "ring-2 ring-blue-500"
+                        : "hover:bg-[var(--muted)]"
+                    }`}
         >
           {/* Header Section - No border */}
           <div className="p-4">
@@ -192,7 +231,7 @@ const CardView: React.FC<CardViewProps> = ({
             <div className="flex items-center justify-between">
               {/* Title and Icon */}
               <div className="flex items-center gap-2 flex-1 min-w-0">
-                {item.type.toLowerCase() === 'task' ? (
+                {item.type.toLowerCase() === "task" ? (
                   <FiCheckSquare className="w-5 h-5 flex-shrink-0" />
                 ) : (
                   <FiFolder className="w-5 h-5 flex-shrink-0" />
@@ -204,7 +243,7 @@ const CardView: React.FC<CardViewProps> = ({
                   onChange={(e) =>
                     handleChange(
                       item.index,
-                      'title' as ItemProperty,
+                      "title" as ItemProperty,
                       e.target.value
                     )
                   }
@@ -212,7 +251,10 @@ const CardView: React.FC<CardViewProps> = ({
                 />
               </div>
               {/* Action Buttons */}
-              <div className="flex items-center gap-1 ml-2" onClick={(e) => e.stopPropagation()}>
+              <div
+                className="flex items-center gap-1 ml-2"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <button
                   className="p-1.5 bg-[var(--muted)] hover:bg-[var(--muted-foreground)]
                             text-[var(--foreground)] rounded-full transition-all"
@@ -253,7 +295,7 @@ const CardView: React.FC<CardViewProps> = ({
                   onChange={(e) =>
                     handleChange(
                       item.index,
-                      'description' as ItemProperty,
+                      "description" as ItemProperty,
                       e.target.value
                     )
                   }
@@ -273,13 +315,15 @@ const CardView: React.FC<CardViewProps> = ({
                   {item.isEditing ? (
                     <EditableContent
                       isEditing={item.isEditing}
-                      value={item.beginTime ? item.beginTime.substring(0, 16) : ''}
+                      value={
+                        item.beginTime ? item.beginTime.substring(0, 16) : ""
+                      }
                       name="beginTime"
                       type="datetime-local"
                       onChange={(e) =>
                         handleChange(
                           item.index,
-                          'beginTime' as ItemProperty,
+                          "beginTime" as ItemProperty,
                           e.target.value
                         )
                       }
@@ -296,13 +340,13 @@ const CardView: React.FC<CardViewProps> = ({
                   {item.isEditing ? (
                     <EditableContent
                       isEditing={item.isEditing}
-                      value={item.endTime ? item.endTime.substring(0, 16) : ''}
+                      value={item.endTime ? item.endTime.substring(0, 16) : ""}
                       name="endTime"
                       type="datetime-local"
                       onChange={(e) =>
                         handleChange(
                           item.index,
-                          'endTime' as ItemProperty,
+                          "endTime" as ItemProperty,
                           e.target.value
                         )
                       }
@@ -320,16 +364,18 @@ const CardView: React.FC<CardViewProps> = ({
             <div className="grid grid-cols-2 gap-4">
               {/* Difficulty Level */}
               <div>
-                {(item.diffLevel !== null || item.isEditing) && (
-                  item.isEditing ? (
+                {(item.diffLevel !== null || item.isEditing) &&
+                  (item.isEditing ? (
                     <select
                       name="diffLevel"
                       value={item.diffLevel === null ? "1" : item.diffLevel}
-                      onChange={(e) => handleChange(
-                        item.index,
-                        'diffLevel' as ItemProperty,
-                        e.target.value ? parseInt(e.target.value) : 1
-                      )}
+                      onChange={(e) =>
+                        handleChange(
+                          item.index,
+                          "diffLevel" as ItemProperty,
+                          e.target.value ? parseInt(e.target.value) : 1
+                        )
+                      }
                       onClick={(e) => e.stopPropagation()}
                       className="w-full text-xs px-2 py-1 rounded-full bg-yellow-50 
                                dark:bg-yellow-900 border border-blue-500 focus:outline-none"
@@ -339,18 +385,21 @@ const CardView: React.FC<CardViewProps> = ({
                       <option value="3">Khó</option>
                     </select>
                   ) : (
-                    <span className={`inline-block w-full text-center text-xs px-2 py-1 
-                                   rounded-full ${getDiffLevelStyle(item.diffLevel)}`}>
-                      {item.diffLevel !== null ? getDiffLevelLabel(item.diffLevel) : 'Không xác định'}
+                    <span
+                      className={`inline-block w-full text-center text-xs px-2 py-1 
+                                   rounded-full ${getDiffLevelStyle(
+                                     item.diffLevel
+                                   )}`}
+                    >
+                      {item.diffLevel !== null
+                        ? getDiffLevelLabel(item.diffLevel)
+                        : "Không xác định"}
                     </span>
-                  )
-                )}
+                  ))}
               </div>
 
               {/* Progress */}
-              <div>
-                {renderProgress(item)}
-              </div>
+              <div>{renderProgress(item)}</div>
             </div>
           </div>
         </div>
