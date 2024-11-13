@@ -1,8 +1,8 @@
 "use client";
 import React from "react";
 import TableRow from "./TableRow";
-import { TableViewProps } from "@/app/components/Table/types/table";
-import { COLUMNS } from "@/app/components/Table/constants/columns";
+import { TableViewProps } from "@/app/components/Board/types/table";
+import { COLUMNS } from "@/app/components/Board/constants/columns";
 
 const TableView: React.FC<TableViewProps> = ({
   items,
@@ -12,9 +12,10 @@ const TableView: React.FC<TableViewProps> = ({
   handleDeleteItem,
   handleUpdateProgress,
   openManagers,
-  isCreating, // Add this prop
-  setIsCreating, // Add this prop
-  handleCardClick
+  isCreating,
+  setIsCreating,
+  handleNavigateToChild,
+  handleColorChange, // Thêm prop này
 }) => {
   return (
     <div className="overflow-x-auto -mx-4 sm:mx-0">
@@ -55,7 +56,8 @@ const TableView: React.FC<TableViewProps> = ({
                 openManagers={openManagers}
                 isCreating={isCreating} // Pass isCreating to TableRow
                 setIsCreating={setIsCreating} // Pass setIsCreating to TableRow
-                handleCardClick={handleCardClick} // Pass handleCardClick to TableRow
+                handleNavigateToChild={handleNavigateToChild} // Pass handleNavigateToChild to TableRow
+                handleColorChange={handleColorChange} // Thêm prop này
               />
             ))
           ) : (

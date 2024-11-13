@@ -1,14 +1,14 @@
 import { useReducer, useCallback, useEffect } from "react";
 import { useAppStore } from "@/app/store/appStore";
-import { Item, ItemProperty } from "@/app/components/Table/types/table";
-import { projectService } from '@/app/components/Table/services/projectService';
+import { Item, ItemProperty } from "@/app/components/Board/types/table";
+import { projectService } from "@/app/components/Board/services/projectService";
 import { toast } from "react-toastify";
 import { showConfirmationToast } from "@/app/utils/toastUtils";
 import {
   projectReducer,
   initialState,
-} from "@/app/components/Table/reducers/projectReducer";
-import { Dispatch, SetStateAction } from 'react';
+} from "@/app/components/Board/reducers/projectReducer";
+import { Dispatch, SetStateAction } from "react";
 
 export const useProject = (
   currentProjectId: number,
@@ -94,7 +94,8 @@ export const useProject = (
           dispatch({ type: "DELETE_ITEM", payload: id });
           toast.success("Đã xoá nhiệm vụ mới tạo!");
         } else {
-          projectService.deleteProject(id)
+          projectService
+            .deleteProject(id)
             .then(() => {
               dispatch({ type: "DELETE_ITEM", payload: id });
               toast.success("Xóa nhiệm vụ thành công!");
@@ -155,6 +156,23 @@ export const useProject = (
     }
   };
 
+  const handleColorChange = async (index: number, color: string | null) => {
+    try {
+      const currentItem = listProject[index];
+      
+      // Cập nhật UI trước
+      dispatch({
+        type: "UPDATE_ITEM",
+        payload: { index, item: { color: color ?? undefined } },
+      });
+
+      // Gọi API để cập nhật
+      await projectService.updateProject(currentItem.id, { color: color ?? undefined });
+      
+    } catch {
+    }
+  };
+
   // Navigation
   const navigateToChild = useCallback(
     (item: Item) => {
@@ -181,7 +199,7 @@ export const useProject = (
   );
 
   // Navigation handler moved from CardView
-  const handleCardClick = useCallback(
+  const handleNavigateToChild = useCallback(
     (item: Item) => {
       if (item.isEditing || isCreating) {
         toast.warning("Vui lòng lưu thay đổi trước khi chuyển trang!");
@@ -213,11 +231,11 @@ export const useProject = (
   }, [hasUnsavedChanges]);
 
   const setIsCreating: Dispatch<SetStateAction<boolean>> = (value) => {
-    if (typeof value === 'function') {
+    if (typeof value === "function") {
       const prevState = state.isCreating;
-      dispatch({ 
-        type: "SET_CREATING", 
-        payload: (value as (prev: boolean) => boolean)(prevState) 
+      dispatch({
+        type: "SET_CREATING",
+        payload: (value as (prev: boolean) => boolean)(prevState),
       });
     } else {
       dispatch({ type: "SET_CREATING", payload: value });
@@ -236,6 +254,7 @@ export const useProject = (
     handleCreateAndSaveItem,
     handleUpdateProgress,
     navigateToChild,
-    handleCardClick, // Add this handler
+    handleNavigateToChild, // Add this handler
+    handleColorChange, // Thêm handler mới
   };
 };

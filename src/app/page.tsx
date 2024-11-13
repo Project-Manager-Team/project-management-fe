@@ -4,7 +4,7 @@ import React, { useEffect } from "react";
 import Notification from "./components/Notification";
 import Profile from "./components/Profile";
 import HistoryBar from "./components/HistoryBar";
-import Table from "./components/Table/components";
+import Table from "./components/Board/components";
 import ThemeToggle from "./components/ThemeToggle";
 
 export default function Home() {
@@ -18,7 +18,7 @@ export default function Home() {
         {
           id: 0,
           url: "/api/project/personal/",
-          title: "Home",
+          title: "Root",
         },
       ]);
     }
@@ -27,7 +27,7 @@ export default function Home() {
   const currentItem =
     history && history.length > 0
       ? history[history.length - 1]
-      : { id: 0, url: "/api/project/personal/", title: "Home" };
+      : { id: 0, url: "/api/project/personal/", title: "Root" };
 
   return (
     <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">

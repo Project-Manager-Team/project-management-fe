@@ -1,17 +1,21 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   FiEdit,
   FiSave,
   FiTrash2,
   FiCheckSquare,
   FiFolder,
+  FiCircle,
 } from "react-icons/fi";
-import { Item, TableRowProps } from "@/app/components/Table/types/table";
+import { Item, TableRowProps } from "@/app/components/Board/types/table";
 import { formatDateTime } from "@/app/utils/formatDateTime";
 import { useAppStore } from "@/app/store/appStore";
 import { toast } from "react-toastify";
 import OwnerButton from "./OwnerButton";
-import EditableContent from '@/app/components/common/EditableContent';
+import EditableContent from "@/app/components/common/EditableContent";
+import { getDiffLevelStyle, getDiffLevelLabel } from "../utils/tableViewUtils";
+import { HexColorPicker } from "react-colorful"; // Thêm import mới
+import ColorPicker from './ColorPicker';
 
 const TableRow: React.FC<TableRowProps> = ({
   item,
@@ -23,6 +27,8 @@ const TableRow: React.FC<TableRowProps> = ({
   selectedColumns,
   isCreating,
   setIsCreating,
+  handleNavigateToChild,
+  handleColorChange, // Thêm prop này
 }) => {
   const { history, setHistory, setShouldReloadTable } = useAppStore();
 
@@ -32,6 +38,8 @@ const TableRow: React.FC<TableRowProps> = ({
         ? "bg-yellow-50 dark:bg-yellow-900 border border-blue-500"
         : "bg-[var(--background)]"
     } focus:outline-none focus:ring-0 text-[var(--foreground)]`;
+
+  const [isPickerVisible, setIsPickerVisible] = useState(false); // Thêm state mới
 
   // Helper functions
   const handleTypeClick = () => {
@@ -72,35 +80,6 @@ const TableRow: React.FC<TableRowProps> = ({
     handleUpdateProgress(item.id, newProgress);
   };
 
-  const getDiffLevelStyle = (level: number | null | undefined) => {
-    if (level === null || level === undefined)
-      return "bg-gray-100 text-gray-800";
-    switch (level) {
-      case 1:
-        return "bg-green-100 text-green-800";
-      case 2:
-        return "bg-yellow-100 text-yellow-800";
-      case 3:
-        return "bg-red-100 text-red-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
-
-  const getDiffLevelText = (level: number | null | undefined) => {
-    if (level === null || level === undefined) return "Không xác định";
-    switch (level) {
-      case 1:
-        return "Dễ";
-      case 2:
-        return "Trung bình";
-      case 3:
-        return "Khó";
-      default:
-        return "Không xác định";
-    }
-  };
-
   const onDelete = () => {
     handleDeleteItem(item.id); // Assuming item.id is number | null
   };
@@ -113,7 +92,7 @@ const TableRow: React.FC<TableRowProps> = ({
         <button
           className="p-2 bg-[var(--input)] hover:bg-opacity-80 text-[var(--foreground)] 
                    rounded-full transition-all duration-200"
-          onClick={handleTypeClick}
+          onClick={() => handleNavigateToChild}
         >
           {renderTypeIcon(item.type)}
         </button>
@@ -123,13 +102,21 @@ const TableRow: React.FC<TableRowProps> = ({
         switch (colId) {
           case "title":
             return (
-              <td key={colId} className="p-3 align-middle max-w-[200px]"> {/* Changed from min-w to max-w */}
+              <td key={colId} className="p-3 align-middle max-w-[200px]">
+                {" "}
+                {/* Changed from min-w to max-w */}
                 <div className="overflow-hidden">
                   <EditableContent
                     isEditing={item.isEditing}
                     value={item.title}
                     name="title"
-                    onChange={(e) => handleChange(item.index, "title" as keyof Item, e.target.value)}
+                    onChange={(e) =>
+                      handleChange(
+                        item.index,
+                        "title" as keyof Item,
+                        e.target.value
+                      )
+                    }
                     className="w-full text-sm rounded-lg truncate" // Added truncate
                   />
                 </div>
@@ -137,13 +124,24 @@ const TableRow: React.FC<TableRowProps> = ({
             );
           case "description":
             return (
-              <td key={colId} className="p-3 align-middle hidden md:table-cell max-w-[300px]"> {/* Added max-w */}
+              <td
+                key={colId}
+                className="p-3 align-middle hidden md:table-cell max-w-[300px]"
+              >
+                {" "}
+                {/* Added max-w */}
                 <div className="overflow-hidden">
                   <EditableContent
                     isEditing={item.isEditing}
                     value={item.description}
                     name="description"
-                    onChange={(e) => handleChange(item.index, "description" as keyof Item, e.target.value)}
+                    onChange={(e) =>
+                      handleChange(
+                        item.index,
+                        "description" as keyof Item,
+                        e.target.value
+                      )
+                    }
                     className="w-full rounded-lg line-clamp-2" // Added line-clamp-2 for 2 lines max
                   />
                 </div>
@@ -158,10 +156,18 @@ const TableRow: React.FC<TableRowProps> = ({
                 {item.isEditing ? (
                   <EditableContent
                     isEditing={true}
-                    value={item.beginTime ? item.beginTime.substring(0, 16) : ""}
+                    value={
+                      item.beginTime ? item.beginTime.substring(0, 16) : ""
+                    }
                     name="beginTime"
                     type="datetime-local"
-                    onChange={(e) => handleChange(item.index, "beginTime" as keyof Item, e.target.value)}
+                    onChange={(e) =>
+                      handleChange(
+                        item.index,
+                        "beginTime" as keyof Item,
+                        e.target.value
+                      )
+                    }
                     className={dateTimeInputClass}
                   />
                 ) : (
@@ -187,7 +193,13 @@ const TableRow: React.FC<TableRowProps> = ({
                     value={item.endTime ? item.endTime.substring(0, 16) : ""}
                     name="endTime"
                     type="datetime-local"
-                    onChange={(e) => handleChange(item.index, "endTime" as keyof Item, e.target.value)}
+                    onChange={(e) =>
+                      handleChange(
+                        item.index,
+                        "endTime" as keyof Item,
+                        e.target.value
+                      )
+                    }
                     className={dateTimeInputClass}
                   />
                 ) : (
@@ -242,7 +254,7 @@ const TableRow: React.FC<TableRowProps> = ({
                       item.diffLevel
                     )}`}
                   >
-                    {getDiffLevelText(item.diffLevel)}
+                    {getDiffLevelLabel(item.diffLevel)}
                   </span>
                 )}
               </td>
@@ -274,7 +286,7 @@ const TableRow: React.FC<TableRowProps> = ({
         }
       })}
       <td className="p-3 align-middle text-right whitespace-nowrap">
-        <div className="flex justify-end space-x-1">
+        <div className="flex justify-end space-x-1 relative">
           <button
             className="p-1.5 bg-[var(--muted)] hover:bg-[var(--muted-foreground)]
                       text-[var(--foreground)] rounded-full transition-all"
@@ -295,6 +307,10 @@ const TableRow: React.FC<TableRowProps> = ({
           >
             <FiTrash2 className="w-4 h-4" />
           </button>
+          <ColorPicker
+            color={item.color}
+            onChange={(color) => handleColorChange(item.index, color)}
+          />
         </div>
       </td>
     </tr>

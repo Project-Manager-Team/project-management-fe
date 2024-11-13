@@ -1,7 +1,7 @@
 import { FiUser } from "react-icons/fi";
 import Image from "next/image";
 import { DOMAIN } from "@/app/config/api";
-import { OwnerButtonProps } from "@/app/components/Table/types/table";
+import { OwnerButtonProps } from "@/app/components/Board/types/table";
 
 const OwnerButton: React.FC<OwnerButtonProps> = ({
   owner,

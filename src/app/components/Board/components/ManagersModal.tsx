@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   PermissionKey,
-  ManagersModalProps,
   ManagerButtonProps,
-} from "@/app/components/Table/types/table";
+  Manager
+} from "@/app/components/Board/types/table";
+
 import Image from "next/image";
 import { DOMAIN } from "@/app/config/api";
 import { FiUser, FiTrash2 } from "react-icons/fi";
@@ -12,9 +13,10 @@ import { toast } from "react-toastify";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { inviteFormSchema, type InviteFormInputs } from "@/app/schemas/form";
-import { PermissionSwitchProps } from "@/app/components/Table/types/table";
+import { PermissionSwitchProps } from "@/app/components/Board/types/table";
 import { showConfirmationToast } from "@/app/utils/toastUtils";
 import { useManager } from "../hooks/useManager";
+import apiClient from "@/app/utils/apiClient";
 
 // Permission Switch Component
 const PermissionSwitch = ({ value, onChange }: PermissionSwitchProps) => (
@@ -60,13 +62,32 @@ export const ManagerButton: React.FC<ManagerButtonProps> = ({
 
 const ManagersModal: React.FC<ManagersModalProps> = ({
   currentManagerItem,
-  managerPermissions,
-  setManagerPermissions,
   isOpen,
   onClose,
 }) => {
   const [isInviteOpen, setIsInviteOpen] = useState(false);
-  const { updatePermission, removeManager, sendInvitation } = useManager(currentManagerItem.id);
+  const [managerPermissions, setManagerPermissions] = useState<Manager[]>([]);
+  const { updatePermission, removeManager, sendInvitation } = useManager(
+    currentManagerItem.id
+  );
+
+  // Add useEffect to fetch managers data
+  useEffect(() => {
+    const fetchManagersPermissions = async () => {
+      if (currentManagerItem && isOpen) {
+        try {
+          const response = await apiClient.get<Manager[]>(
+            `/api/project/${currentManagerItem.id}/managers_permissions/`
+          );
+          setManagerPermissions(response.data);
+        } catch {
+          toast.error("Không thể lấy dữ liệu quản lý");
+        }
+      }
+    };
+
+    fetchManagersPermissions();
+  }, [currentManagerItem, isOpen]);
 
   const {
     register,
@@ -84,7 +105,7 @@ const ManagersModal: React.FC<ManagersModalProps> = ({
         title: data.title,
         content: data.content,
       });
-      
+
       toast.success("Đã gửi lời mời thành công");
       setIsInviteOpen(false);
       reset();
@@ -102,11 +123,9 @@ const ManagersModal: React.FC<ManagersModalProps> = ({
     if (!manager.permission_id || !manager.user.id) return;
 
     try {
-      await updatePermission(
-        manager.permission_id,
-        manager.user.id,
-        { [permissionType]: value }
-      );
+      await updatePermission(manager.permission_id, manager.user.id, {
+        [permissionType]: value,
+      });
 
       const updatedPermissions = [...managerPermissions];
       if (updatedPermissions[managerIndex].permissions) {
@@ -415,5 +434,14 @@ const ManagersModal: React.FC<ManagersModalProps> = ({
     </Dialog>
   );
 };
+
+// Update the prop types
+interface ManagersModalProps {
+  currentManagerItem: {
+    id: number;
+  };
+  isOpen: boolean;
+  onClose: () => void;
+}
 
 export default ManagersModal;

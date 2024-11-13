@@ -14,6 +14,7 @@ export interface Item {
   owner: Owner | null;
   managersCount: number;
   diffLevel: number | null; // Change from string | null to number | null
+  color?: string;
 }
 
 export interface Owner {
@@ -109,7 +110,8 @@ export interface TableRowProps {
   openInviteForm?: (item: Item) => void;
   isCreating: boolean;
   setIsCreating: React.Dispatch<React.SetStateAction<boolean>>;
-  handleCardClick: (item: Item) => void; // Add this handler
+  handleNavigateToChild: (item: Item) => void; // Add this handler
+  handleColorChange: (index: number, color: string) => void; // Cập nhật kiểu tham số
 }
 
 export interface ManagerButtonProps {
@@ -165,10 +167,11 @@ export interface CardViewProps {
   handleEditItem: (index: number) => void;
   handleDeleteItem: (id: number | null) => void;
   handleUpdateProgress: (id: number, progress: number) => void;
-  handleCardClick: (item: Item) => void; // Ensure this is required
+  handleNavigateToChild: (item: Item) => void; // Ensure this is required
   openManagers: (item: Item) => void;
   isCreating: boolean;
   setIsCreating: React.Dispatch<React.SetStateAction<boolean>>;
+  handleColorChange: (index: number, color: string | null) => void; // Thêm prop này
 }
 
 export interface TableViewProps extends CardViewProps {

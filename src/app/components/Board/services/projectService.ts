@@ -1,5 +1,5 @@
 import apiClient from "@/app/utils/apiClient";
-import { Item } from "@/app/components/Table/types/table";
+import { Item } from "@/app/components/Board/types/table";
 import { API_ENDPOINTS } from "../constants/apiEndpoints";
 
 export const projectService = {
@@ -13,7 +13,11 @@ export const projectService = {
   },
 
   async updateProject(id: number, project: Partial<Item>): Promise<void> {
-    await apiClient.put<Item>(API_ENDPOINTS.PROJECT.DETAIL(id), project);
+    const { color, ...otherData } = project;
+    await apiClient.patch<Item>(API_ENDPOINTS.PROJECT.DETAIL(id), {
+      ...otherData,
+      color: color || null, // Đảm bảo color được gửi đi
+    });
   },
 
   async deleteProject(id: number): Promise<void> {
@@ -22,5 +26,5 @@ export const projectService = {
 
   async updateProgress(id: number, progress: number): Promise<void> {
     await apiClient.patch<Item>(API_ENDPOINTS.PROJECT.DETAIL(id), { progress });
-  }
+  },
 };

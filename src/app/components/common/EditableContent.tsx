@@ -24,7 +24,7 @@ export const EditableContent = ({
       name={name}
       value={value === true ? "" : value || ""}
       onChange={onChange}
-      className={`w-full p-2 bg-yellow-50 dark:bg-yellow-900 border border-blue-500 
+      className={`w-full p-2 bg-black-50 dark:bg-black-900 border border-blue-500 
                 rounded-lg focus:outline-none ${className}`}
       onClick={(e) => e.stopPropagation()}
     />
@@ -34,7 +34,7 @@ export const EditableContent = ({
       name={name}
       value={value === true ? "" : value || ""}
       onChange={onChange}
-      className={`w-full p-2 bg-yellow-50 dark:bg-yellow-900 border border-blue-500 
+      className={`w-full p-2 bg-white-50 dark:bg-black-900 border border-blue-500 
                 rounded-lg focus:outline-none ${className}`}
       onClick={(e) => e.stopPropagation()}
     />

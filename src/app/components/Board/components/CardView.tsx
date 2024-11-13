@@ -1,18 +1,11 @@
-import {
-  FiCheckSquare,
-  FiFolder,
-  FiEdit,
-  FiSave,
-  FiTrash2,
-  FiCheck,
-} from "react-icons/fi";
-import { Item, ItemProperty } from "@/app/components/Table/types/table";
+import { FiCheckSquare, FiFolder, FiEdit, FiSave, FiTrash2, FiCheck, FiCircle } from "react-icons/fi";
+import { Item, ItemProperty } from "@/app/components/Board/types/table";
 import OwnerButton from "./OwnerButton"; // Change to default import
-import {
-  CardViewProps,
-} from "@/app/components/Table/types/table";
+import { CardViewProps } from "@/app/components/Board/types/table";
 import { formatDateTime } from "@/app/utils/formatDateTime"; // Add this import at the top
-import EditableContent from '@/app/components/common/EditableContent';
+import EditableContent from "@/app/components/common/EditableContent";
+import { getDiffLevelStyle, getDiffLevelLabel } from "../utils/tableViewUtils";
+import ColorPicker from './ColorPicker';
 
 const CardView: React.FC<CardViewProps> = ({
   items,
@@ -20,38 +13,42 @@ const CardView: React.FC<CardViewProps> = ({
   handleEditItem,
   handleDeleteItem,
   handleUpdateProgress,
-  handleCardClick, // Add this prop
+  handleNavigateToChild, // Add this prop
+  handleColorChange, // Thêm prop mới
   openManagers,
 }) => {
-  const getDiffLevelStyle = (level: number | null | undefined) => {
-    if (level === null || level === undefined)
-      return "bg-gray-100 text-gray-800";
-    switch (level) {
-      case 1:
-        return "bg-green-100 text-green-800";
-      case 2:
-        return "bg-yellow-100 text-yellow-800";
-      case 3:
-        return "bg-red-100 text-red-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
+  const colors = [
+    '#f87171', // red
+    '#fb923c', // orange
+    '#fbbf24', // amber
+    '#34d399', // emerald
+    '#22d3ee', // cyan
+    '#818cf8', // indigo
+    '#c084fc', // purple
+    '#e879f9', // fuchsia
+  ];
+
+  // Helper function to group items by status
+  const groupByStatus = (items: Item[]) => {
+    const groups: { [key: string]: Item[] } = {
+      'Chưa bắt đầu': [],
+      'Đang thực hiện': [],
+      'Hoàn thành': [],
+    };
+
+    items.forEach(item => {
+      if (item.progress === 100) {
+        groups['Hoàn thành'].push(item);
+      } else if (item.progress > 0) {
+        groups['Đang thực hiện'].push(item);
+      } else {
+        groups['Chưa bắt đầu'].push(item);
+      }
+    });
+
+    return groups;
   };
 
-  const getDiffLevelLabel = (level: number | null | undefined) => {
-    switch (level) {
-      case 1:
-        return "Dễ";
-      case 2:
-        return "Trung bình";
-      case 3:
-        return "Khó";
-      default:
-        return "Không xác định";
-    }
-  };
-
-  // Add this function to format date display
   const renderDateContent = (dateString: string | null) => {
     if (!dateString) return null;
     const { date, time } = formatDateTime(dateString);
@@ -111,23 +108,16 @@ const CardView: React.FC<CardViewProps> = ({
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
+    <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-4 p-4 space-y-4 [&>*:first-child]:mt-0">
       {items.map((item) => (
         <div
           key={item.id}
-          onClick={() => handleCardClick(item)}
-          className={`group bg-[var(--card)] border border-[var(--border)] rounded-lg 
+          onClick={() => handleNavigateToChild(item)}
+          className={`break-inside-avoid-column mb-4 group bg-[var(--card)] border-l-4 rounded-lg 
                     shadow-sm transition-all duration-200 flex flex-col
-                    ${
-                      !item.isEditing
-                        ? "hover:scale-[1.02] hover:shadow-lg cursor-pointer"
-                        : ""
-                    }
-                    ${
-                      item.isEditing
-                        ? "ring-2 ring-blue-500"
-                        : "hover:bg-[var(--muted)]"
-                    }`}
+                    ${!item.isEditing ? 'hover:scale-[1.02] hover:shadow-lg cursor-pointer' : ''}
+                    ${item.isEditing ? 'ring-2 ring-blue-500' : 'hover:bg-[var(--accent)]'}`}
+          style={{ borderLeftColor: item.color || 'var(--border)' }}
         >
           {/* Header Section - No border */}
           <div className="p-4">
@@ -159,6 +149,10 @@ const CardView: React.FC<CardViewProps> = ({
                 className="flex items-center gap-1 ml-2"
                 onClick={(e) => e.stopPropagation()}
               >
+                <ColorPicker
+                  color={item.color}
+                  onChange={(color) => handleColorChange(item.index, color)}
+                />
                 <button
                   className="p-1.5 bg-[var(--muted)] hover:bg-[var(--muted-foreground)]
                             text-[var(--foreground)] rounded-full transition-all"
@@ -281,8 +275,8 @@ const CardView: React.FC<CardViewProps> = ({
                         )
                       }
                       onClick={(e) => e.stopPropagation()}
-                      className="w-full text-xs px-2 py-1 rounded-full bg-yellow-50 
-                               dark:bg-yellow-900 border border-blue-500 focus:outline-none"
+                      className="w-full text-xs px-2 py-1 rounded-full bg-green-50 
+                           dark:bg-gray-900 border border-blue-500 focus:outline-none"
                     >
                       <option value="1">Dễ</option>
                       <option value="2">Trung bình</option>

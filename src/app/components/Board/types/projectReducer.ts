@@ -9,6 +9,7 @@ export type ProjectState = {
 export type ProjectAction =
   | { type: "SET_PROJECTS"; payload: Item[] }
   | { type: "UPDATE_ITEM"; payload: { index: number; item: Partial<Item> } }
+  | { type: "UPDATE_COLOR"; payload: { id: number; color: string | null } }
   | { type: "DELETE_ITEM"; payload: number }
   | { type: "ADD_ITEM"; payload: Item }
   | { type: "SET_CREATING"; payload: boolean }

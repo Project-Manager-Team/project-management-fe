@@ -1,12 +1,10 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
-import apiClient from "@/app/utils/apiClient";
 import { toast } from "react-toastify";
 import {
   Item,
-  Manager,
   ColumnToggleProps,
-} from "@/app/components/Table/types/table";
+} from "@/app/components/Board/types/table";
 import { FiPlus, FiSave, FiArrowLeft } from "react-icons/fi"; // Add this import
 import ManagersModal from "./ManagersModal";
 import ReactModal from "react-modal";
@@ -16,7 +14,7 @@ import CardView from "./CardView";
 import {
   DEFAULT_COLUMNS,
   allColumns,
-} from "@/app/components/Table/constants/columns";
+} from "@/app/components/Board/constants/columns";
 import TableView from "./TableView"; // Thêm import cho TableView
 import { useProject } from "../hooks/useProject";
 
@@ -67,7 +65,8 @@ export default function Table({ current }: TableProps) {
     handleDeleteItem,
     handleCreateAndSaveItem,
     handleUpdateProgress,
-    handleCardClick, // Add this
+    handleNavigateToChild, // Add this
+    handleColorChange, // Thêm handler này
   } = useProject(current.id, current.url);
 
   const [selectedColumns, setSelectedColumns] =
@@ -105,41 +104,16 @@ export default function Table({ current }: TableProps) {
   const [currentManagerItem, setCurrentManagerItem] = useState<Item | null>(
     null
   );
-  const [managerPermissions, setManagerPermissions] = useState<Manager[]>([]);
 
   const handleOpenManagers = (item: Item) => {
     setCurrentManagerItem(item);
     setShowManagers(true);
   };
 
-  useEffect(() => {
-    const fetchManagersPermissions = async () => {
-      if (currentManagerItem) {
-        try {
-          const response = await apiClient.get<Manager[]>(
-            `/api/project/${currentManagerItem.id}/managers_permissions/` // Ensure correct API path
-          );
-          setManagerPermissions(response.data);
-        } catch {
-          toast.error("Không thể lấy dữ liệu quản lý");
-        }
-      }
-    };
-
-    if (showManagers) {
-      fetchManagersPermissions();
-    }
-  }, [showManagers, currentManagerItem]);
-
-  // Modify the toggleColumn function to use useCallback and handle toasts properly
   const toggleColumn = useCallback((columnId: string) => {
     setSelectedColumns((prev) => {
       const isRemoving = prev.includes(columnId);
-
-      // Prevent removing if it would leave less than 1 column
       if (isRemoving && prev.length <= 1) {
-        // Instead of showing toast immediately, return the same state
-        // and schedule the toast for the next tick
         setTimeout(() => {
           toast.warning("Phải hiển thị ít nhất 1 cột");
         }, 0);
@@ -152,9 +126,8 @@ export default function Table({ current }: TableProps) {
 
       return newColumns;
     });
-  }, []); // Empty dependencies array since this function doesn't depend on any props or state
+  }, []);
 
-  // Add this effect to handle navigation warning
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (hasUnsavedChanges()) {
@@ -216,7 +189,6 @@ export default function Table({ current }: TableProps) {
             </button>
           )}
 
-          {/* View Mode Toggle */}
           <div className="flex gap-2 p-1 bg-[var(--muted)] rounded-lg">
             <button
               onClick={() => setViewMode("table")}
@@ -303,7 +275,8 @@ export default function Table({ current }: TableProps) {
           isCreating={isCreating} // Pass isCreating to TableView
           setIsCreating={setIsCreating}
           parentTitle={current.title} // Add this prop
-          handleCardClick={handleCardClick} // Add this
+          handleNavigateToChild={handleNavigateToChild} // Add this
+          handleColorChange={handleColorChange} // Thêm prop này
         />
       ) : (
         <CardView
@@ -315,7 +288,8 @@ export default function Table({ current }: TableProps) {
           openManagers={handleOpenManagers}
           isCreating={isCreating} // Pass isCreating to CardView
           setIsCreating={setIsCreating}
-          handleCardClick={handleCardClick} // Add this
+          handleNavigateToChild={handleNavigateToChild} // Add this
+          handleColorChange={handleColorChange} // Thêm prop này
         />
       )}
 
@@ -333,11 +307,7 @@ export default function Table({ current }: TableProps) {
             </Dialog.Title>
 
             <div className="space-y-6">
-              {/* Xóa phần View Mode ở đây */}
-
-              {/* Column Toggles */}
               <div className="space-y-2">
-                {/* Column header */}
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-medium text-[var(--foreground)]">
                     Cột hiển thị
@@ -390,8 +360,6 @@ export default function Table({ current }: TableProps) {
       {currentManagerItem && (
         <ManagersModal
           currentManagerItem={currentManagerItem}
-          managerPermissions={managerPermissions}
-          setManagerPermissions={setManagerPermissions}
           isOpen={showManagers}
           onClose={() => setShowManagers(false)}
         />
