@@ -1,6 +1,6 @@
-
 import apiClient from "@/app/utils/apiClient";
 import { Item, Manager } from "@/app/components/Table/types/table";
+import { API_ENDPOINTS } from "../constants/apiEndpoints";
 
 export const projectService = {
   // Fetch projects
@@ -11,32 +11,28 @@ export const projectService = {
 
   // Create project
   async createProject(project: Item): Promise<Item> {
-    const { data } = await apiClient.post<Item>("/api/project/", project);
+    const { data } = await apiClient.post<Item>(API_ENDPOINTS.PROJECT.BASE, project);
     return data;
   },
 
   // Update project
-  async updateProject(id: number, project: Partial<Item>): Promise<Item> {
-    const { data } = await apiClient.put<Item>(`/api/project/${id}/`, project);
-    return data;
+  async updateProject(id: number, project: Partial<Item>): Promise<void> {
+    await apiClient.put<Item>(API_ENDPOINTS.PROJECT.DETAIL(id), project);
   },
 
   // Delete project
   async deleteProject(id: number): Promise<void> {
-    await apiClient.delete(`/api/project/${id}/`);
+    await apiClient.delete(API_ENDPOINTS.PROJECT.DETAIL(id));
   },
 
   // Update progress
-  async updateProgress(id: number, progress: number): Promise<Item> {
-    const { data } = await apiClient.patch<Item>(`/api/project/${id}/`, { progress });
-    return data;
+  async updateProgress(id: number, progress: number): Promise<void> {
+    await apiClient.patch<Item>(API_ENDPOINTS.PROJECT.UPDATE_PROGRESS(id), { progress });
   },
 
   // Get managers permissions
   async getManagersPermissions(projectId: number): Promise<Manager[]> {
-    const { data } = await apiClient.get<Manager[]>(
-      `/api/project/${projectId}/managers_permissions/`
-    );
+    const { data } = await apiClient.get<Manager[]>(API_ENDPOINTS.PROJECT.MANAGERS(projectId));
     return data;
   },
 
@@ -47,7 +43,7 @@ export const projectService = {
     userId: number,
     permissions: Record<string, boolean>
   ): Promise<void> {
-    await apiClient.patch(`/api/permissions/${permissionId}/`, {
+    await apiClient.patch(API_ENDPOINTS.PERMISSIONS.UPDATE(permissionId), {
       project: projectId,
       user: userId,
       ...permissions
@@ -56,7 +52,7 @@ export const projectService = {
 
   // Remove manager
   async removeManager(projectId: number, managerId: number): Promise<void> {
-    await apiClient.post(`/api/project/${projectId}/remove_manager/`, {
+    await apiClient.post(API_ENDPOINTS.PROJECT.REMOVE_MANAGER(projectId), {
       managerId
     });
   },
@@ -67,7 +63,7 @@ export const projectService = {
     title: string;
     content: string;
   }): Promise<void> {
-    await apiClient.post("/api/invitation/", {
+    await apiClient.post(API_ENDPOINTS.INVITATION, {
       ...data,
       project: projectId
     });
