@@ -67,6 +67,7 @@ export default function Table({ current }: TableProps) {
     handleDeleteItem,
     handleCreateAndSaveItem,
     handleUpdateProgress,
+    handleCardClick, // Add this
   } = useProject(current.id, current.url);
 
   const [selectedColumns, setSelectedColumns] =
@@ -302,6 +303,7 @@ export default function Table({ current }: TableProps) {
           isCreating={isCreating} // Pass isCreating to TableView
           setIsCreating={setIsCreating}
           parentTitle={current.title} // Add this prop
+          handleCardClick={handleCardClick} // Add this
         />
       ) : (
         <CardView
@@ -313,6 +315,7 @@ export default function Table({ current }: TableProps) {
           openManagers={handleOpenManagers}
           isCreating={isCreating} // Pass isCreating to CardView
           setIsCreating={setIsCreating}
+          handleCardClick={handleCardClick} // Add this
         />
       )}
 

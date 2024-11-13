@@ -180,6 +180,18 @@ export const useProject = (
     [history, isNavigating, setHistory, setShouldReloadTable]
   );
 
+  // Navigation handler moved from CardView
+  const handleCardClick = useCallback(
+    (item: Item) => {
+      if (item.isEditing || isCreating) {
+        toast.warning("Vui lòng lưu thay đổi trước khi chuyển trang!");
+        return;
+      }
+      navigateToChild(item);
+    },
+    [isCreating, navigateToChild]
+  );
+
   // Load initial data
   useEffect(() => {
     if (currentProjectUrl) {
@@ -224,5 +236,6 @@ export const useProject = (
     handleCreateAndSaveItem,
     handleUpdateProgress,
     navigateToChild,
+    handleCardClick, // Add this handler
   };
 };

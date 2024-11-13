@@ -11,17 +11,18 @@ import { formatDateTime } from "@/app/utils/formatDateTime";
 import { useAppStore } from "@/app/store/appStore";
 import { toast } from "react-toastify";
 import OwnerButton from "./OwnerButton";
+import EditableContent from '@/app/components/common/EditableContent';
 
 const TableRow: React.FC<TableRowProps> = ({
   item,
-  selectedColumns,
   handleChange,
   handleEditItem,
   handleDeleteItem,
   handleUpdateProgress,
   openManagers,
-  isCreating, // Add this prop
-  setIsCreating, // Add this prop
+  selectedColumns,
+  isCreating,
+  setIsCreating,
 }) => {
   const { history, setHistory, setShouldReloadTable } = useAppStore();
 
@@ -122,48 +123,30 @@ const TableRow: React.FC<TableRowProps> = ({
         switch (colId) {
           case "title":
             return (
-              <td key={colId} className="p-3 align-middle min-w-[200px]">
-                <input
-                  type="text"
-                  name="title"
-                  className={`input-field w-full text-sm ${
-                    item.isEditing
-                      ? "bg-yellow-50 dark:bg-yellow-900 border border-blue-500"
-                      : "bg-transparent"
-                  } focus:outline-none focus:ring-0 text-[var(--foreground)] rounded-lg`}
-                  value={item.title || ""}
-                  onChange={(e) =>
-                    handleChange(
-                      item.index,
-                      e.target.name as keyof Item,
-                      e.target.value
-                    )
-                  }
-                  disabled={!item.isEditing}
-                />
+              <td key={colId} className="p-3 align-middle max-w-[200px]"> {/* Changed from min-w to max-w */}
+                <div className="overflow-hidden">
+                  <EditableContent
+                    isEditing={item.isEditing}
+                    value={item.title}
+                    name="title"
+                    onChange={(e) => handleChange(item.index, "title" as keyof Item, e.target.value)}
+                    className="w-full text-sm rounded-lg truncate" // Added truncate
+                  />
+                </div>
               </td>
             );
           case "description":
             return (
-              <td key={colId} className="p-3 align-middle hidden md:table-cell">
-                <input
-                  type="text"
-                  name="description"
-                  className={`input-field w-full ${
-                    item.isEditing
-                      ? "bg-yellow-50 dark:bg-yellow-900 border border-blue-500"
-                      : "bg-transparent"
-                  } focus:outline-none focus:ring-0 text-[var(--foreground)] rounded-lg`}
-                  value={item.description || ""}
-                  onChange={(e) =>
-                    handleChange(
-                      item.index,
-                      e.target.name as keyof Item,
-                      e.target.value
-                    )
-                  }
-                  disabled={!item.isEditing}
-                />
+              <td key={colId} className="p-3 align-middle hidden md:table-cell max-w-[300px]"> {/* Added max-w */}
+                <div className="overflow-hidden">
+                  <EditableContent
+                    isEditing={item.isEditing}
+                    value={item.description}
+                    name="description"
+                    onChange={(e) => handleChange(item.index, "description" as keyof Item, e.target.value)}
+                    className="w-full rounded-lg line-clamp-2" // Added line-clamp-2 for 2 lines max
+                  />
+                </div>
               </td>
             );
           case "beginTime":
@@ -173,21 +156,13 @@ const TableRow: React.FC<TableRowProps> = ({
                 className="p-3 align-middle w-[160px] min-w-[160px]"
               >
                 {item.isEditing ? (
-                  <input
-                    type="datetime-local"
+                  <EditableContent
+                    isEditing={true}
+                    value={item.beginTime ? item.beginTime.substring(0, 16) : ""}
                     name="beginTime"
+                    type="datetime-local"
+                    onChange={(e) => handleChange(item.index, "beginTime" as keyof Item, e.target.value)}
                     className={dateTimeInputClass}
-                    value={
-                      item.beginTime ? item.beginTime.substring(0, 16) : ""
-                    }
-                    onChange={(e) =>
-                      handleChange(
-                        item.index,
-                        e.target.name as keyof Item,
-                        e.target.value
-                      )
-                    }
-                    disabled={!item.isEditing}
                   />
                 ) : (
                   item.beginTime && (
@@ -207,19 +182,13 @@ const TableRow: React.FC<TableRowProps> = ({
                 className="p-3 align-middle w-[160px] min-w-[160px]"
               >
                 {item.isEditing ? (
-                  <input
-                    type="datetime-local"
-                    name="endTime"
-                    className={dateTimeInputClass}
+                  <EditableContent
+                    isEditing={true}
                     value={item.endTime ? item.endTime.substring(0, 16) : ""}
-                    onChange={(e) =>
-                      handleChange(
-                        item.index,
-                        e.target.name as keyof Item,
-                        e.target.value
-                      )
-                    }
-                    disabled={!item.isEditing}
+                    name="endTime"
+                    type="datetime-local"
+                    onChange={(e) => handleChange(item.index, "endTime" as keyof Item, e.target.value)}
+                    className={dateTimeInputClass}
                   />
                 ) : (
                   item.endTime && (

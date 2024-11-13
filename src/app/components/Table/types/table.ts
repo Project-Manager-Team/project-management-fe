@@ -109,6 +109,7 @@ export interface TableRowProps {
   openInviteForm?: (item: Item) => void;
   isCreating: boolean;
   setIsCreating: React.Dispatch<React.SetStateAction<boolean>>;
+  handleCardClick: (item: Item) => void; // Add this handler
 }
 
 export interface ManagerButtonProps {
@@ -132,21 +133,6 @@ export interface TableViewProps extends CardViewProps {
   selectedColumns: string[];
   isCreating: boolean;
   parentTitle: string; // Add this prop
-}
-
-// Add EditableContentProps
-export interface EditableContentProps {
-  isEditing: boolean;
-  value: string | number | boolean | null;
-  onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
-  name: string;
-  type?: string;
-  className?: string;
-}
-
-// Add AutoResizeTextAreaProps
-export interface AutoResizeTextAreaProps {
-  content: string | null;
 }
 
 // Update ManagersModalProps
@@ -179,6 +165,7 @@ export interface CardViewProps {
   handleEditItem: (index: number) => void;
   handleDeleteItem: (id: number | null) => void;
   handleUpdateProgress: (id: number, progress: number) => void;
+  handleCardClick: (item: Item) => void; // Ensure this is required
   openManagers: (item: Item) => void;
   isCreating: boolean;
   setIsCreating: React.Dispatch<React.SetStateAction<boolean>>;
@@ -186,7 +173,7 @@ export interface CardViewProps {
 
 export interface TableViewProps extends CardViewProps {
   selectedColumns: string[];
-  isCreating: boolean;
+  parentTitle: string;
 }
 
 // Removed CardViewProps as it is equivalent to SharedViewProps

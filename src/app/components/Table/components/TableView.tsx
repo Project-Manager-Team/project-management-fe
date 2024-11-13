@@ -14,6 +14,7 @@ const TableView: React.FC<TableViewProps> = ({
   openManagers,
   isCreating, // Add this prop
   setIsCreating, // Add this prop
+  handleCardClick
 }) => {
   return (
     <div className="overflow-x-auto -mx-4 sm:mx-0">
@@ -54,6 +55,7 @@ const TableView: React.FC<TableViewProps> = ({
                 openManagers={openManagers}
                 isCreating={isCreating} // Pass isCreating to TableRow
                 setIsCreating={setIsCreating} // Pass setIsCreating to TableRow
+                handleCardClick={handleCardClick} // Pass handleCardClick to TableRow
               />
             ))
           ) : (

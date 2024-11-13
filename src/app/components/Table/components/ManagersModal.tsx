@@ -14,7 +14,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { inviteFormSchema, type InviteFormInputs } from "@/app/schemas/form";
 import { PermissionSwitchProps } from "@/app/components/Table/types/table";
 import { showConfirmationToast } from "@/app/utils/toastUtils";
-import { managerService } from "../services/managerService";
+import { useManager } from "../hooks/useManager";
 
 // Permission Switch Component
 const PermissionSwitch = ({ value, onChange }: PermissionSwitchProps) => (
@@ -66,6 +66,7 @@ const ManagersModal: React.FC<ManagersModalProps> = ({
   onClose,
 }) => {
   const [isInviteOpen, setIsInviteOpen] = useState(false);
+  const { updatePermission, removeManager, sendInvitation } = useManager(currentManagerItem.id);
 
   const {
     register,
@@ -78,12 +79,12 @@ const ManagersModal: React.FC<ManagersModalProps> = ({
 
   const onSubmit = async (data: InviteFormInputs) => {
     try {
-      await managerService.sendInvitation(currentManagerItem.id, {
+      await sendInvitation({
         username: data.username,
         title: data.title,
-        content: data.content
+        content: data.content,
       });
-
+      
       toast.success("Đã gửi lời mời thành công");
       setIsInviteOpen(false);
       reset();
@@ -101,9 +102,8 @@ const ManagersModal: React.FC<ManagersModalProps> = ({
     if (!manager.permission_id || !manager.user.id) return;
 
     try {
-      await managerService.updateManagerPermission(
+      await updatePermission(
         manager.permission_id,
-        currentManagerItem.id,
         manager.user.id,
         { [permissionType]: value }
       );
@@ -123,25 +123,19 @@ const ManagersModal: React.FC<ManagersModalProps> = ({
     }
   };
 
-  // Update handleRemoveManager function to use the helper
   const handleRemoveManager = async (managerId: number) => {
-    showConfirmationToast("Bạn có muốn xóa không?", () =>
-      removeManager(managerId)
-    );
-  };
-
-  // Add helper function to handle actual removal
-  const removeManager = async (managerId: number) => {
-    try {
-      await managerService.removeManager(currentManagerItem.id, managerId);
-      const updatedPermissions = managerPermissions.filter(
-        (manager) => manager.user.id !== managerId
-      );
-      setManagerPermissions(updatedPermissions);
-      toast.success("Đã xoá người quản lý");
-    } catch {
-      toast.error("Không thể xoá người quản lý");
-    }
+    showConfirmationToast("Bạn có muốn xóa không?", async () => {
+      try {
+        await removeManager(managerId);
+        const updatedPermissions = managerPermissions.filter(
+          (manager) => manager.user.id !== managerId
+        );
+        setManagerPermissions(updatedPermissions);
+        toast.success("Đã xoá người quản lý");
+      } catch {
+        toast.error("Không thể xoá người quản lý");
+      }
+    });
   };
 
   return (

@@ -1,4 +1,3 @@
-import React, { useEffect, useRef, useState } from "react";
 import {
   FiCheckSquare,
   FiFolder,
@@ -7,74 +6,13 @@ import {
   FiTrash2,
   FiCheck,
 } from "react-icons/fi";
-import { toast } from "react-toastify";
 import { Item, ItemProperty } from "@/app/components/Table/types/table";
 import OwnerButton from "./OwnerButton"; // Change to default import
-import { useAppStore } from "@/app/store/appStore";
 import {
   CardViewProps,
-  EditableContentProps,
-  AutoResizeTextAreaProps,
 } from "@/app/components/Table/types/table";
 import { formatDateTime } from "@/app/utils/formatDateTime"; // Add this import at the top
-
-const AutoResizeTextArea = ({ content }: AutoResizeTextAreaProps) => {
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  useEffect(() => {
-    const textarea = textareaRef.current;
-    if (textarea) {
-      textarea.style.height = "auto";
-      textarea.style.height = textarea.scrollHeight + "px";
-    }
-  }, [content]);
-
-  return (
-    <div className="text-sm text-[var(--muted-foreground)]">
-      {content || ""}
-    </div>
-  );
-};
-
-const EditableContent = ({
-  isEditing,
-  value,
-  onChange,
-  name,
-  type = "text",
-  className = "",
-}: EditableContentProps) => {
-  if (!isEditing) {
-    return type === "textarea" ? (
-      <div className="min-h-[1.5rem]">
-        <AutoResizeTextArea content={value ? String(value) : null} />
-      </div>
-    ) : (
-      <span className={className}>{value}</span>
-    );
-  }
-
-  return type === "textarea" ? (
-    <textarea
-      name={name}
-      value={value === true ? "" : value || ""}
-      onChange={onChange}
-      className={`w-full p-2 bg-yellow-50 dark:bg-yellow-900 border border-blue-500 
-                rounded-lg focus:outline-none ${className}`}
-      onClick={(e) => e.stopPropagation()}
-    />
-  ) : (
-    <input
-      type={type}
-      name={name}
-      value={value === true ? "" : value || ""}
-      onChange={onChange}
-      className={`w-full p-2 bg-yellow-50 dark:bg-yellow-900 border border-blue-500 
-                rounded-lg focus:outline-none ${className}`}
-      onClick={(e) => e.stopPropagation()}
-    />
-  );
-};
+import EditableContent from '@/app/components/common/EditableContent';
 
 const CardView: React.FC<CardViewProps> = ({
   items,
@@ -82,43 +20,9 @@ const CardView: React.FC<CardViewProps> = ({
   handleEditItem,
   handleDeleteItem,
   handleUpdateProgress,
+  handleCardClick, // Add this prop
   openManagers,
-  isCreating, // Add this prop
-  setIsCreating, // Add this prop
 }) => {
-  const { history, setHistory, setShouldReloadTable } = useAppStore();
-  const [isNavigating, setIsNavigating] = useState(false);
-
-  const handleCardClick = (item: Item, isEditing: boolean) => {
-    if (isEditing || isCreating) {
-      toast.warning("Vui lòng lưu thay đổi trước khi chuyển trang!");
-      return;
-    }
-    navigateToChild(item);
-  };
-
-  const navigateToChild = (item: Item) => {
-    if (isNavigating) return; // Prevent rapid navigation
-    setIsNavigating(true);
-
-    setIsCreating(false);
-    const newHistory = [
-      ...history,
-      {
-        id: item.id,
-        url: `/api/project/${item.id}/child`,
-        title: item.title || "",
-      },
-    ];
-    setHistory(newHistory);
-    setShouldReloadTable(true);
-
-    // Reset the navigation lock after a delay
-    setTimeout(() => {
-      setIsNavigating(false);
-    }, 500); // 500ms delay
-  };
-
   const getDiffLevelStyle = (level: number | null | undefined) => {
     if (level === null || level === undefined)
       return "bg-gray-100 text-gray-800";
@@ -211,7 +115,7 @@ const CardView: React.FC<CardViewProps> = ({
       {items.map((item) => (
         <div
           key={item.id}
-          onClick={() => handleCardClick(item, item.isEditing)}
+          onClick={() => handleCardClick(item)}
           className={`group bg-[var(--card)] border border-[var(--border)] rounded-lg 
                     shadow-sm transition-all duration-200 flex flex-col
                     ${
