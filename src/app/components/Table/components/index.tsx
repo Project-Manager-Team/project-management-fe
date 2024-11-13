@@ -18,7 +18,7 @@ import {
   allColumns,
 } from "@/app/components/Table/constants/columns";
 import TableView from "./TableView"; // Thêm import cho TableView
-import { useProject } from "./hooks/useProject";
+import { useProject } from "../hooks/useProject";
 
 // Add this after imports
 ReactModal.setAppElement("body"); // Set the root element for accessibility

@@ -1,10 +1,10 @@
-'use client';
-import { useAppStore } from './store/appStore';
+"use client";
+import { useAppStore } from "./store/appStore";
 import React, { useEffect } from "react";
 import Notification from "./components/Notification";
 import Profile from "./components/Profile";
 import HistoryBar from "./components/HistoryBar";
-import Table from "./components/Table";
+import Table from "./components/Table/components";
 import ThemeToggle from "./components/ThemeToggle";
 
 export default function Home() {
@@ -14,27 +14,32 @@ export default function Home() {
   // Initialize history with a default item if empty
   useEffect(() => {
     if (!history || history.length === 0) {
-      setHistory([{
-        id: 0,
-        url: '/api/project/personal/',
-        title: 'Home'
-      }]);
+      setHistory([
+        {
+          id: 0,
+          url: "/api/project/personal/",
+          title: "Home",
+        },
+      ]);
     }
   }, [history, setHistory]);
 
-  const currentItem = history && history.length > 0 
-    ? history[history.length - 1] 
-    : { id: 0, url: '/api/project/personal/', title: 'Home' };
+  const currentItem =
+    history && history.length > 0
+      ? history[history.length - 1]
+      : { id: 0, url: "/api/project/personal/", title: "Home" };
 
   return (
     <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
       {/* Header Section */}
       <header className="fixed top-0 left-0 right-0 bg-[var(--background)] border-b border-gray-200 dark:border-gray-800 z-50">
-        <div className="w-full px-4">  {/* Removed container class to allow full width */}
+        <div className="w-full px-4">
+          {" "}
+          {/* Removed container class to allow full width */}
           <div className="h-16 flex items-center">
             {/* Left side - No extra wrapper div */}
             <HistoryBar />
-            
+
             {/* Right side - Push to the right */}
             <div className="ml-auto flex items-center space-x-6">
               <ThemeToggle />

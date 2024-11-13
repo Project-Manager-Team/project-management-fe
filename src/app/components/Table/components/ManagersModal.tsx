@@ -9,12 +9,12 @@ import { DOMAIN } from "@/app/config/api";
 import { FiUser, FiTrash2 } from "react-icons/fi";
 import { Dialog, DialogPanel, Switch, Transition } from "@headlessui/react";
 import { toast } from "react-toastify";
-import apiClient from "@/app/utils/apiClient";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { inviteFormSchema, type InviteFormInputs } from "@/app/schemas/form";
 import { PermissionSwitchProps } from "@/app/components/Table/types/table";
 import { showConfirmationToast } from "@/app/utils/toastUtils";
+import { managerService } from "../services/managerService";
 
 // Permission Switch Component
 const PermissionSwitch = ({ value, onChange }: PermissionSwitchProps) => (
@@ -78,11 +78,10 @@ const ManagersModal: React.FC<ManagersModalProps> = ({
 
   const onSubmit = async (data: InviteFormInputs) => {
     try {
-      await apiClient.post("/api/invitation/", {
+      await managerService.sendInvitation(currentManagerItem.id, {
         username: data.username,
         title: data.title,
-        content: data.content,
-        project: currentManagerItem.id, // Thêm project ID vào payload
+        content: data.content
       });
 
       toast.success("Đã gửi lời mời thành công");
@@ -102,15 +101,11 @@ const ManagersModal: React.FC<ManagersModalProps> = ({
     if (!manager.permission_id || !manager.user.id) return;
 
     try {
-      const payload = {
-        project: currentManagerItem.id,
-        user: manager.user.id,
-        [permissionType]: value,
-      };
-
-      await apiClient.patch(
-        `/api/permissions/${manager.permission_id}/`,
-        payload
+      await managerService.updateManagerPermission(
+        manager.permission_id,
+        currentManagerItem.id,
+        manager.user.id,
+        { [permissionType]: value }
       );
 
       const updatedPermissions = [...managerPermissions];
@@ -138,13 +133,7 @@ const ManagersModal: React.FC<ManagersModalProps> = ({
   // Add helper function to handle actual removal
   const removeManager = async (managerId: number) => {
     try {
-      await apiClient.post(
-        `/api/project/${currentManagerItem.id}/remove_manager/`,
-        {
-          managerId,
-        }
-      );
-
+      await managerService.removeManager(currentManagerItem.id, managerId);
       const updatedPermissions = managerPermissions.filter(
         (manager) => manager.user.id !== managerId
       );
