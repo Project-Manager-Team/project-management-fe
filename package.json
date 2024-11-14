@@ -25,6 +25,8 @@
     "@radix-ui/react-select": "^2.1.2",
     "axios": "^1.7.7",
     "canvas-to-blob": "^1.0.0",
+    "cross-env": "^7.0.3",
+    "lodash": "^4.17.21",
     "next": "15.0.2",
     "rc-util": "^5.43.0",
     "react": "^18.3.1",
@@ -39,6 +41,7 @@
     "zustand": "^5.0.1"
   },
   "devDependencies": {
+    "@types/lodash": "^4.17.13",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",

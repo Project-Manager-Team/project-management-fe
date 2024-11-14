@@ -8,11 +8,12 @@ export const projectService = {
     return data.filter((item) => item.type !== "personal");
   },
 
-  async createProject(project: Item): Promise<void> {
-    await apiClient.post<Item>(API_ENDPOINTS.PROJECT.BASE, project);
+  async createProject(project: Item): Promise<Item> {
+    const { data } = await apiClient.post<Item>(API_ENDPOINTS.PROJECT.BASE, project);
+    return data;
   },
 
-  async updateProject(id: number, project: Partial<Item>): Promise<void> {
+  async updateProject(id: number | null, project: Partial<Item>): Promise<void> {
     const { color, ...otherData } = project;
     await apiClient.patch<Item>(API_ENDPOINTS.PROJECT.DETAIL(id), {
       ...otherData,

@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 
 interface HistoryItem {
-  id: number;
+  id: number | null;
   title: string;
   url: string;
 }

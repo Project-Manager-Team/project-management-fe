@@ -1,4 +1,4 @@
-import { FiCheckSquare, FiFolder, FiEdit, FiSave, FiTrash2, FiCheck, FiCircle } from "react-icons/fi";
+import { FiCheckSquare, FiFolder, FiEdit, FiSave, FiTrash2, FiCheck } from "react-icons/fi";
 import { Item, ItemProperty } from "@/app/components/Board/types/table";
 import OwnerButton from "./OwnerButton"; // Change to default import
 import { CardViewProps } from "@/app/components/Board/types/table";
@@ -17,37 +17,6 @@ const CardView: React.FC<CardViewProps> = ({
   handleColorChange, // Thêm prop mới
   openManagers,
 }) => {
-  const colors = [
-    '#f87171', // red
-    '#fb923c', // orange
-    '#fbbf24', // amber
-    '#34d399', // emerald
-    '#22d3ee', // cyan
-    '#818cf8', // indigo
-    '#c084fc', // purple
-    '#e879f9', // fuchsia
-  ];
-
-  // Helper function to group items by status
-  const groupByStatus = (items: Item[]) => {
-    const groups: { [key: string]: Item[] } = {
-      'Chưa bắt đầu': [],
-      'Đang thực hiện': [],
-      'Hoàn thành': [],
-    };
-
-    items.forEach(item => {
-      if (item.progress === 100) {
-        groups['Hoàn thành'].push(item);
-      } else if (item.progress > 0) {
-        groups['Đang thực hiện'].push(item);
-      } else {
-        groups['Chưa bắt đầu'].push(item);
-      }
-    });
-
-    return groups;
-  };
 
   const renderDateContent = (dateString: string | null) => {
     if (!dateString) return null;
@@ -64,12 +33,13 @@ const CardView: React.FC<CardViewProps> = ({
 
   // Add this helper function
   const renderProgress = (item: Item) => {
-    if (item.type.toLowerCase() === "task") {
+    const isTask = !item.type || item.type.toLowerCase() === "task";
+    if (isTask) {
       return (
         <button
           onClick={(e) => {
             e.stopPropagation();
-            handleUpdateProgress(item.id, item.progress === 100 ? 0 : 100);
+            handleUpdateProgress(item.id ?? 0, item.progress === 100 ? 0 : 100);
           }}
           className={`p-1.5 rounded-lg transition-all flex items-center gap-2 text-sm
                      ${
@@ -108,16 +78,20 @@ const CardView: React.FC<CardViewProps> = ({
   };
 
   return (
-    <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-4 p-4 space-y-4 [&>*:first-child]:mt-0">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 p-4">
       {items.map((item) => (
         <div
-          key={item.id}
+          key={item.id ?? `new-item-${item.index}`} // Sửa key để handle cả trường hợp id null
           onClick={() => handleNavigateToChild(item)}
-          className={`break-inside-avoid-column mb-4 group bg-[var(--card)] border-l-4 rounded-lg 
-                    shadow-sm transition-all duration-200 flex flex-col
-                    ${!item.isEditing ? 'hover:scale-[1.02] hover:shadow-lg cursor-pointer' : ''}
-                    ${item.isEditing ? 'ring-2 ring-blue-500' : 'hover:bg-[var(--accent)]'}`}
-          style={{ borderLeftColor: item.color || 'var(--border)' }}
+          className={`bg-[var(--card)] border-2 rounded-lg 
+                      shadow-sm transition-all duration-200 flex flex-col
+                      ${
+                        !item.isEditing
+                          ? 'hover:scale-[1.02] hover:shadow-lg cursor-pointer'
+                          : ''
+                      }
+                      ${item.isEditing ? 'ring-2 ring-blue-500' : 'hover:bg-[var(--accent)]'}`}
+          style={{ borderColor: item.color || 'var(--border)' }}
         >
           {/* Header Section - No border */}
           <div className="p-4">
@@ -125,10 +99,16 @@ const CardView: React.FC<CardViewProps> = ({
             <div className="flex items-center justify-between">
               {/* Title and Icon */}
               <div className="flex items-center gap-2 flex-1 min-w-0">
-                {item.type.toLowerCase() === "task" ? (
-                  <FiCheckSquare className="w-5 h-5 flex-shrink-0" />
+                {(!item.type || item.type.toLowerCase() === "task") ? (
+                  <FiCheckSquare 
+                    className="w-5 h-5 flex-shrink-0" 
+                    style={{ color: item.color || 'currentColor' }}
+                  />
                 ) : (
-                  <FiFolder className="w-5 h-5 flex-shrink-0" />
+                  <FiFolder 
+                    className="w-5 h-5 flex-shrink-0" 
+                    style={{ color: item.color || 'currentColor' }} // Thêm style này
+                  />
                 )}
                 <EditableContent
                   isEditing={item.isEditing}
@@ -158,6 +138,7 @@ const CardView: React.FC<CardViewProps> = ({
                             text-[var(--foreground)] rounded-full transition-all"
                   onClick={() => handleEditItem(item.index)}
                   aria-label={item.isEditing ? "Save" : "Edit"}
+                  style={{ color: item.color || 'var(--foreground)' }}
                 >
                   {item.isEditing ? (
                     <FiSave className="w-4 h-4" />
@@ -170,6 +151,7 @@ const CardView: React.FC<CardViewProps> = ({
                             text-[var(--foreground)] rounded-full transition-all"
                   onClick={() => handleDeleteItem(item.id)}
                   aria-label="Delete"
+                  style={{ color: item.color || 'var(--foreground)' }}
                 >
                   <FiTrash2 className="w-4 h-4" />
                 </button>

@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import {
   PermissionKey,
   ManagerButtonProps,
-  Manager
+  Manager,
+  ManagersModalProps
 } from "@/app/components/Board/types/table";
 
 import Image from "next/image";
@@ -64,9 +65,10 @@ const ManagersModal: React.FC<ManagersModalProps> = ({
   currentManagerItem,
   isOpen,
   onClose,
+  managerPermissions,
+  setManagerPermissions
 }) => {
   const [isInviteOpen, setIsInviteOpen] = useState(false);
-  const [managerPermissions, setManagerPermissions] = useState<Manager[]>([]);
   const { updatePermission, removeManager, sendInvitation } = useManager(
     currentManagerItem.id
   );
@@ -434,14 +436,5 @@ const ManagersModal: React.FC<ManagersModalProps> = ({
     </Dialog>
   );
 };
-
-// Update the prop types
-interface ManagersModalProps {
-  currentManagerItem: {
-    id: number;
-  };
-  isOpen: boolean;
-  onClose: () => void;
-}
 
 export default ManagersModal;

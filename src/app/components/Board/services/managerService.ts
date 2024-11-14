@@ -3,7 +3,7 @@ import { Manager } from "@/app/components/Board/types/table";
 import { API_ENDPOINTS } from "../constants/apiEndpoints";
 
 export const managerService = {
-  async getManagersPermissions(projectId: number): Promise<Manager[]> {
+  async getManagersPermissions(projectId: number | null): Promise<Manager[]> {
     const { data } = await apiClient.get<Manager[]>(
       API_ENDPOINTS.MANAGER.PERMISSIONS(projectId)
     );
@@ -12,7 +12,7 @@ export const managerService = {
 
   async updateManagerPermission(
     permissionId: number,
-    projectId: number,
+    projectId: number | null,
     userId: number,
     permissions: Record<string, boolean>
   ): Promise<void> {
@@ -26,14 +26,17 @@ export const managerService = {
     );
   },
 
-  async removeManager(projectId: number, managerId: number): Promise<void> {
+  async removeManager(
+    projectId: number | null,
+    managerId: number
+  ): Promise<void> {
     await apiClient.post(API_ENDPOINTS.MANAGER.REMOVE(projectId), {
       managerId,
     });
   },
 
   async sendInvitation(
-    projectId: number,
+    projectId: number | null,
     data: {
       username: string;
       title: string;

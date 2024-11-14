@@ -2,7 +2,7 @@ import { useState, useCallback } from "react";
 import { Manager } from "../types/table";
 import { managerService } from "../services/managerService";
 
-export const useManager = (projectId: number) => {
+export const useManager = (projectId: number | null) => {
   const [managers, setManagers] = useState<Manager[]>([]);
 
   const fetchManagers = useCallback(async () => {

@@ -26,6 +26,7 @@ export function projectReducer(
           }))
         ),
         isCreating: false,
+        isNavigating: false, // Reset navigation state
       };
 
     case "UPDATE_ITEM":
@@ -50,8 +51,11 @@ export function projectReducer(
     case "ADD_ITEM":
       return {
         ...state,
-        listProject: [...state.listProject, action.payload],
-        isCreating: true,
+        listProject: updateIndexes([
+          ...state.listProject,
+          action.payload
+        ])
+        // Removed isCreating: false from here
       };
 
     case "SET_CREATING":
@@ -67,13 +71,18 @@ export function projectReducer(
       };
 
     case "TOGGLE_EDIT":
+      const updatedList = state.listProject.map((item, idx) => {
+        if (idx === action.payload) {
+          return {
+            ...item,
+            isEditing: !item.isEditing,
+          };
+        }
+        return item;
+      });
       return {
         ...state,
-        listProject: state.listProject.map((item, idx) =>
-          idx === action.payload
-            ? { ...item, isEditing: !item.isEditing }
-            : item
-        ),
+        listProject: updatedList,
       };
 
     case "UPDATE_PROGRESS":
@@ -91,6 +100,17 @@ export function projectReducer(
         ...state,
         listProject: [],
         isCreating: false,
+      };
+
+    case "REPLACE_ITEM":
+      return {
+        ...state,
+        listProject: updateIndexes(
+          state.listProject.map(item => 
+            item.id === action.payload.oldId ? action.payload.newItem : item
+          )
+        ),
+        isCreating: false
       };
 
     default:

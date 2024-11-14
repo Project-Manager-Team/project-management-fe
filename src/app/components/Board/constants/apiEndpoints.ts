@@ -1,14 +1,14 @@
 export const API_ENDPOINTS = {
   PROJECT: {
     BASE: '/api/project/',
-    CHILD: (id: number) => `/api/project/${id}/child/`,
-    DETAIL: (id: number) => `/api/project/${id}/`,
-    MANAGERS: (id: number) => `/api/project/${id}/managers_permissions/`,
+    CHILD: (id: number | null) => `/api/project/${id}/child/`,
+    DETAIL: (id: number | null) => `/api/project/${id}/`,
+    MANAGERS: (id: number | null) => `/api/project/${id}/managers_permissions/`,
   },
   INVITATION: '/api/invitation',
   MANAGER: {
-    PERMISSIONS: (projectId: number) => `/api/project/${projectId}/managers_permissions/`,
-    REMOVE: (projectId: number) => `/api/project/${projectId}/remove_manager/`,
+    PERMISSIONS: (projectId: number | null) => `/api/project/${projectId}/managers_permissions/`,
+    REMOVE: (projectId: number | null) => `/api/project/${projectId}/remove_manager/`,
     INVITE: '/api/invitation/',
     UPDATE_PERMISSION: (permissionId: number) => `/api/permissions/${permissionId}/`
   }

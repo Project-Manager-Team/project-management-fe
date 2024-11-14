@@ -16,4 +16,5 @@ export type ProjectAction =
   | { type: "SET_NAVIGATING"; payload: boolean }
   | { type: "TOGGLE_EDIT"; payload: number }
   | { type: "UPDATE_PROGRESS"; payload: { id: number; progress: number } }
-  | { type: "CLEAR_PROJECTS" };
+  | { type: "CLEAR_PROJECTS" }
+  | { type: "REPLACE_ITEM"; payload: { oldId: number | null, newItem: Item } };

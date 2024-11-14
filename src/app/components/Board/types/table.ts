@@ -1,5 +1,5 @@
 export interface Item {
-  id: number;
+  id: number | null;  // Cho phép id có thể là null
   index: number;
   type: string;
   title: string | null;
@@ -14,7 +14,7 @@ export interface Item {
   owner: Owner | null;
   managersCount: number;
   diffLevel: number | null; // Change from string | null to number | null
-  color?: string;
+  color: string;
 }
 
 export interface Owner {
@@ -23,14 +23,14 @@ export interface Owner {
 }
 
 export interface HistoryItem {
-  id: number;
+  id: number | null;  // Cập nhật để phù hợp với Item
   title: string;
   url: string;
 }
 
 export interface Current {
   url: string;
-  id?: number;
+  id?: number | null;  // Cập nhật để phù hợp với Item
   title: string;
 }
 
@@ -117,12 +117,12 @@ export interface TableRowProps {
 export interface ManagerButtonProps {
   onClick: () => void;
   managersCount: number;
-  size?: 'small' | 'normal';
+  size?: "small" | "normal";
 }
 
 // Update ManagersModalProps to remove duplicate props and fix conflicts
 export interface ManagersModalProps {
-  currentManagerItem: Item;
+  currentManagerItem: Item; 
   managerPermissions: Manager[];
   setManagerPermissions: React.Dispatch<React.SetStateAction<Manager[]>>;
   isOpen: boolean;
@@ -157,13 +157,17 @@ export interface OwnerButtonProps {
   owner: Owner | null;
   managersCount: number;
   onClick: () => void;
-  size?: 'small' | 'normal';
+  size?: "small" | "normal";
 }
 
 // Update CardViewProps and TableViewProps
 export interface CardViewProps {
   items: Item[];
-  handleChange: (index: number, name: ItemProperty, value: string | number | boolean | null) => void;
+  handleChange: (
+    index: number,
+    name: ItemProperty,
+    value: string | number | boolean | null
+  ) => void;
   handleEditItem: (index: number) => void;
   handleDeleteItem: (id: number | null) => void;
   handleUpdateProgress: (id: number, progress: number) => void;

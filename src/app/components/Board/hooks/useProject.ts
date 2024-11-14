@@ -1,4 +1,4 @@
-import { useReducer, useCallback, useEffect } from "react";
+import { useReducer, useCallback, useEffect, useRef } from "react";
 import { useAppStore } from "@/app/store/appStore";
 import { Item, ItemProperty } from "@/app/components/Board/types/table";
 import { projectService } from "@/app/components/Board/services/projectService";
@@ -9,6 +9,7 @@ import {
   initialState,
 } from "@/app/components/Board/reducers/projectReducer";
 import { Dispatch, SetStateAction } from "react";
+import debounce from 'lodash/debounce';
 
 export const useProject = (
   currentProjectId: number,
@@ -23,34 +24,46 @@ export const useProject = (
     return isCreating || listProject.some((item) => item.isEditing);
   }, [isCreating, listProject]);
 
-  // Data fetching
-  const getProjectsData = async (url: string) => {
-    try {
-      const accessToken = sessionStorage.getItem("access");
-      if (!accessToken) {
-        dispatch({ type: "CLEAR_PROJECTS" });
-        return;
-      }
+  // Tối ưu hóa getProjectsData với debounce
+  const debouncedGetProjectsData = useCallback(
+    debounce(async (url: string) => {
+      try {
+        const accessToken = sessionStorage.getItem("access");
+        if (!accessToken) {
+          dispatch({ type: "CLEAR_PROJECTS" });
+          return;
+        }
 
-      const data = await projectService.getProjects(url);
-      dispatch({ type: "SET_PROJECTS", payload: data });
-    } catch {
-      dispatch({ type: "CLEAR_PROJECTS" });
-      toast.error("Lấy dữ liệu không thành công");
-    } finally {
-      setShouldReloadTable(false);
-    }
-  };
+        const data = await projectService.getProjects(url);
+        dispatch({ type: "SET_PROJECTS", payload: data });
+      } catch {
+        dispatch({ type: "CLEAR_PROJECTS" });
+        toast.error("Lấy dữ liệu không thành công");
+      } finally {
+        setShouldReloadTable(false);
+      }
+    }, 300),
+    []
+  );
 
   const handleChange = (
     index: number,
     name: ItemProperty,
     value: string | number | boolean | null
   ) => {
-    dispatch({
-      type: "UPDATE_ITEM",
-      payload: { index, item: { [name]: value } },
-    });
+    const item = listProject[index];
+    if (item) {
+      dispatch({
+        type: "UPDATE_ITEM",
+        payload: { 
+          index, 
+          item: { 
+            ...item, // Giữ lại các giá trị cũ
+            [name]: value 
+          } 
+        },
+      });
+    }
   };
 
   const handleEditItem = async (index: number) => {
@@ -110,9 +123,35 @@ export const useProject = (
   );
 
   const handleCreateAndSaveItem = async () => {
-    if (!isCreating) {
+    if (isCreating) {
+      // Find the new item
+      const newItem = listProject.find(item => !item.id);
+      if (!newItem) return;
+
+      try {
+        // Save to server
+        const savedItem = await projectService.createProject(newItem);
+        
+        // Update the state with saved item
+        dispatch({
+          type: "REPLACE_ITEM",
+          payload: {
+            oldId: null,
+            newItem: savedItem
+          }
+        });
+
+        // Only set isCreating to false after successful save
+        dispatch({ type: "SET_CREATING", payload: false });
+      } catch {
+        toast.error("Không thể lưu !")
+        // Don't set isCreating to false on error
+        // Maybe show an error toast here
+      }
+    } else {
+      // Add new empty item
       const newItem: Item = {
-        id: Date.now(),
+        id: null,
         index: listProject.length,
         type: "task",
         title: null,
@@ -126,23 +165,12 @@ export const useProject = (
         managers: [],
         owner: null,
         managersCount: 0,
+        color: "",
         diffLevel: 1,
       };
+      
       dispatch({ type: "ADD_ITEM", payload: newItem });
-    } else {
-      const newItem = listProject[listProject.length - 1];
-      if (!newItem.title?.trim()) {
-        toast.error("Tiêu đề là bắt buộc");
-        return;
-      }
-      try {
-        await projectService.createProject(newItem);
-        dispatch({ type: "SET_CREATING", payload: false });
-        await getProjectsData(currentProjectUrl);
-        toast.success("Tạo mới nhiệm vụ thành công!");
-      } catch {
-        toast.error("Không thể tạo mới nhiệm vụ");
-      }
+      dispatch({ type: "SET_CREATING", payload: true });
     }
   };
 
@@ -173,49 +201,56 @@ export const useProject = (
     }
   };
 
-  // Navigation
-  const navigateToChild = useCallback(
-    (item: Item) => {
-      if (isNavigating) return;
-      dispatch({ type: "SET_NAVIGATING", payload: true });
+  // Navigation state management
+  const isInitialMount = useRef(true);
 
-      const newHistory = [
-        ...history,
-        {
-          id: item.id,
-          url: `/api/project/${item.id}/child`,
-          title: item.title || "",
-        },
-      ];
-      setHistory(newHistory);
-      setShouldReloadTable(true);
+  // Simplified navigation without debounce
+  const navigateToChild = useCallback((item: Item) => {
+    if (!item || isNavigating) return;
+    
+    const newHistory = [...history, {
+      id: item.id,
+      url: `/api/project/${item.id}/child`,
+      title: item.title || "",
+    }];
 
-      setTimeout(
-        () => dispatch({ type: "SET_NAVIGATING", payload: false }),
-        500
-      );
-    },
-    [history, isNavigating, setHistory, setShouldReloadTable]
-  );
+    setHistory(newHistory);
+    // Không set shouldReloadTable ở đây
+  }, [history, isNavigating, setHistory]);
 
-  // Navigation handler moved from CardView
-  const handleNavigateToChild = useCallback(
-    (item: Item) => {
-      if (item.isEditing || isCreating) {
-        toast.warning("Vui lòng lưu thay đổi trước khi chuyển trang!");
-        return;
-      }
-      navigateToChild(item);
-    },
-    [isCreating, navigateToChild]
-  );
-
-  // Load initial data
-  useEffect(() => {
-    if (currentProjectUrl) {
-      getProjectsData(currentProjectUrl);
+  const handleNavigateToChild = useCallback((item: Item) => {
+    if (item.isEditing || isCreating) {
+      toast.warning("Vui lòng lưu thay đổi trước khi chuyển trang!");
+      return;
     }
-  }, [currentProjectUrl, shouldReloadTable]);
+    navigateToChild(item);
+  }, [isCreating, navigateToChild]);
+
+  // Data fetching control
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+
+    const fetchData = async () => {
+      if (!currentProjectUrl || isFetchingRef.current) return;
+      
+      isFetchingRef.current = true;
+      try {
+        const data = await projectService.getProjects(currentProjectUrl);
+        dispatch({ type: "SET_PROJECTS", payload: data });
+      } catch {
+        dispatch({ type: "CLEAR_PROJECTS" });
+        toast.error("Lấy dữ liệu không thành công");
+      } finally {
+        isFetchingRef.current = false;
+        setShouldReloadTable(false);
+      }
+    };
+
+    fetchData();
+  }, [currentProjectUrl]);
 
   // Add navigation warning
   useEffect(() => {
@@ -230,6 +265,13 @@ export const useProject = (
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [hasUnsavedChanges]);
 
+  // Cleanup khi unmount
+  useEffect(() => {
+    return () => {
+      debouncedGetProjectsData.cancel();
+    };
+  }, [debouncedGetProjectsData]);
+
   const setIsCreating: Dispatch<SetStateAction<boolean>> = (value) => {
     if (typeof value === "function") {
       const prevState = state.isCreating;
@@ -242,7 +284,39 @@ export const useProject = (
     }
   };
 
+  const isFetchingRef = useRef(false); // Thêm ref để kiểm soát việc gọi API
+
+  const getProjectsData = useCallback(async (url: string) => {
+    if (isFetchingRef.current) return; // Nếu đang fetch thì không gọi lại
+    isFetchingRef.current = true;
+
+    try {
+      const accessToken = sessionStorage.getItem("access");
+      if (!accessToken) {
+        dispatch({ type: "CLEAR_PROJECTS" });
+        return;
+      }
+
+      const data = await projectService.getProjects(url);
+      dispatch({ type: "SET_PROJECTS", payload: data });
+    } catch {
+      dispatch({ type: "CLEAR_PROJECTS" });
+      toast.error("Lấy dữ liệu không thành công");
+    } finally {
+      setShouldReloadTable(false);
+      isFetchingRef.current = false;
+    }
+  }, [dispatch, setShouldReloadTable]);
+
+  // Điều chỉnh useEffect để chỉ gọi API khi cần thiết
+  useEffect(() => {
+    if (currentProjectUrl && shouldReloadTable && !isNavigating && !isCreating) {
+      getProjectsData(currentProjectUrl);
+    }
+  }, [currentProjectUrl, shouldReloadTable, isNavigating, isCreating, getProjectsData]);
+
   return {
+
     listProject,
     isCreating,
     setIsCreating, // Now properly typed
@@ -253,7 +327,6 @@ export const useProject = (
     handleDeleteItem,
     handleCreateAndSaveItem,
     handleUpdateProgress,
-    navigateToChild,
     handleNavigateToChild, // Add this handler
     handleColorChange, // Thêm handler mới
   };

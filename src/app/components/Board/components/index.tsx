@@ -4,6 +4,7 @@ import { toast } from "react-toastify";
 import {
   Item,
   ColumnToggleProps,
+  Manager
 } from "@/app/components/Board/types/table";
 import { FiPlus, FiSave, FiArrowLeft } from "react-icons/fi"; // Add this import
 import ManagersModal from "./ManagersModal";
@@ -47,7 +48,7 @@ const ColumnToggle = ({ enabled, onChange }: ColumnToggleProps) => {
 // Cập nhật interface TableProps
 interface TableProps {
   current: {
-    id: number;
+    id: number | null;
     url: string;
     title: string;
   };
@@ -67,7 +68,7 @@ export default function Table({ current }: TableProps) {
     handleUpdateProgress,
     handleNavigateToChild, // Add this
     handleColorChange, // Thêm handler này
-  } = useProject(current.id, current.url);
+  } = useProject(current?.id ?? 0, current.url);
 
   const [selectedColumns, setSelectedColumns] =
     useState<string[]>(DEFAULT_COLUMNS);
@@ -104,6 +105,7 @@ export default function Table({ current }: TableProps) {
   const [currentManagerItem, setCurrentManagerItem] = useState<Item | null>(
     null
   );
+  const [managerPermissions, setManagerPermissions] = useState<Manager[]>([]); // Add this line
 
   const handleOpenManagers = (item: Item) => {
     setCurrentManagerItem(item);
@@ -171,8 +173,16 @@ export default function Table({ current }: TableProps) {
     const newHistory = [...history];
     newHistory.pop();
     setHistory(newHistory);
-    setShouldReloadTable(true);
+
+    setShouldReloadTable(true); // Only set this when necessary
   };
+
+  useEffect(() => {
+    // Set shouldReloadTable to true only when history changes
+    if (history.length > 0) {
+      setShouldReloadTable(true);
+    }
+  }, [history, setShouldReloadTable]);
 
   return (
     <div className="bg-[var(--card)] shadow-lg rounded-lg overflow-hidden">
@@ -362,6 +372,8 @@ export default function Table({ current }: TableProps) {
           currentManagerItem={currentManagerItem}
           isOpen={showManagers}
           onClose={() => setShowManagers(false)}
+          managerPermissions={managerPermissions} // Add this line
+          setManagerPermissions={setManagerPermissions} // Add this line
         />
       )}
 
