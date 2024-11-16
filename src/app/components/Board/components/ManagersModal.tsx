@@ -3,8 +3,8 @@ import {
   PermissionKey,
   ManagerButtonProps,
   Manager,
-  ManagersModalProps
-} from "@/app/components/Board/types/table";
+  ManagersModalProps,
+} from "@/app/components/Board/types/board";
 
 import Image from "next/image";
 import { DOMAIN } from "@/app/config/api";
@@ -14,7 +14,7 @@ import { toast } from "react-toastify";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { inviteFormSchema, type InviteFormInputs } from "@/app/schemas/form";
-import { PermissionSwitchProps } from "@/app/components/Board/types/table";
+import { PermissionSwitchProps } from "@/app/components/Board/types/board";
 import { showConfirmationToast } from "@/app/utils/toastUtils";
 import { useManager } from "../hooks/useManager";
 import apiClient from "@/app/utils/apiClient";
@@ -66,7 +66,7 @@ const ManagersModal: React.FC<ManagersModalProps> = ({
   isOpen,
   onClose,
   managerPermissions,
-  setManagerPermissions
+  setManagerPermissions,
 }) => {
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const { updatePermission, removeManager, sendInvitation } = useManager(

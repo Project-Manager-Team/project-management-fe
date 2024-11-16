@@ -4,7 +4,7 @@ import React, { useEffect } from "react";
 import Notification from "./components/Notification";
 import Profile from "./components/Profile";
 import HistoryBar from "./components/HistoryBar";
-import Table from "./components/Board/components";
+import Board from "./components/Board/components";
 import ThemeToggle from "./components/ThemeToggle";
 
 export default function Home() {
@@ -50,10 +50,13 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="container mx-auto px-4 pt-20">
+      {/* Main Content with SideBar */}
+
+      <main className="flex-1 p-6 pt-24">
+        {" "}
+        {/* Changed p-6 to add pt-24 */}
         <div className="bg-[var(--background)] text-[var(--foreground)] rounded-lg shadow-lg">
-          <Table current={currentItem} />
+          <Board current={currentItem} />
         </div>
       </main>
     </div>

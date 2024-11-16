@@ -1,6 +1,7 @@
 import apiClient from "@/app/utils/apiClient";
-import { Item } from "@/app/components/Board/types/table";
+import { Item } from "@/app/components/Board/types/board";
 import { API_ENDPOINTS } from "../constants/apiEndpoints";
+import { geminiService } from '@/app/services/geminiService';
 
 export const projectService = {
   async getProjects(url: string): Promise<Item[]> {
@@ -9,11 +10,17 @@ export const projectService = {
   },
 
   async createProject(project: Item): Promise<Item> {
-    const { data } = await apiClient.post<Item>(API_ENDPOINTS.PROJECT.BASE, project);
+    const { data } = await apiClient.post<Item>(
+      API_ENDPOINTS.PROJECT.BASE,
+      project
+    );
     return data;
   },
 
-  async updateProject(id: number | null, project: Partial<Item>): Promise<void> {
+  async updateProject(
+    id: number | null,
+    project: Partial<Item>
+  ): Promise<void> {
     const { color, ...otherData } = project;
     await apiClient.patch<Item>(API_ENDPOINTS.PROJECT.DETAIL(id), {
       ...otherData,
@@ -28,4 +35,16 @@ export const projectService = {
   async updateProgress(id: number, progress: number): Promise<void> {
     await apiClient.patch<Item>(API_ENDPOINTS.PROJECT.DETAIL(id), { progress });
   },
+
+  async getProjectReport(id: number): Promise<any> {
+    const { data } = await apiClient.get(API_ENDPOINTS.PROJECT.REPORT(id));
+    return data;
+  },
+
+  async generateAIReport(id: number): Promise<string> {
+    const projectData = await this.getProjectReport(id);
+    const report = await geminiService.generateProjectReport(projectData);
+    return report;
+  },
+
 };

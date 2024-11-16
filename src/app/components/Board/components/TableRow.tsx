@@ -1,29 +1,26 @@
-import React from "react";
-import {
-  FiEdit,
-  FiSave,
-  FiTrash2,
-  FiCheckSquare,
-  FiFolder,
-} from "react-icons/fi";
-import { Item, TableRowProps } from "@/app/components/Board/types/table";
+import React, { memo, useCallback } from "react";
+import { FiCheckSquare, FiFolder } from "react-icons/fi";
+import { Item, TableRowProps } from "@/app/components/Board/types/board";
 import { formatDateTime } from "@/app/utils/formatDateTime";
 import OwnerButton from "./OwnerButton";
 import EditableContent from "@/app/components/common/EditableContent";
 import { getDiffLevelStyle, getDiffLevelLabel } from "../utils/tableViewUtils";
-import ColorPicker from './ColorPicker';
 
-const TableRow: React.FC<TableRowProps> = ({
+const TableCell = memo(({ children, className }: { children: React.ReactNode; className?: string }) => (
+  <td className={`p-3 align-middle ${className}`}>{children}</td>
+));
+
+TableCell.displayName = "TableCell";
+
+const TableRow = ({
   item,
   handleChange,
-  handleEditItem,
-  handleDeleteItem,
   handleUpdateProgress,
   openManagers,
   selectedColumns,
   handleNavigateToChild,
-  handleColorChange, // Thêm prop này
-}) => {
+  onContextMenu,
+}: TableRowProps) => {
   const dateTimeInputClass = `w-[160px] rounded-lg transition-colors
     ${
       item.isEditing
@@ -31,44 +28,43 @@ const TableRow: React.FC<TableRowProps> = ({
         : "bg-[var(--background)]"
     } focus:outline-none focus:ring-0 text-[var(--foreground)]`;
 
-  const handleCheckboxChange = () => {
+  const handleCheckboxChange = useCallback(() => {
     const newProgress = item.progress === 100 ? 0 : 100;
-    handleUpdateProgress(item.id ??0, newProgress);
-  };
-
-  const onDelete = () => {
-    handleDeleteItem(item.id); // Assuming item.id is number | null
-  };
+    handleUpdateProgress(item.id ?? 0, newProgress);
+  }, [item.progress, item.id, handleUpdateProgress]);
 
   // Render table row
   return (
-    <tr 
-      className="hover:bg-[var(--muted)] border border-[var(--border)]" 
-      style={{ 
-        borderColor: item.color || 'var(--border)'
+    <tr
+      className="hover:bg-[var(--muted)]
+                [&>td:first-child]:rounded-md [&>td:last-child]:rounded-md
+                bg-[var(--card)] border-2 border-solid text-sm"
+      style={{
+        borderColor: item.color || "var(--border)",
       }}
+      onContextMenu={onContextMenu}
     >
       {/* Type column is always shown */}
-      <td className="p-3 align-middle">
+      <TableCell>
         <button
-          className="p-2 bg-[var(--input)] hover:bg-opacity-80 text-[var(--foreground)] 
-                   rounded-full transition-all duration-200"
+          className="p-1.5 bg-[var(--input)] hover:bg-opacity-80 text-[var(--foreground)] 
+                   rounded-md transition-all"
           onClick={() => handleNavigateToChild(item)}
-          style={{ color: item.color || 'var(--foreground)' }}
+          style={{ color: item.color || "var(--foreground)" }}
         >
           {item.type.toLowerCase() === "task" ? (
-            <FiCheckSquare className="w-5 h-5" />
+            <FiCheckSquare className="w-4 h-4" />
           ) : (
-            <FiFolder className="w-5 h-5" />
+            <FiFolder className="w-4 h-4" />
           )}
         </button>
-      </td>
+      </TableCell>
       {/* Other columns are toggleable */}
       {selectedColumns.map((colId) => {
         switch (colId) {
           case "title":
             return (
-              <td key={colId} className="p-3 align-middle max-w-[200px]">
+              <TableCell key={colId}>
                 {" "}
                 {/* Changed from min-w to max-w */}
                 <div className="overflow-hidden">
@@ -86,14 +82,11 @@ const TableRow: React.FC<TableRowProps> = ({
                     className="w-full text-sm rounded-lg truncate" // Added truncate
                   />
                 </div>
-              </td>
+              </TableCell>
             );
           case "description":
             return (
-              <td
-                key={colId}
-                className="p-3 align-middle hidden md:table-cell max-w-[300px]"
-              >
+              <TableCell key={colId} className="hidden md:table-cell max-w-[300px]">
                 {" "}
                 {/* Added max-w */}
                 <div className="overflow-hidden">
@@ -111,14 +104,11 @@ const TableRow: React.FC<TableRowProps> = ({
                     className="w-full rounded-lg line-clamp-2" // Added line-clamp-2 for 2 lines max
                   />
                 </div>
-              </td>
+              </TableCell>
             );
           case "beginTime":
             return (
-              <td
-                key={colId}
-                className="p-3 align-middle w-[160px] min-w-[160px]"
-              >
+              <TableCell key={colId} className="w-[160px] min-w-[160px]">
                 {item.isEditing ? (
                   <EditableContent
                     isEditing={true}
@@ -145,14 +135,11 @@ const TableRow: React.FC<TableRowProps> = ({
                     </div>
                   )
                 )}
-              </td>
+              </TableCell>
             );
           case "endTime":
             return (
-              <td
-                key={colId}
-                className="p-3 align-middle w-[160px] min-w-[160px]"
-              >
+              <TableCell key={colId} className="w-[160px] min-w-[160px]">
                 {item.isEditing ? (
                   <EditableContent
                     isEditing={true}
@@ -177,21 +164,21 @@ const TableRow: React.FC<TableRowProps> = ({
                     </div>
                   )
                 )}
-              </td>
+              </TableCell>
             );
           case "owner":
             return (
-              <td key={colId} className="p-3 align-middle">
+              <TableCell key={colId}>
                 <OwnerButton
                   owner={item.owner}
                   managersCount={item.managersCount}
                   onClick={() => openManagers(item)}
                 />
-              </td>
+              </TableCell>
             );
           case "diffLevel":
             return (
-              <td key={colId} className="p-3 align-middle">
+              <TableCell key={colId}>
                 {item.isEditing ? (
                   <select
                     name="diffLevel"
@@ -223,11 +210,11 @@ const TableRow: React.FC<TableRowProps> = ({
                     {getDiffLevelLabel(item.diffLevel)}
                   </span>
                 )}
-              </td>
+              </TableCell>
             );
           case "progress":
             return (
-              <td key={colId} className="p-3 align-middle">
+              <TableCell key={colId}>
                 {item.type.toLowerCase() === "task" ? (
                   <input
                     type="checkbox"
@@ -245,47 +232,14 @@ const TableRow: React.FC<TableRowProps> = ({
                     ></div>
                   </div>
                 )}
-              </td>
+              </TableCell>
             );
           default:
             return null;
         }
       })}
-      <td className="p-3 align-middle text-right whitespace-nowrap">
-        <div className="flex justify-end space-x-1 relative">
-          {/* Đặt ColorPicker lên đầu để đảm bảo nó không bị các button khác che */}
-          <div className="relative">
-            <ColorPicker
-              color={item.color}
-              onChange={(color) => handleColorChange(item.index, color ?? '')}
-            />
-          </div>
-          <button
-            className="p-1.5 bg-[var(--muted)] hover:bg-[var(--muted-foreground)]
-                      text-[var(--foreground)] rounded-full transition-all"
-            onClick={() => handleEditItem(item.index)}
-            aria-label={item.isEditing ? "Save" : "Edit"}
-            style={{ color: item.color || 'var(--foreground)' }}
-          >
-            {item.isEditing ? (
-              <FiSave className="w-4 h-4" />
-            ) : (
-              <FiEdit className="w-4 h-4" />
-            )}
-          </button>
-          <button
-            className="p-1.5 bg-[var(--muted)] hover:bg-[var(--muted-foreground)]
-                      text-[var(--foreground)] rounded-full transition-all"
-            onClick={onDelete}
-            aria-label="Delete"
-            style={{ color: item.color || 'var(--foreground)' }}
-          >
-            <FiTrash2 className="w-4 h-4" />
-          </button>
-        </div>
-      </td>
     </tr>
   );
 };
 
-export default TableRow;
+export default memo(TableRow);

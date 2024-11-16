@@ -1,9 +1,12 @@
-
-import { Item } from "./table";
+import { Item } from "./board";
 
 export interface ViewUtilsProps {
   handleUpdateProgress: (id: number, progress: number) => void;
-  handleChange: (index: number, field: keyof Item, value: string | number | boolean) => void;
+  handleChange: (
+    index: number,
+    field: keyof Item,
+    value: string | number | boolean
+  ) => void;
   handleEditItem: (index: number) => void;
   handleDeleteItem: (id: number) => void;
 }

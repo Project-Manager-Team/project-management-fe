@@ -1,6 +1,6 @@
 import { useReducer, useCallback, useEffect, useRef } from "react";
 import { useAppStore } from "@/app/store/appStore";
-import { Item, ItemProperty } from "@/app/components/Board/types/table";
+import { Item, ItemProperty } from "@/app/components/Board/types/board";
 import { projectService } from "@/app/components/Board/services/projectService";
 import { toast } from "react-toastify";
 import { showConfirmationToast } from "@/app/utils/toastUtils";
@@ -9,13 +9,13 @@ import {
   initialState,
 } from "@/app/components/Board/reducers/projectReducer";
 import { Dispatch, SetStateAction } from "react";
-import debounce from 'lodash/debounce';
+import debounce from "lodash/debounce";
 
 export const useProject = (
   currentProjectId: number,
   currentProjectUrl: string
 ) => {
-  const { history, setHistory, shouldReloadTable, setShouldReloadTable } =
+  const { history, setHistory, shouldReloadBoard, setShouldReloadBoard } =
     useAppStore();
   const [state, dispatch] = useReducer(projectReducer, initialState);
   const { listProject, isCreating, isNavigating } = state;
@@ -40,7 +40,7 @@ export const useProject = (
         dispatch({ type: "CLEAR_PROJECTS" });
         toast.error("Lấy dữ liệu không thành công");
       } finally {
-        setShouldReloadTable(false);
+        setShouldReloadBoard(false);
       }
     }, 300),
     []
@@ -55,12 +55,12 @@ export const useProject = (
     if (item) {
       dispatch({
         type: "UPDATE_ITEM",
-        payload: { 
-          index, 
-          item: { 
+        payload: {
+          index,
+          item: {
             ...item, // Giữ lại các giá trị cũ
-            [name]: value 
-          } 
+            [name]: value,
+          },
         },
       });
     }
@@ -125,31 +125,27 @@ export const useProject = (
   const handleCreateAndSaveItem = async () => {
     if (isCreating) {
       // Find the new item
-      const newItem = listProject.find(item => !item.id);
+      const newItem = listProject.find((item) => !item.id);
       if (!newItem) return;
 
       try {
         // Save to server
         const savedItem = await projectService.createProject(newItem);
-        
+
         // Update the state with saved item
         dispatch({
           type: "REPLACE_ITEM",
           payload: {
             oldId: null,
-            newItem: savedItem
-          }
+            newItem: savedItem,
+          },
         });
-
-        // Only set isCreating to false after successful save
         dispatch({ type: "SET_CREATING", payload: false });
+        toast.success("Tạo Mới thành công");
       } catch {
-        toast.error("Không thể lưu !")
-        // Don't set isCreating to false on error
-        // Maybe show an error toast here
+        toast.error("Không thể lưu!");
       }
     } else {
-      // Add new empty item
       const newItem: Item = {
         id: null,
         index: listProject.length,
@@ -168,7 +164,7 @@ export const useProject = (
         color: "",
         diffLevel: 1,
       };
-      
+
       dispatch({ type: "ADD_ITEM", payload: newItem });
       dispatch({ type: "SET_CREATING", payload: true });
     }
@@ -187,44 +183,48 @@ export const useProject = (
   const handleColorChange = async (index: number, color: string | null) => {
     try {
       const currentItem = listProject[index];
-      
+
       // Cập nhật UI trước
       dispatch({
         type: "UPDATE_ITEM",
         payload: { index, item: { color: color ?? undefined } },
       });
 
-      // Gọi API để cập nhật
-      await projectService.updateProject(currentItem.id, { color: color ?? undefined });
-      
-    } catch {
-    }
+      await projectService.updateProject(currentItem.id, {
+        color: color ?? undefined,
+      });
+    } catch {}
   };
 
-  // Navigation state management
   const isInitialMount = useRef(true);
 
-  // Simplified navigation without debounce
-  const navigateToChild = useCallback((item: Item) => {
-    if (!item || isNavigating) return;
-    
-    const newHistory = [...history, {
-      id: item.id,
-      url: `/api/project/${item.id}/child`,
-      title: item.title || "",
-    }];
+  const navigateToChild = useCallback(
+    (item: Item) => {
+      if (!item || isNavigating) return;
+      const newHistory = [
+        ...history,
+        {
+          id: item.id,
+          url: `/api/project/${item.id}/child`,
+          title: item.title || "",
+        },
+      ];
 
-    setHistory(newHistory);
-    // Không set shouldReloadTable ở đây
-  }, [history, isNavigating, setHistory]);
+      setHistory(newHistory);
+    },
+    [history, isNavigating, setHistory]
+  );
 
-  const handleNavigateToChild = useCallback((item: Item) => {
-    if (item.isEditing || isCreating) {
-      toast.warning("Vui lòng lưu thay đổi trước khi chuyển trang!");
-      return;
-    }
-    navigateToChild(item);
-  }, [isCreating, navigateToChild]);
+  const handleNavigateToChild = useCallback(
+    (item: Item) => {
+      if (item.isEditing || isCreating) {
+        toast.warning("Vui lòng lưu thay đổi trước khi chuyển trang!");
+        return;
+      }
+      navigateToChild(item);
+    },
+    [isCreating, navigateToChild]
+  );
 
   // Data fetching control
   useEffect(() => {
@@ -235,7 +235,7 @@ export const useProject = (
 
     const fetchData = async () => {
       if (!currentProjectUrl || isFetchingRef.current) return;
-      
+
       isFetchingRef.current = true;
       try {
         const data = await projectService.getProjects(currentProjectUrl);
@@ -245,7 +245,7 @@ export const useProject = (
         toast.error("Lấy dữ liệu không thành công");
       } finally {
         isFetchingRef.current = false;
-        setShouldReloadTable(false);
+        setShouldReloadBoard(false);
       }
     };
 
@@ -286,40 +286,62 @@ export const useProject = (
 
   const isFetchingRef = useRef(false); // Thêm ref để kiểm soát việc gọi API
 
-  const getProjectsData = useCallback(async (url: string) => {
-    if (isFetchingRef.current) return; // Nếu đang fetch thì không gọi lại
-    isFetchingRef.current = true;
+  const getProjectsData = useCallback(
+    async (url: string) => {
+      if (isFetchingRef.current) return; // Nếu đang fetch thì không gọi lại
+      isFetchingRef.current = true;
 
-    try {
-      const accessToken = sessionStorage.getItem("access");
-      if (!accessToken) {
+      try {
+        const accessToken = sessionStorage.getItem("access");
+        if (!accessToken) {
+          dispatch({ type: "CLEAR_PROJECTS" });
+          return;
+        }
+        const data = await projectService.getProjects(url);
+        dispatch({ type: "SET_PROJECTS", payload: data });
+      } catch {
         dispatch({ type: "CLEAR_PROJECTS" });
-        return;
+        toast.error("Lấy dữ liệu không thành công");
+      } finally {
+        setShouldReloadBoard(false);
+        isFetchingRef.current = false;
       }
-
-      const data = await projectService.getProjects(url);
-      dispatch({ type: "SET_PROJECTS", payload: data });
-    } catch {
-      dispatch({ type: "CLEAR_PROJECTS" });
-      toast.error("Lấy dữ liệu không thành công");
-    } finally {
-      setShouldReloadTable(false);
-      isFetchingRef.current = false;
-    }
-  }, [dispatch, setShouldReloadTable]);
+    },
+    [dispatch, setShouldReloadBoard]
+  );
 
   // Điều chỉnh useEffect để chỉ gọi API khi cần thiết
   useEffect(() => {
-    if (currentProjectUrl && shouldReloadTable && !isNavigating && !isCreating) {
+    if (
+      currentProjectUrl &&
+      shouldReloadBoard &&
+      !isNavigating &&
+      !isCreating
+    ) {
       getProjectsData(currentProjectUrl);
     }
-  }, [currentProjectUrl, shouldReloadTable, isNavigating, isCreating, getProjectsData]);
+  }, [
+    currentProjectUrl,
+    shouldReloadBoard,
+    isNavigating,
+    isCreating,
+    getProjectsData,
+  ]);
+
+  const handleGenerateReport = async (item: Item) => {
+    try {
+      const report = await projectService.generateAIReport(item.id);
+      toast.success("Báo cáo đã được tạo thành công!");
+      return report;
+    } catch {
+      toast.error("Có lỗi khi tạo báo cáo!");
+    }
+  };
 
   return {
-
     listProject,
     isCreating,
-    setIsCreating, // Now properly typed
+    setIsCreating,
     isNavigating,
     hasUnsavedChanges,
     handleChange,
@@ -327,7 +349,8 @@ export const useProject = (
     handleDeleteItem,
     handleCreateAndSaveItem,
     handleUpdateProgress,
-    handleNavigateToChild, // Add this handler
-    handleColorChange, // Thêm handler mới
+    handleNavigateToChild,
+    handleColorChange,
+    handleGenerateReport,
   };
 };

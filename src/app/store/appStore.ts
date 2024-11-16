@@ -9,8 +9,8 @@ interface HistoryItem {
 interface AppState {
   history: HistoryItem[];
   setHistory: (history: HistoryItem[]) => void;
-  shouldReloadTable: boolean;
-  setShouldReloadTable: (shouldReload: boolean) => void;
+  shouldReloadBoard: boolean;
+  setShouldReloadBoard: (shouldReload: boolean) => void;
   resetToHome: () => void;
 }
 
@@ -21,14 +21,14 @@ export const useAppStore = create<AppState>((set) => ({
     title: "Home",
   }],
   setHistory: (history) => set({ history }),
-  shouldReloadTable: false,
-  setShouldReloadTable: (shouldReload) => set({ shouldReloadTable: shouldReload }),
+  shouldReloadBoard: false,
+  setShouldReloadBoard: (shouldReload) => set({ shouldReloadBoard: shouldReload }),
   resetToHome: () => set({
     history: [{
       id: 0,
       url: `/api/project/personal/`,
       title: "Home",
     }],
-    shouldReloadTable: true,
+    shouldReloadBoard: true,
   }),
 }))

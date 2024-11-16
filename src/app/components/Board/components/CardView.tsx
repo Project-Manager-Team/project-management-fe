@@ -1,22 +1,30 @@
-import { FiCheckSquare, FiFolder, FiEdit, FiSave, FiTrash2, FiCheck } from "react-icons/fi";
-import { Item, ItemProperty } from "@/app/components/Board/types/table";
-import OwnerButton from "./OwnerButton"; // Change to default import
-import { CardViewProps } from "@/app/components/Board/types/table";
-import { formatDateTime } from "@/app/utils/formatDateTime"; // Add this import at the top
+import {
+  FiCheckSquare,
+  FiFolder,
+  FiCheck,
+} from "react-icons/fi";
+import { Item, ItemProperty } from "@/app/components/Board/types/board";
+import { CardViewProps } from "@/app/components/Board/types/board";
+import { formatDateTime } from "@/app/utils/formatDateTime";
 import EditableContent from "@/app/components/common/EditableContent";
 import { getDiffLevelStyle, getDiffLevelLabel } from "../utils/tableViewUtils";
-import ColorPicker from './ColorPicker';
+import OwnerButton from "./OwnerButton";
 
 const CardView: React.FC<CardViewProps> = ({
   items,
   handleChange,
-  handleEditItem,
-  handleDeleteItem,
   handleUpdateProgress,
   handleNavigateToChild, // Add this prop
-  handleColorChange, // Thêm prop mới
-  openManagers,
+  setContextMenu, // Add this
+  openManagers, // Add this prop
 }) => {
+  const handleContextMenu = (e: React.MouseEvent, item: Item) => {
+    e.preventDefault();
+    setContextMenu({
+      item,
+      position: { x: e.clientX, y: e.clientY },
+    });
+  };
 
   const renderDateContent = (dateString: string | null) => {
     if (!dateString) return null;
@@ -63,7 +71,7 @@ const CardView: React.FC<CardViewProps> = ({
     }
 
     return (
-      <div className="flex items-center gap-2">
+      <div className="flex grow items-center gap-2">
         <div className="flex-grow bg-gray-200 rounded-full h-2">
           <div
             className="bg-green-500 h-2 rounded-full transition-all"
@@ -77,96 +85,73 @@ const CardView: React.FC<CardViewProps> = ({
     );
   };
 
+  // const handleGenerateReport = async (item: Item) => {
+  //   try {
+  //     toast.info("Đang tạo báo cáo...");
+  //     const report = await generateProjectReport(item);
+  //     toast.success("Đã tạo báo cáo thành công!");
+  //   } catch {
+  //     toast.error("Không thể tạo báo cáo");
+  //   }
+  // };
+
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 p-4">
+    <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-3 p-3">
       {items.map((item) => (
-        <div
-          key={item.id ?? `new-item-${item.index}`} // Sửa key để handle cả trường hợp id null
-          onClick={() => handleNavigateToChild(item)}
-          className={`bg-[var(--card)] border-2 rounded-lg 
-                      shadow-sm transition-all duration-200 flex flex-col
-                      ${
-                        !item.isEditing
-                          ? 'hover:scale-[1.02] hover:shadow-lg cursor-pointer'
-                          : ''
-                      }
-                      ${item.isEditing ? 'ring-2 ring-blue-500' : 'hover:bg-[var(--accent)]'}`}
-          style={{ borderColor: item.color || 'var(--border)' }}
-        >
-          {/* Header Section - No border */}
-          <div className="p-4">
-            {/* Title and Actions Row */}
-            <div className="flex items-center justify-between">
-              {/* Title and Icon */}
-              <div className="flex items-center gap-2 flex-1 min-w-0">
-                {(!item.type || item.type.toLowerCase() === "task") ? (
-                  <FiCheckSquare 
-                    className="w-5 h-5 flex-shrink-0" 
-                    style={{ color: item.color || 'currentColor' }}
-                  />
-                ) : (
-                  <FiFolder 
-                    className="w-5 h-5 flex-shrink-0" 
-                    style={{ color: item.color || 'currentColor' }} // Thêm style này
-                  />
-                )}
-                <EditableContent
-                  isEditing={item.isEditing}
-                  value={item.title}
-                  name="title"
-                  onChange={(e) =>
-                    handleChange(
-                      item.index,
-                      "title" as ItemProperty,
-                      e.target.value
-                    )
-                  }
-                  className="font-medium text-[var(--foreground)] truncate"
-                />
-              </div>
-              {/* Action Buttons */}
-              <div
-                className="flex items-center gap-1 ml-2"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <ColorPicker
-                  color={item.color}
-                  onChange={(color) => handleColorChange(item.index, color)}
-                />
-                <button
-                  className="p-1.5 bg-[var(--muted)] hover:bg-[var(--muted-foreground)]
-                            text-[var(--foreground)] rounded-full transition-all"
-                  onClick={() => handleEditItem(item.index)}
-                  aria-label={item.isEditing ? "Save" : "Edit"}
-                  style={{ color: item.color || 'var(--foreground)' }}
-                >
-                  {item.isEditing ? (
-                    <FiSave className="w-4 h-4" />
+        <div key={item.id ?? `new-item-${item.index}`} className="flex">
+          <div
+            onClick={() => handleNavigateToChild(item)}
+            onContextMenu={(e) => handleContextMenu(e, item)}
+            className={`bg-[var(--card)] border rounded-md shadow-sm 
+                   transition-all duration-200 flex flex-col flex-1
+                   ${!item.isEditing ? "hover:scale-[1.01] hover:shadow cursor-pointer" : ""}
+                   ${item.isEditing ? "ring-1 ring-blue-500" : "hover:bg-[var(--accent)]"}`}
+            style={{ borderColor: item.color || "var(--border)" }}
+          >
+            {/* Header */}
+            <div className="p-3">
+              <div className="flex items-center justify-between gap-2">
+                {/* Existing icon and title */}
+                <div className="flex items-center gap-1.5 flex-grow min-w-0">
+                  {!item.type || item.type.toLowerCase() === "task" ? (
+                    <FiCheckSquare
+                      className="w-4 h-4 flex-shrink-0"
+                      style={{ color: item.color || "currentColor" }}
+                    />
                   ) : (
-                    <FiEdit className="w-4 h-4" />
+                    <FiFolder
+                      className="w-4 h-4 flex-shrink-0"
+                      style={{ color: item.color || "currentColor" }} // Thêm style này
+                    />
                   )}
-                </button>
-                <button
-                  className="p-1.5 bg-[var(--muted)] hover:bg-[var(--muted-foreground)]
-                            text-[var(--foreground)] rounded-full transition-all"
-                  onClick={() => handleDeleteItem(item.id)}
-                  aria-label="Delete"
-                  style={{ color: item.color || 'var(--foreground)' }}
-                >
-                  <FiTrash2 className="w-4 h-4" />
-                </button>
+                  <EditableContent
+                    isEditing={item.isEditing}
+                    value={item.title}
+                    name="title"
+                    onChange={(e) =>
+                      handleChange(
+                        item.index,
+                        "title" as ItemProperty,
+                        e.target.value
+                      )
+                    }
+                    className="text-sm font-medium text-[var(--foreground)] truncate"
+                  />
+                </div>
+                
+                {/* Add OwnerButton */}
                 <OwnerButton
                   owner={item.owner}
-                  managersCount={item.managersCount}
+                  managersCount={item.managers?.length || 0}
                   onClick={() => openManagers(item)}
                   size="small"
                 />
               </div>
             </div>
 
-            {/* Description */}
+            {/* Description - More compact */}
             {(item.description || item.isEditing) && (
-              <div className="mt-3">
+              <div className="px-3 pb-2">
                 <EditableContent
                   isEditing={item.isEditing}
                   value={item.description}
@@ -179,109 +164,112 @@ const CardView: React.FC<CardViewProps> = ({
                       e.target.value
                     )
                   }
+                  className="text-xs text-[var(--muted-foreground)] line-clamp-2"
                 />
               </div>
             )}
-          </div>
 
-          {/* Main Content Section - No padding if empty */}
-          {(item.beginTime || item.endTime || item.isEditing) && (
-            <div className="px-4">
-              <div className="grid grid-cols-2 gap-4 p-2 bg-[var(--muted)] rounded-lg">
-                <div className="space-y-1">
-                  <span className="text-xs font-medium text-[var(--muted-foreground)]">
-                    Bắt đầu
-                  </span>
-                  {item.isEditing ? (
-                    <EditableContent
-                      isEditing={item.isEditing}
-                      value={
-                        item.beginTime ? item.beginTime.substring(0, 16) : ""
-                      }
-                      name="beginTime"
-                      type="datetime-local"
-                      onChange={(e) =>
-                        handleChange(
-                          item.index,
-                          "beginTime" as ItemProperty,
-                          e.target.value
-                        )
-                      }
-                    />
-                  ) : (
-                    renderDateContent(item.beginTime)
-                  )}
-                </div>
+            {/* Dates section - More compact */}
+            {(item.beginTime || item.endTime || item.isEditing) && (
+              <div className="px-3">
+                <div className="grid grid-cols-2 gap-2 p-1.5 bg-[var(--muted)] rounded">
+                  <div className="space-y-1">
+                    <span className="text-xs font-medium text-[var(--muted-foreground)]">
+                      Bắt đầu
+                    </span>
+                    {item.isEditing ? (
+                      <EditableContent
+                        isEditing={item.isEditing}
+                        value={
+                          item.beginTime ? item.beginTime.substring(0, 16) : ""
+                        }
+                        name="beginTime"
+                        type="datetime-local"
+                        onChange={(e) =>
+                          handleChange(
+                            item.index,
+                            "beginTime" as ItemProperty,
+                            e.target.value
+                          )
+                        }
+                      />
+                    ) : (
+                      renderDateContent(item.beginTime)
+                    )}
+                  </div>
 
-                <div className="space-y-1">
-                  <span className="text-xs font-medium text-[var(--muted-foreground)]">
-                    Kết thúc
-                  </span>
-                  {item.isEditing ? (
-                    <EditableContent
-                      isEditing={item.isEditing}
-                      value={item.endTime ? item.endTime.substring(0, 16) : ""}
-                      name="endTime"
-                      type="datetime-local"
-                      onChange={(e) =>
-                        handleChange(
-                          item.index,
-                          "endTime" as ItemProperty,
-                          e.target.value
-                        )
-                      }
-                    />
-                  ) : (
-                    renderDateContent(item.endTime)
-                  )}
+                  <div className="space-y-1">
+                    <span className="text-xs font-medium text-[var(--muted-foreground)]">
+                      Kết thúc
+                    </span>
+                    {item.isEditing ? (
+                      <EditableContent
+                        isEditing={item.isEditing}
+                        value={
+                          item.endTime ? item.endTime.substring(0, 16) : ""
+                        }
+                        name="endTime"
+                        type="datetime-local"
+                        onChange={(e) =>
+                          handleChange(
+                            item.index,
+                            "endTime" as ItemProperty,
+                            e.target.value
+                          )
+                        }
+                      />
+                    ) : (
+                      renderDateContent(item.endTime)
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Footer Section - No border */}
-          <div className="p-4 mt-auto">
-            <div className="grid grid-cols-2 gap-4">
-              {/* Difficulty Level */}
-              <div>
-                {(item.diffLevel !== null || item.isEditing) &&
-                  (item.isEditing ? (
-                    <select
-                      name="diffLevel"
-                      value={item.diffLevel === null ? "1" : item.diffLevel}
-                      onChange={(e) =>
-                        handleChange(
-                          item.index,
-                          "diffLevel" as ItemProperty,
-                          e.target.value ? parseInt(e.target.value) : 1
-                        )
-                      }
-                      onClick={(e) => e.stopPropagation()}
-                      className="w-full text-xs px-2 py-1 rounded-full bg-green-50 
+            {/* Footer */}
+            <div className="p-3 mt-auto">
+              <div className="flex space-x-4 items-center">
+                {/* Difficulty Level */}
+                <div>
+                  {(item.diffLevel !== null || item.isEditing) &&
+                    (item.isEditing ? (
+                      <select
+                        name="diffLevel"
+                        value={item.diffLevel === null ? "1" : item.diffLevel}
+                        onChange={(e) =>
+                          handleChange(
+                            item.index,
+                            "diffLevel" as ItemProperty,
+                            e.target.value ? parseInt(e.target.value) : 1
+                          )
+                        }
+                        onClick={(e) => e.stopPropagation()}
+                        className="w-full text-xs px-2 py-1 rounded-full bg-green-50 
                            dark:bg-gray-900 border border-blue-500 focus:outline-none"
-                    >
-                      <option value="1">Dễ</option>
-                      <option value="2">Trung bình</option>
-                      <option value="3">Khó</option>
-                    </select>
-                  ) : (
-                    <span
-                      className={`inline-block w-full text-center text-xs px-2 py-1 
+                      >
+                        <option value="1">Dễ</option>
+                        <option value="2">Trung bình</option>
+                        <option value="3">Khó</option>
+                      </select>
+                    ) : (
+                      <span
+                        className={`inline-block w-full text-center text-xs px-2 py-1 
                                    rounded-full ${getDiffLevelStyle(
                                      item.diffLevel
                                    )}`}
-                    >
-                      {item.diffLevel !== null
-                        ? getDiffLevelLabel(item.diffLevel)
-                        : "Không xác định"}
-                    </span>
-                  ))}
-              </div>
+                      >
+                        {item.diffLevel !== null
+                          ? getDiffLevelLabel(item.diffLevel)
+                          : "Không xác định"}
+                      </span>
+                    ))}
+                </div>
 
-              {/* Progress */}
-              <div>{renderProgress(item)}</div>
+                {/* Progress */}
+                <div className="flex grow">{renderProgress(item)}</div>
+              </div>
             </div>
-          </div>
+          </div>          
         </div>
       ))}
     </div>

@@ -4,6 +4,7 @@ export const API_ENDPOINTS = {
     CHILD: (id: number | null) => `/api/project/${id}/child/`,
     DETAIL: (id: number | null) => `/api/project/${id}/`,
     MANAGERS: (id: number | null) => `/api/project/${id}/managers_permissions/`,
+    REPORT: (id: number | null) => `/api/project/${id}/report/`,
   },
   INVITATION: '/api/invitation',
   MANAGER: {

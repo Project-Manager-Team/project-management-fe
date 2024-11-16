@@ -1,8 +1,29 @@
 "use client";
-import React from "react";
+import React, { useMemo, memo } from "react";
 import TableRow from "./TableRow";
-import { TableViewProps } from "@/app/components/Board/types/table";
+import { TableViewProps } from "@/app/components/Board/types/board";
 import { COLUMNS } from "@/app/components/Board/constants/columns";
+
+const TableHeader = memo(
+  ({ selectedColumns }: { selectedColumns: string[] }) => (
+    <tr className="bg-[var(--input)] text-[var(--foreground)] shadow-sm text-xs">
+      <th className="p-3 text-left whitespace-nowrap rounded-bl-lg">
+        <span className="text-xs font-medium">{COLUMNS.type.label}</span>
+      </th>
+      {selectedColumns.map(
+        (colId) =>
+          COLUMNS[colId as keyof typeof COLUMNS] && (
+            <th key={colId} className="p-3 text-left whitespace-nowrap">
+              <span className="text-xs font-medium">
+                {COLUMNS[colId as keyof typeof COLUMNS].label}
+              </span>
+            </th>
+          )
+      )}
+    </tr>
+  )
+);
+TableHeader.displayName = "TableHeader";
 
 const TableView: React.FC<TableViewProps> = ({
   items,
@@ -12,68 +33,60 @@ const TableView: React.FC<TableViewProps> = ({
   handleDeleteItem,
   handleUpdateProgress,
   openManagers,
-  isCreating,
-  setIsCreating,
   handleNavigateToChild,
-  handleColorChange, // Thêm prop này
+  handleColorChange,
+  setContextMenu, // Add this
 }) => {
-  return (
-    <div className="overflow-x-auto -mx-4 sm:mx-0">
-      <table className="w-full table-auto min-w-[800px]">
-        <thead className="sticky top-0 z-10">
-          <tr className="bg-[var(--input)] text-[var(--foreground)]">
-            {/* Type column is always shown */}
-            <th className="p-3 text-left whitespace-nowrap">
-              <span className="text-xs font-medium">{COLUMNS.type.label}</span>
-            </th>
-            {/* Other columns are toggleable */}
-            {selectedColumns.map(
-              (colId) =>
-                COLUMNS[colId as keyof typeof COLUMNS] && (
-                  <th key={colId} className="p-3 text-left whitespace-nowrap">
-                    <span className="text-xs font-medium">
-                      {COLUMNS[colId as keyof typeof COLUMNS].label}
-                    </span>
-                  </th>
-                )
-            )}
-            <th className="p-3 text-right whitespace-nowrap">
-              <span className="sr-only">Actions</span>
-            </th>
+  const tableContent = useMemo(
+    () => (
+      <tbody>
+        {items.length > 0 ? (
+          items.map((item) => (
+            <TableRow
+              key={item.id ?? `new-item-${item.index}`}
+              item={item}
+              handleChange={handleChange}
+              handleEditItem={handleEditItem}
+              handleDeleteItem={handleDeleteItem}
+              handleUpdateProgress={handleUpdateProgress}
+              selectedColumns={selectedColumns}
+              openManagers={openManagers}
+              handleNavigateToChild={handleNavigateToChild}
+              handleColorChange={handleColorChange}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                setContextMenu({
+                  item,
+                  position: { x: e.clientX, y: e.clientY },
+                });
+              }}
+            />
+          ))
+        ) : (
+          <tr>
+            <td
+              colSpan={selectedColumns.length + 2}
+              className="py-8 text-center text-[var(--foreground)] text-sm"
+            >
+              Chưa có dữ liệu
+            </td>
           </tr>
+        )}
+      </tbody>
+    ),
+    [items, selectedColumns]
+  );
+
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full table-auto min-w-[800px] bg-[var(--background)] border-separate border-spacing-y-2 -mt-2">
+        <thead className="sticky top-0 z-10">
+          <TableHeader selectedColumns={selectedColumns} />
         </thead>
-        <tbody>
-          {items.length > 0 ? (
-            items.map((item) => (
-              <TableRow
-                key={item.id}
-                item={item}
-                handleChange={handleChange}
-                handleEditItem={handleEditItem}
-                handleDeleteItem={handleDeleteItem}
-                handleUpdateProgress={handleUpdateProgress}
-                selectedColumns={selectedColumns}
-                openManagers={openManagers}
-                isCreating={isCreating} // Pass isCreating to TableRow
-                setIsCreating={setIsCreating} // Pass setIsCreating to TableRow
-                handleNavigateToChild={handleNavigateToChild} // Pass handleNavigateToChild to TableRow
-                handleColorChange={handleColorChange} // Thêm prop này
-              />
-            ))
-          ) : (
-            <tr>
-              <td
-                colSpan={selectedColumns.length + 2}
-                className="py-8 text-center text-[var(--foreground)] text-sm"
-              >
-                Chưa có dữ liệu
-              </td>
-            </tr>
-          )}
-        </tbody>
+        {tableContent}
       </table>
     </div>
   );
 };
 
-export default TableView;
+export default memo(TableView);

@@ -1,4 +1,4 @@
-import { Item } from "./table";
+import { Item } from "./board";
 
 export type ProjectState = {
   listProject: Item[];
@@ -17,4 +17,4 @@ export type ProjectAction =
   | { type: "TOGGLE_EDIT"; payload: number }
   | { type: "UPDATE_PROGRESS"; payload: { id: number; progress: number } }
   | { type: "CLEAR_PROJECTS" }
-  | { type: "REPLACE_ITEM"; payload: { oldId: number | null, newItem: Item } };
+  | { type: "REPLACE_ITEM"; payload: { oldId: number | null; newItem: Item } };

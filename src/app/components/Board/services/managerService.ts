@@ -1,5 +1,5 @@
 import apiClient from "@/app/utils/apiClient";
-import { Manager } from "@/app/components/Board/types/table";
+import { Manager } from "@/app/components/Board/types/board";
 import { API_ENDPOINTS } from "../constants/apiEndpoints";
 
 export const managerService = {

@@ -1,5 +1,5 @@
 import { ProjectState, ProjectAction } from "../types/projectReducer";
-import { Item } from "../types/table";
+import { Item } from "../types/board";
 
 const updateIndexes = (items: Item[]) => {
   return items.map((item, index) => ({ ...item, index }));
@@ -51,10 +51,7 @@ export function projectReducer(
     case "ADD_ITEM":
       return {
         ...state,
-        listProject: updateIndexes([
-          ...state.listProject,
-          action.payload
-        ])
+        listProject: updateIndexes([...state.listProject, action.payload]),
         // Removed isCreating: false from here
       };
 
@@ -106,11 +103,11 @@ export function projectReducer(
       return {
         ...state,
         listProject: updateIndexes(
-          state.listProject.map(item => 
+          state.listProject.map((item) =>
             item.id === action.payload.oldId ? action.payload.newItem : item
           )
         ),
-        isCreating: false
+        isCreating: false,
       };
 
     default:
