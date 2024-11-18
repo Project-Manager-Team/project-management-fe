@@ -178,7 +178,7 @@ export interface CardViewProps {
   isCreating: boolean;
   setIsCreating: React.Dispatch<React.SetStateAction<boolean>>;
   handleColorChange: (index: number, color: string | null) => void; // Thêm prop này
-  handleGenerateReport: (item: Item) => void; // Add this line
+  handleGenerateReport: (item: Item) => Promise<void>; // Add this line
 
   setContextMenu: React.Dispatch<
     React.SetStateAction<{

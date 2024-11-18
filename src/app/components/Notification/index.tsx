@@ -43,7 +43,7 @@ const NotificationItem = React.memo(({
 NotificationItem.displayName = 'NotificationItem';
 
 function Notification() {
-  const { setShouldReloadTable } = useAppStore();
+  const { setShouldReloadBoard } = useAppStore();
   const { invitations, reloadTrigger, fetchInvitations, handleReply, handleDelete } = useNotificationStore();
   const [isOpen] = React.useState(false);
 
@@ -70,7 +70,7 @@ function Notification() {
   const onReply = async (item: Invitation, status: boolean) => {
     await handleReply(item, status);
     if (status) {
-      setTimeout(() => setShouldReloadTable(true), 200);
+      setTimeout(() => setShouldReloadBoard(true), 200);
     }
     fetchInvitations(); // Ensure invitations are fetched after reply
   };

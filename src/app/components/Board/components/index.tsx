@@ -201,21 +201,23 @@ export default function Board({ current = defaultCurrent }: BoardProps) {
   } | null>(null);
 
   return (
-    <div className="relative min-h-screen flex bg-[var(--background)]">
+    <div className="relative min-h-screen flex flex-col sm:flex-row bg-[var(--background)]">
       {/* Tree section with seamless styling */}
       <div
-        className={`transition-all duration-300 ease-in-out border-r border-[var(--border)]
-                    ${isTreeVisible ? "w-64" : "w-0"} overflow-hidden`}
+        className={`transition-all duration-300 ease-in-out border-b sm:border-r border-[var(--border)]
+                    ${isTreeVisible ? "h-64 sm:h-auto sm:w-64" : "h-0 sm:w-0"} overflow-hidden`}
       >
         {isTreeVisible && <TreeProject />}
       </div>
 
       {/* Main content section */}
       <div className="flex-1 flex flex-col min-h-screen">
-        <div className="flex-1 p-4">
+        <div className="flex-1 p-2 sm:p-4">
           <div className="bg-[var(--card)] rounded-lg overflow-hidden shadow-sm">
-            <div className="p-4 border-b border-[var(--border)] flex items-center">
-              <div className="flex items-center gap-4 flex-shrink-0">
+            {/* Header section */}
+            <div className="p-2 sm:p-4 border-b border-[var(--border)] flex flex-wrap sm:flex-nowrap items-center gap-2">
+              {/* Left controls */}
+              <div className="flex items-center gap-2 order-1 sm:order-none">
                 <button
                   onClick={() => setIsTreeVisible(!isTreeVisible)} // Toggle visibility
                   className="p-2 bg-[var(--muted)] hover:bg-[var(--muted-foreground)] 
@@ -292,15 +294,15 @@ export default function Board({ current = defaultCurrent }: BoardProps) {
                 </div>
               </div>
 
-              {/* Center title */}
-              <div className="flex-1 px-4 text-center">
+              {/* Center title - full width on mobile */}
+              <div className="w-full sm:flex-1 px-2 sm:px-4 text-center order-3 sm:order-none">
                 <h1 className="text-lg font-medium text-[var(--foreground)] truncate">
                   {current.title}
                 </h1>
               </div>
 
               {/* Right section */}
-              <div className="flex-shrink-0">
+              <div className="order-2 sm:order-none">
                 <button
                   onClick={() => setIsColumnSelectorOpen(true)}
                   className="p-2 bg-[var(--muted)] hover:bg-[var(--muted-foreground)] 

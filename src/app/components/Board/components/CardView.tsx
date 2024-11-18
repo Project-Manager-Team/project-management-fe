@@ -96,23 +96,22 @@ const CardView: React.FC<CardViewProps> = ({
   // };
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-3 p-3">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 p-4">
       {items.map((item) => (
-        <div key={item.id ?? `new-item-${item.index}`} className="flex">
+        <div key={item.id ?? `new-item-${item.index}`} className="flex w-full">
           <div
             onClick={() => handleNavigateToChild(item)}
             onContextMenu={(e) => handleContextMenu(e, item)}
             className={`bg-[var(--card)] border rounded-md shadow-sm 
-                   transition-all duration-200 flex flex-col flex-1
+                   transition-all duration-200 flex flex-col w-full
                    ${!item.isEditing ? "hover:scale-[1.01] hover:shadow cursor-pointer" : ""}
                    ${item.isEditing ? "ring-1 ring-blue-500" : "hover:bg-[var(--accent)]"}`}
             style={{ borderColor: item.color || "var(--border)" }}
           >
             {/* Header */}
-            <div className="p-3">
-              <div className="flex items-center justify-between gap-2">
-                {/* Existing icon and title */}
-                <div className="flex items-center gap-1.5 flex-grow min-w-0">
+            <div className="p-3 sm:p-4">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <div className="flex items-center gap-1.5 min-w-0 flex-1">
                   {!item.type || item.type.toLowerCase() === "task" ? (
                     <FiCheckSquare
                       className="w-4 h-4 flex-shrink-0"
@@ -138,20 +137,20 @@ const CardView: React.FC<CardViewProps> = ({
                     className="text-sm font-medium text-[var(--foreground)] truncate"
                   />
                 </div>
-                
-                {/* Add OwnerButton */}
-                <OwnerButton
-                  owner={item.owner}
-                  managersCount={item.managers?.length || 0}
-                  onClick={() => openManagers(item)}
-                  size="small"
-                />
+                <div className="flex-shrink-0">
+                  <OwnerButton
+                    owner={item.owner}
+                    managersCount={item.managers?.length || 0}
+                    onClick={() => openManagers(item)}
+                    size="small"
+                  />
+                </div>
               </div>
             </div>
 
-            {/* Description - More compact */}
+            {/* Description */}
             {(item.description || item.isEditing) && (
-              <div className="px-3 pb-2">
+              <div className="px-3 sm:px-4 pb-3">
                 <EditableContent
                   isEditing={item.isEditing}
                   value={item.description}
@@ -169,10 +168,10 @@ const CardView: React.FC<CardViewProps> = ({
               </div>
             )}
 
-            {/* Dates section - More compact */}
+            {/* Dates section */}
             {(item.beginTime || item.endTime || item.isEditing) && (
-              <div className="px-3">
-                <div className="grid grid-cols-2 gap-2 p-1.5 bg-[var(--muted)] rounded">
+              <div className="px-3 sm:px-4">
+                <div className="grid sm:grid-cols-2 gap-3 p-2 bg-[var(--muted)] rounded">
                   <div className="space-y-1">
                     <span className="text-xs font-medium text-[var(--muted-foreground)]">
                       Bắt đầu
@@ -227,10 +226,9 @@ const CardView: React.FC<CardViewProps> = ({
             )}
 
             {/* Footer */}
-            <div className="p-3 mt-auto">
-              <div className="flex space-x-4 items-center">
-                {/* Difficulty Level */}
-                <div>
+            <div className="p-3 sm:p-4 mt-auto">
+              <div className="flex flex-wrap gap-3 items-center">
+                <div className="w-24 flex-shrink-0">
                   {(item.diffLevel !== null || item.isEditing) &&
                     (item.isEditing ? (
                       <select
@@ -264,9 +262,9 @@ const CardView: React.FC<CardViewProps> = ({
                       </span>
                     ))}
                 </div>
-
-                {/* Progress */}
-                <div className="flex grow">{renderProgress(item)}</div>
+                <div className="flex-1 min-w-[200px]">
+                  {renderProgress(item)}
+                </div>
               </div>
             </div>
           </div>          

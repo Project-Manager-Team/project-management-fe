@@ -78,13 +78,15 @@ const TableView: React.FC<TableViewProps> = ({
   );
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full table-auto min-w-[800px] bg-[var(--background)] border-separate border-spacing-y-2 -mt-2">
-        <thead className="sticky top-0 z-10">
-          <TableHeader selectedColumns={selectedColumns} />
-        </thead>
-        {tableContent}
-      </table>
+    <div className="overflow-x-auto -mx-2 sm:mx-0">
+      <div className="min-w-[800px] p-2 sm:p-0">
+        <table className="w-full table-auto bg-[var(--background)] border-separate border-spacing-y-2 -mt-2">
+          <thead className="sticky top-0 z-10">
+            <TableHeader selectedColumns={selectedColumns} />
+          </thead>
+          {tableContent}
+        </table>
+      </div>
     </div>
   );
 };

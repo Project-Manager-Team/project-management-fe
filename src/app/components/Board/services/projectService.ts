@@ -2,6 +2,7 @@ import apiClient from "@/app/utils/apiClient";
 import { Item } from "@/app/components/Board/types/board";
 import { API_ENDPOINTS } from "../constants/apiEndpoints";
 import { geminiService } from '@/app/services/geminiService';
+import { ProjectData } from "../types/project";
 
 export const projectService = {
   async getProjects(url: string): Promise<Item[]> {
@@ -36,15 +37,17 @@ export const projectService = {
     await apiClient.patch<Item>(API_ENDPOINTS.PROJECT.DETAIL(id), { progress });
   },
 
-  async getProjectReport(id: number): Promise<any> {
+  async getProjectReport(id: number): Promise<ProjectData> {
     const { data } = await apiClient.get(API_ENDPOINTS.PROJECT.REPORT(id));
     return data;
   },
 
-  async generateAIReport(id: number): Promise<string> {
+  async generateAIReport(id: number | null): Promise<string> {
+    if (id === null) {
+      throw new Error("Invalid project ID");
+    }
     const projectData = await this.getProjectReport(id);
     const report = await geminiService.generateProjectReport(projectData);
     return report;
   },
-
 };

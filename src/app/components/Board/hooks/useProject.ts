@@ -10,11 +10,28 @@ import {
 } from "@/app/components/Board/reducers/projectReducer";
 import { Dispatch, SetStateAction } from "react";
 import debounce from "lodash/debounce";
+import { marked } from 'marked';
+
+interface UseProjectReturn {
+  listProject: Item[];
+  isCreating: boolean;
+  setIsCreating: Dispatch<SetStateAction<boolean>>;
+  isNavigating: boolean;
+  hasUnsavedChanges: () => boolean;
+  handleChange: (index: number, name: ItemProperty, value: string | number | boolean | null) => void;
+  handleEditItem: (index: number) => Promise<void>;
+  handleDeleteItem: (id: number | null) => void;
+  handleCreateAndSaveItem: () => Promise<void>;
+  handleUpdateProgress: (id: number, progress: number) => Promise<void>;
+  handleNavigateToChild: (item: Item) => void;
+  handleColorChange: (index: number, color: string | null) => Promise<void>;
+  handleGenerateReport: (item: Item) => Promise<void>;
+}
 
 export const useProject = (
   currentProjectId: number,
   currentProjectUrl: string
-) => {
+): UseProjectReturn => {
   const { history, setHistory, shouldReloadBoard, setShouldReloadBoard } =
     useAppStore();
   const [state, dispatch] = useReducer(projectReducer, initialState);
@@ -330,9 +347,105 @@ export const useProject = (
 
   const handleGenerateReport = async (item: Item) => {
     try {
-      const report = await projectService.generateAIReport(item.id);
+      if (item.id === null) {
+        toast.error("Không thể tạo báo cáo cho item chưa được lưu!");
+        return;
+      }
+      
+      const reportMarkdown = await projectService.generateAIReport(item.id);
+      
+      // Create overlay background
+      const overlay = document.createElement('div');
+      overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+      `;
+
+      // Create modal content
+      const modalContent = document.createElement('div');
+      modalContent.className = 'report-modal';
+      const htmlContent = await marked(reportMarkdown); // Add await here
+      modalContent.innerHTML = htmlContent;
+      
+      // Detect system theme
+      const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      
+      // Apply theme-aware styles
+      modalContent.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: ${isDarkMode ? '#1a1a1a' : 'white'};
+        color: ${isDarkMode ? '#e0e0e0' : '#1a1a1a'};
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        max-width: 800px;
+        width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+        z-index: 1000;
+        font-size: 16px;
+        line-height: 1.6;
+      `;
+
+      // Style markdown content
+      const styleSheet = document.createElement('style');
+      styleSheet.textContent = `
+        .report-modal h1, .report-modal h2, .report-modal h3 {
+          color: ${isDarkMode ? '#fff' : '#000'};
+          margin-top: 1.5em;
+          margin-bottom: 0.5em;
+        }
+        .report-modal ul, .report-modal ol {
+          margin-left: 1.5em;
+          margin-bottom: 1em;
+        }
+        .report-modal li {
+          margin-bottom: 0.5em;
+        }
+      `;
+      modalContent.appendChild(styleSheet);
+
+      // Add close button
+      const closeButton = document.createElement('button');
+      closeButton.innerText = 'Đóng';
+      closeButton.style.cssText = `
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        padding: 8px 15px;
+        border: none;
+        background: ${isDarkMode ? '#333' : '#f0f0f0'};
+        color: ${isDarkMode ? '#fff' : '#000'};
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: background 0.2s;
+        &:hover {
+          background: ${isDarkMode ? '#444' : '#e0e0e0'};
+        }
+      `;
+      
+      const cleanup = () => {
+        document.body.removeChild(overlay);
+        document.body.removeChild(modalContent);
+      };
+
+      closeButton.onclick = cleanup;
+      overlay.onclick = cleanup;
+      
+      modalContent.appendChild(closeButton);
+      document.body.appendChild(overlay);
+      document.body.appendChild(modalContent);
+
       toast.success("Báo cáo đã được tạo thành công!");
-      return report;
     } catch {
       toast.error("Có lỗi khi tạo báo cáo!");
     }
