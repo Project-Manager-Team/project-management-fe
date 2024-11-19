@@ -410,6 +410,22 @@ export const useProject = (
         .report-modal li {
           margin-bottom: 0.5em;
         }
+        .report-modal table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-bottom: 1em;
+        }
+        .report-modal th, .report-modal td {
+          border: 1px solid ${isDarkMode ? '#444' : '#ddd'};
+          padding: 8px;
+          text-align: left;
+        }
+        .report-modal th {
+          background: ${isDarkMode ? '#333' : '#f0f0f0'};
+        }
+        .report-modal tr:nth-child(even) {
+          background: ${isDarkMode ? '#2a2a2a' : '#f9f9f9'};
+        }
       `;
       modalContent.appendChild(styleSheet);
 
@@ -444,6 +460,36 @@ export const useProject = (
       modalContent.appendChild(closeButton);
       document.body.appendChild(overlay);
       document.body.appendChild(modalContent);
+
+      // Add download button
+      const downloadButton = document.createElement('button');
+      downloadButton.innerText = 'Tải về';
+      downloadButton.style.cssText = `
+        position: absolute;
+        top: 15px;
+        left: 15px;
+        padding: 8px 15px;
+        border: none;
+        background: ${isDarkMode ? '#333' : '#f0f0f0'};
+        color: ${isDarkMode ? '#fff' : '#000'};
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: background 0.2s;
+        &:hover {
+          background: ${isDarkMode ? '#444' : '#e0e0e0'};
+        }
+      `;
+      downloadButton.onclick = () => {
+        const blob = new Blob([reportMarkdown], { type: 'text/markdown' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${item.title}-report.md`;
+        a.click();
+        URL.revokeObjectURL(url);
+      };
+      modalContent.appendChild(downloadButton);
 
       toast.success("Báo cáo đã được tạo thành công!");
     } catch {

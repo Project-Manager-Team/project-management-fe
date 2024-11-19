@@ -27,6 +27,8 @@
     "axios": "^1.7.7",
     "canvas-to-blob": "^1.0.0",
     "cross-env": "^7.0.3",
+    "docx": "^9.0.3",
+    "html2pdf.js": "^0.10.2",
     "jspdf": "^2.5.2",
     "lodash": "^4.17.21",
     "marked": "^15.0.0",

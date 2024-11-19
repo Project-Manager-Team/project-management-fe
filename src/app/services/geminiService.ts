@@ -12,7 +12,7 @@ const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY);
 export const geminiService = {
   async generateProjectReport(projectData: ProjectData): Promise<string> {
     const model = genAI.getGenerativeModel({
-      model: "gemini-1.5-pro-002",
+      model: "gemini-1.5-flash-002",
     });
 
     const generateTreeStructure = (data: ProjectData, level = 0): string => {
@@ -70,7 +70,7 @@ export const geminiService = {
     4. PHÂN TÍCH CHI TIẾT CÔNG VIỆC:
     ${generateTreeStructure(projectData)}
     
-    4. QUẢN LÝ VÀ PHÂN QUYỀN:
+    5. QUẢN LÝ VÀ PHÂN QUYỀN:
     - Số lượng quản lý: ${projectData.managersCount}
     - Danh sách quản lý:
       ${
@@ -84,7 +84,7 @@ export const geminiService = {
     # Báo cáo tổng quan dự án
 
     ## 1. Tổng quan tình hình
-    [Phân tích tổng thể về tình hình dự án]
+    [Phân tích tổng thể về tình hình dự án và đưa ra cấu trúc dự án]
 
     ## 2. Phân tích cấu trúc và thành phần
     [Phân tích chi tiết cấu trúc phân rã công việc]
@@ -93,7 +93,7 @@ export const geminiService = {
     [Nhận xét về tiến độ và việc quản lý thời gian]
 
     ## 4. Phân tích rủi ro và thách thức
-    [Xác định các rủi ro và thách thức tiềm ẩn, bao gồm cả vấn đề quản lý thành viên]
+    [Xác định các rủi ro và thách thức tiềm ẩn, bao gồm cả vấn đề quản lý thành vi��n]
 
     ## 5. Đánh giá cơ cấu quản lý
     [Phân tích hiệu quả của mô hình quản lý và phân quyền hiện tại]
