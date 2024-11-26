@@ -5,7 +5,7 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: "http",
-        hostname: "promex04.myvnc.com",
+        hostname: "localhost",
         port: "8000",
         pathname: "/media/**",
       },
